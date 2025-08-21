@@ -1,17 +1,23 @@
+import { useState } from 'react'
 import './App.css'
-import { Container, Row, Col, Button } from "react-bootstrap"
+import { supabase } from './services/supabaseClient'
+import { useEffect } from 'react'
 
 function App() {
+  const [message, setMessage] = useState("")
+  useEffect(()=>{
+    const checkonnection = async ()=>{
+      const {data, error} = await supabase.from("test_table").select("*").limit(1)
+      if(error){
+        setMessage(error.message)
+      }else{
+        setMessage("conexion exitosa")
+      }
+    }
+    checkonnection()
+  })
   return (
-    <Container className="mt-5">
-      <Row>
-        <Col className="text-center">
-          <h1>🚀 Bootstrap funcionando</h1>
-          <p>Si ves el estilo bonito, ¡todo está ok!</p>
-          <Button variant="primary" onClick={()=>alert("hola mundo")}>Probar Botón</Button>
-        </Col>
-      </Row>
-    </Container>
+    <h1>{message}</h1>
   )
 }
 
