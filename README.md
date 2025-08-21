@@ -1,15 +1,15 @@
 ✅ Tareas Sprint 1
 🔹 Configuración inicial
 
- Configurar la conexión con Supabase (supabaseClient.js).
+ Configurar la conexión con Supabase (supabaseClient.js).✅
 
- Crear archivo .env para guardar las credenciales de Supabase.
+ Crear archivo .env para guardar las credenciales de Supabase.✅
 
- Verificar la conexión con un test simple en consola.
+ Verificar la conexión con un test simple en consola.✅
 
 🔹 Rutas principales
 
- Crear layout base con react-router-dom.
+ Crear layout base con react-router-dom.✅
 
  Definir rutas iniciales:
 
