@@ -13,9 +13,9 @@
 
  Definir rutas iniciales:
 
-/ → Landing Page
+/ → Landing Page✅
 
-/login → Formulario de inicio de sesión
+/login → Formulario de inicio de sesión✅
 
 /register → Formulario de registro
 
