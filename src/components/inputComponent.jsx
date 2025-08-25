@@ -32,3 +32,26 @@ export function BtnSubmitForm() {
     </Button>
   </div>
 }
+
+export function SelectField({ label, name, options = [] }) {
+  const {
+    register,
+    formState: { errors },
+  } = useFormContext();
+  return (
+    <Form.Group className="mb-3">
+      <Form.Label>{label}</Form.Label>
+      <Form.Select {...register(name)}>
+        <option value="">Seleccione una opción</option>
+        {options.map((opt, index) => (
+          <option key={index} value={opt.value}>
+            {opt.label}
+          </option>
+        ))}
+      </Form.Select>
+      {errors[name] && (
+        <Form.Text className="text-danger">{errors[name].message}</Form.Text>
+      )}
+    </Form.Group>
+  );
+}
