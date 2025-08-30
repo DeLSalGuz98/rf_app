@@ -1,5 +1,5 @@
 export function DasboardPage() {
-  return<div>
-    dashboard
-  </div>
+  return<>
+    <div>dashboard</div>
+  </>
 }

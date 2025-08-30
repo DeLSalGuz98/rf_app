@@ -3,7 +3,8 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormComponent from "../components/formComponent";
 import {InputField, BtnSubmitForm } from "../components/inputComponent";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import { handleLoging } from "../services/handleLoging";
 
 
 
@@ -14,12 +15,19 @@ const loginSchema = z.object({
 
 
 export function LoginPage() {
+  const navigate = useNavigate()
   const methods = useForm({
     resolver: zodResolver(loginSchema),
   });
 
-  const onSubmit = (data) => {
-    console.log("Login data:", data);
+  const onSubmit = async (data) => {
+    const res = await handleLoging(data.email, data.password)
+    if(res.message === "error"){
+      alert("error en la credenciales")
+      navigate("/login")
+    }else{
+      navigate("/rf/dashboard")
+    }
   };
 
   return (
