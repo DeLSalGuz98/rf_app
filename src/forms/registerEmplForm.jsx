@@ -4,6 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Row, Col } from "react-bootstrap";
 import FormComponent from "../components/formComponent";
 import { BtnSubmitForm, InputField, SelectField } from "../components/inputComponent";
+import { HandleRegister } from "../services/handleRegister";
+import { useNavigate } from "react-router-dom";
 
 const registerSchema = z.object({
   nombre: z.string().min(2, "El nombre es requerido"),
@@ -24,18 +26,53 @@ const registerSchema = z.object({
   permisos: z.enum(["admin", "general"])
 });
 
-export function RegisterEmployeeForm() {
+export function RegisterEmployeeForm({dataCompany={}}) {
+  const navigate = useNavigate()
   const methods = useForm({
       resolver: zodResolver(registerSchema),
     });
 
-  const onSubmit = (data) => {
-    console.log("Register data:", data);
+  const onSubmit = async(data) => {
+    const empresa = {
+      ruc: dataCompany.ruc,
+      representante_legal: dataCompany.representante_legal.toLowerCase(),
+      razon_social: dataCompany.razon_social.toLowerCase(),
+      direccion: dataCompany.direccion.toLowerCase(),
+      distrito: dataCompany.distrito.toLowerCase(),
+      provincia: dataCompany.provincia.toLowerCase(),
+      departamento: dataCompany.departamento.toLowerCase(),
+      correo: dataCompany.correo
+    }
+    const usuario = {
+      id: "",
+      username: data.nombre.charAt(0)+data.apellidoPaterno,
+      permisos: "admin",
+    }
+    const empleado = {
+      empresa_id: "",
+      usuario_id: "",
+      nombre: data.nombre.toLowerCase(),
+      apellido_paterno: data.apellidoPaterno.toLowerCase(),
+      apellido_materno: data.apellidoMaterno.toLowerCase(),
+      activo: data.activo==="si"?true:false,
+      email: data.email,
+      fecha_inicio: data.fechaInicio,
+      fecha_fin: data.fechaFin,
+      fecha_nacimiento: data.fechaNacimiento,
+      nro_doc: data.nroDoc,
+      sexo: data.sexo.toLowerCase(),
+      telf: data.telf,
+      tipo_contrata: data.tipoContrata.toLowerCase(),
+      tipo_doc: data.tipoDoc.toLowerCase(),
+      tipo_trabajo: data.tipoTrabajo.toLowerCase()
+    }
+    await HandleRegister(empresa, usuario, empleado, data.password)
+    navigate("/")
   }
 
   return (
     <div className="container py-5">
-      <FormComponent methods={methods} onSubmit={onSubmit} title="Registrar Nuevo Usuario">
+      <FormComponent methods={methods} onSubmit={onSubmit} title="Datos del Representante Legal">
         <Row>
           <Col md={6}>
             <InputField label="Nombre" name="nombre" placeholder="Ingresa tu nombre" />

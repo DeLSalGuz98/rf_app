@@ -11,7 +11,7 @@ export function ProtectedRoute({children}) {
   useEffect(()=>{
     const getSession = async ()=>{
       const {data, error} = await supabase.auth.getSession()
-      if(error || !data?.session){
+      if(error || !data){
         navigate("/")
       }else{
         setSession(data.session)
@@ -32,13 +32,13 @@ export function RedirectRoutesUserLogged({children}) {
   useEffect(()=>{
     const getSession = async ()=>{
       const {data, error} = await supabase.auth.getSession()
-      if(error || !data?.session){
+      if(error || !data){
         navigate("/")
-      }else{
-        navigate("/dashboard")
+      }else if(data?.session){
+        navigate("/rf/dashboard")
       }
     }
     getSession()
-  })
+  },[navigate])
   return children
 }

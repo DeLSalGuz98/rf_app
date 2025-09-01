@@ -17,7 +17,7 @@
 
 /login → Formulario de inicio de sesión✅
 
-/register → Formulario de registro
+/register → Formulario de registro✅
 
 /dashboard → Vista protegida (sólo accesible si estás logueado).
 
@@ -27,13 +27,13 @@
 
  Integrar Supabase para registrar usuarios (supabase.auth.signUp).
 
- Crear formulario de Login con react-hook-form + zod.
+ Crear formulario de Login con react-hook-form + zod.✅
 
- Integrar Supabase para iniciar sesión (supabase.auth.signInWithPassword).
+ Integrar Supabase para iniciar sesión (supabase.auth.signInWithPassword).✅
 
- Implementar Logout (supabase.auth.signOut).
+ Implementar Logout (supabase.auth.signOut).✅
 
- Manejar errores de login/registro y mostrar mensajes con react-bootstrap (Alerts).
+ Manejar errores de login/registro y mostrar mensajes con react-bootstrap (Alerts).✅
 
 🔹 Protección de rutas
 
