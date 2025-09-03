@@ -23,9 +23,9 @@
 
 🔹 Autenticación
 
- Crear formulario de Registro con react-hook-form + zod.
+ Crear formulario de Registro con react-hook-form + zod.✅
 
- Integrar Supabase para registrar usuarios (supabase.auth.signUp).
+ Integrar Supabase para registrar usuarios (supabase.auth.signUp).✅
 
  Crear formulario de Login con react-hook-form + zod.✅
 
@@ -37,16 +37,16 @@
 
 🔹 Protección de rutas
 
- Crear un componente PrivateRoute que verifique si el usuario está autenticado.
+ Crear un componente PrivateRoute que verifique si el usuario está autenticado.✅
 
- Redirigir a /login si el usuario no está autenticado.
+ Redirigir a /login si el usuario no está autenticado.✅
 
 🔹 UI mínima
 
  Crear un Navbar simple con Bootstrap que muestre:
 
-Nombre de la app.
+Nombre de la app.✅
 
-Botón de login / logout según estado.
+Botón de login / logout según estado.✅
 
- Estilos básicos de bootstrap para formularios.
+ Estilos básicos de bootstrap para formularios.✅
