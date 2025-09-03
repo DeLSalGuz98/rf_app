@@ -6,13 +6,13 @@ export async function GetUserNameAndNameCompany() {
     console.error(error) 
     return null
   }else{
-    console.log(user.user.id)
     const { data, error } = await supabase
     .from("usuario")
     .select(`
       username,
       empleado (
         empresa (
+          id,
           razon_social
         )
       )
@@ -24,6 +24,6 @@ export async function GetUserNameAndNameCompany() {
       console.error("Error al obtener datos:", error);
       return null;
     }
-    return {username:data.username, razonSocial:data.empleado.empresa.razon_social}
+    return {username:data.username, razonSocial:data.empleado.empresa.razon_social, idEmpresa: data.empleado.empresa.id}
   }
 }

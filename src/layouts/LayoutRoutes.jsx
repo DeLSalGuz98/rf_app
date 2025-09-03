@@ -5,6 +5,8 @@ import { RegisterPage } from '../pages/register'
 import { DasboardPage } from '../pages/dashboard'
 import { ProtectedRoute, RedirectRoutesUserLogged } from '../services/protectedRoutes'
 import { LayoutNavApp } from './LayoutNav'
+import { CreateNewProject } from '../pages/newProject'
+import { AllProjects } from '../pages/allProjects'
 export function Layout() {
   return<div>
     <div className="">
@@ -17,7 +19,17 @@ export function Layout() {
             <ProtectedRoute>
               <DasboardPage />
             </ProtectedRoute>
-            } />
+          } />
+          <Route path="crear-nuevo-proyecto" element={
+            <ProtectedRoute>
+              <CreateNewProject />
+            </ProtectedRoute>
+          } />
+          <Route path="proyectos" element={
+            <ProtectedRoute>
+              <AllProjects />
+            </ProtectedRoute>
+          } />
         </Route>
       </Routes>
     </div>
