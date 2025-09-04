@@ -1,10 +1,104 @@
-import { useParams } from "react-router-dom"
-import ProyectoDetalle from "../components/panelInfoProject"
+import { Link, useParams } from "react-router-dom"
+import { useState } from "react"
+import { Badge, Button, ButtonGroup, Card, Col, Row, Spinner } from "react-bootstrap"
+import { getInfoProject } from "../querysDB/projects/getInfoProject"
+import { useEffect } from "react"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
+  const [proyecto, setProyecto] = useState(null);
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      const fetchProyecto = async () => {
+        const data = await getInfoProject(idProyecto)
+        setProyecto(data);
+        setLoading(false);
+      };
+      fetchProyecto();
+    }, []);
+  
+    if (loading) {
+      return (
+        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+          <Spinner animation="border" variant="primary" />
+        </div>
+      );
+    }
+  
+    if (!proyecto) {
+      return <p className="text-center text-muted">No se encontró el proyecto.</p>;
+    }
   return <div className="container">
-    <ProyectoDetalle idProyecto={idProyecto}></ProyectoDetalle>
+  <Row>
+    <Col lg={12} className="mb-2">
+      <Card>
+        <Card.Body className="d-flex justify-content-between align-items-center">
+          <div className="w-25">
+            <h3 className="text-uppercase">{proyecto.nombre_proyecto}</h3>
+            <small className="text-muted">{proyecto.tipo.charAt(0).toUpperCase() + proyecto.tipo.slice(1)}</small>
+          </div>
+          <div className="text-center">
+            <p className="fst-italic m-0 fs-2">{proyecto.descripcion_proyecto.charAt(0).toUpperCase()+proyecto.descripcion_proyecto.slice(1)}</p>
+            {proyecto.exp_siaf?<small className="text-muted">Exp. SIAF: {proyecto.exp_siaf}</small>:<></>}
+          </div>
+          <div className="text-end w-25">
+            <Badge className="d-inline-block px-3 py-2 text-uppercase" bg={proyecto.estado === "finalizado" ? "success" : proyecto.estado === "pendiente" ? "danger" : "secondary"}>{proyecto.estado}</Badge>
+          </div>
+        </Card.Body>
+      </Card>
+    </Col>
+    <Col lg={12}>
+      <Card>
+        <ButtonGroup>
+          <Link className="btn btn-primary" to={"/rf/todos-los-proyectos"} > <i className="bi bi-arrow-left"></i> Regresar</Link>
+          <Button >Editar</Button>
+          <Button >Nuevo gasto</Button>
+          <Button >Agregar personal</Button>
+        </ButtonGroup>
+      </Card>
+    </Col>  
+    <Col lg={4} className="p-2">
+      <Card className="h-100">
+        <Card.Header><strong>Fechas</strong></Card.Header>
+        <Card.Body>
+          <p><strong>Fecha inicio:</strong> {proyecto.fecha_inicio}</p>
+          <p><strong>Plazo:</strong> {proyecto.plazo_dias} días</p>
+          <p><strong>Fecha fin:</strong> {proyecto.fecha_fin}</p>
+        </Card.Body>
+      </Card>
+    </Col>
+    <Col lg={4} className="p-2">
+      <Card className="h-100">
+        <Card.Header><strong>Cliente</strong></Card.Header>
+        <Card.Body>
+          {proyecto.ruc_cliente?<p><strong>RUC:</strong> {proyecto.ruc_cliente}</p>:<></>}
+          <p><strong>Razón Social:</strong> {proyecto.rs_cliente}</p>
+          {proyecto.unidad_ejecutora?<p><strong>Unidad Ejecutora:</strong> {proyecto.unidad_ejecutora}</p>:<></>}
+          <p><strong>Direccion:</strong> {proyecto.direccion}, {proyecto.distrito.toUpperCase()}, {proyecto.provincia.toUpperCase()}, {proyecto.departamento.toUpperCase()}</p>
+        </Card.Body>
+      </Card>
+    </Col>
+    <Col lg={4} className="p-2">
+      <Card className="h-100">
+        <Card.Header><strong>Costos y Gastos</strong></Card.Header>
+        <Card.Body>
+          <p><strong>Monto ofertado:</strong> S/. {Number(proyecto.monto_ofertado).toFixed(2)}</p>
+          <p><strong>Monto invertido:</strong>  S/. {Number("15300").toFixed(2)}</p> {/*//todo: falta sumar el total de gastos*/}
+          <p><strong>Diferencia</strong>  S/. {"3400.56"}</p> {/*//todo: falta calcualr la diferencia*/}
+          <p><strong>Prcentaje Restante:</strong> {"15.49"}%</p>
+        </Card.Body>
+      </Card>
+    </Col>
+    <Col lg={8} className="border border-black bg-secondary p-2 text-white">lista de gasto</Col>
+    <Col lg={4}>
+      <Row>
+        <Col lg={12} className="border border-black bg-secondary p-2 text-white">vista total gastos facturados y no facturados</Col>
+        <Col lg={12} className="border border-black bg-secondary p-2 text-white">grafico del monto total gastado por dia</Col>
+        <Col lg={12} className="border border-black bg-secondary p-2 text-white">lista del personal asignado al proyecto</Col>
+      </Row>
+    </Col>
+  </Row>
   </div>
 }
 
