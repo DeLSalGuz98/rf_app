@@ -7,6 +7,7 @@ import { ProtectedRoute, RedirectRoutesUserLogged } from '../services/protectedR
 import { LayoutNavApp } from './LayoutNav'
 import { CreateNewProject } from '../pages/newProject'
 import { AllProjects } from '../pages/allProjects'
+import { ProjectPage } from '../pages/viewProject'
 export function Layout() {
   return<div>
     <div className="">
@@ -25,9 +26,14 @@ export function Layout() {
               <CreateNewProject />
             </ProtectedRoute>
           } />
-          <Route path="proyectos" element={
+          <Route path="todos-los-proyectos" element={
             <ProtectedRoute>
               <AllProjects />
+            </ProtectedRoute>
+          } />
+          <Route path="proyecto/:idProyecto" element={
+            <ProtectedRoute>
+              <ProjectPage />
             </ProtectedRoute>
           } />
         </Route>

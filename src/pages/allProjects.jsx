@@ -6,6 +6,7 @@ import { GetUserNameAndNameCompany } from "../utils/getUserAndCompany";
 import { useState } from "react";
 import { TrashIcon } from "../assets/trash";
 import { EyeIcon } from "../assets/eye";
+import { Link } from "react-router-dom";
 
 export function AllProjects() {
   const [headTable] = useState(["Proyecto","Tipo","Descripción","Fecha Final","Dias Restantes","Monto Ofertado","Acciones"]) 
@@ -24,7 +25,7 @@ export function AllProjects() {
         <tr>
           {
             headTable.map((e)=>{
-              return<th>{e}</th>
+              return<th key={e}>{e}</th>
             })
           }
         </tr>
@@ -44,16 +45,16 @@ export function AllProjects() {
 
               return dias > 0 ? dias : 0; // Si ya venció, devuelve 0
             }
-            return<tr>
+            return<tr key={e.id}>
               <td>{e.nombre_proyecto}</td>
               <td>{e.tipo.toUpperCase()}</td>
-              <td>{e.descripcion_proyecto}</td>
+              <td className="text-start">{e.descripcion_proyecto}</td>
               <td className="text-nowrap">{e.fecha_fin}</td>
               <td>{diasRestantes(e.fecha_fin)}</td>
               <td> S/. {e.monto_ofertado.toFixed(2)}</td>
               <td>
                 <div className="d-flex gap-1">
-                  <Button><EyeIcon/></Button>
+                  <Link className="btn btn-primary" to={`/rf/proyecto/${e.id}`} ><EyeIcon/></Link>
                   <Button variant="danger"><TrashIcon/></Button>
                 </div>
               </td>

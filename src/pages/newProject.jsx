@@ -39,7 +39,7 @@ export function CreateNewProject() {
     const res = await GetUserNameAndNameCompany()
     const dataProject = {...data, fecha_fin: calcularFechaFin(data.fecha_inicio, data.plazo_dias), id_empresa: res.idEmpresa, estado: "pendiente"}
     await SaveNewProjectData(dataProject)
-    navigate("/rf/proyectos")
+    navigate("/rf/todos-los-proyectos")
   };
 
   function calcularFechaFin(fechaInicio, plazoDias) {
