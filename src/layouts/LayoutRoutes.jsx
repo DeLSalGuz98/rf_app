@@ -8,6 +8,7 @@ import { LayoutNavApp } from './LayoutNav'
 import { CreateNewProject } from '../pages/newProject'
 import { AllProjects } from '../pages/allProjects'
 import { ProjectPage } from '../pages/viewProject'
+import { NewExpenditureProject } from '../pages/newExpenditureProject'
 export function Layout() {
   return<div>
     <div className="">
@@ -34,6 +35,11 @@ export function Layout() {
           <Route path="proyecto/:idProyecto" element={
             <ProtectedRoute>
               <ProjectPage />
+            </ProtectedRoute>
+          } />
+          <Route path="registrar-gastos-proyecto/:idProyecto" element={
+            <ProtectedRoute>
+              <NewExpenditureProject/>
             </ProtectedRoute>
           } />
         </Route>

@@ -54,8 +54,8 @@ export function AllProjects() {
               <td> S/. {e.monto_ofertado.toFixed(2)}</td>
               <td>
                 <div className="d-flex gap-1">
-                  <Link className="btn btn-primary" to={`/rf/proyecto/${e.id}`} ><EyeIcon/></Link>
-                  <Button variant="danger"><TrashIcon/></Button>
+                  <Link className="btn btn-primary" to={`/rf/proyecto/${e.id}`} ><i className="bi bi-eye-fill"></i></Link>
+                  <Button variant="danger"><i className="bi bi-trash-fill"></i></Button>
                 </div>
               </td>
             </tr>

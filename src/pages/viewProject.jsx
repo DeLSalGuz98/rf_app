@@ -1,8 +1,9 @@
 import { Link, useParams } from "react-router-dom"
 import { useState } from "react"
-import { Badge, Button, ButtonGroup, Card, Col, Row, Spinner } from "react-bootstrap"
+import { Badge, Button, ButtonGroup, Card, Col, Dropdown, DropdownButton, Row, Spinner } from "react-bootstrap"
 import { getInfoProject } from "../querysDB/projects/getInfoProject"
 import { useEffect } from "react"
+import { ModalComponet } from "../components/modalComponent"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
@@ -52,8 +53,11 @@ export function ProjectPage() {
       <Card>
         <ButtonGroup>
           <Link className="btn btn-primary" to={"/rf/todos-los-proyectos"} > <i className="bi bi-arrow-left"></i> Regresar</Link>
-          <Button >Editar</Button>
-          <Button >Nuevo gasto</Button>
+          <DropdownButton as={ButtonGroup} title="Editar" id="bg-nested-dropdown">
+            <Dropdown.Item eventKey="1" onClick={()=>alert("cambiar estado del proyecto")}>Estado del Proyecto</Dropdown.Item>
+            <Dropdown.Item as={Link} to={"/rf/modificar-proyecto"} eventKey="2">Informacion del Proyecto</Dropdown.Item>
+          </DropdownButton>
+          <Button as={Link} to={`/rf/registrar-gastos-proyecto/${idProyecto}`} >Registrar gastos</Button>
           <Button >Agregar personal</Button>
         </ButtonGroup>
       </Card>
