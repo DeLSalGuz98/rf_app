@@ -4,9 +4,8 @@ import { useEffect } from "react";
 import { GetAllListProjects } from "../querysDB/projects/getAllProjects";
 import { GetUserNameAndNameCompany } from "../utils/getUserAndCompany";
 import { useState } from "react";
-import { TrashIcon } from "../assets/trash";
-import { EyeIcon } from "../assets/eye";
 import { Link } from "react-router-dom";
+import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 
 export function AllProjects() {
   const [headTable] = useState(["Proyecto","Tipo","Descripción","Fecha Final","Dias Restantes","Monto Ofertado","Acciones"]) 
@@ -47,8 +46,8 @@ export function AllProjects() {
             }
             return<tr key={e.id}>
               <td>{e.nombre_proyecto}</td>
-              <td>{e.tipo.toUpperCase()}</td>
-              <td className="text-start">{e.descripcion_proyecto}</td>
+              <td>{SetCapitalLetter(e.tipo)}</td>
+              <td className="text-start">{SetCapitalLetter(e.descripcion_proyecto)}</td>
               <td className="text-nowrap">{e.fecha_fin}</td>
               <td>{diasRestantes(e.fecha_fin)}</td>
               <td> S/. {e.monto_ofertado.toFixed(2)}</td>

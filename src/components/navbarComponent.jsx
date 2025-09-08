@@ -66,6 +66,7 @@ export function NavbarComponent() {
                     <NavDropdown.Item as={Link} to="/rf/crear-nuevo-proyecto">Crear nuevo proyecto</NavDropdown.Item>
                     <NavDropdown.Item as={Link} to="/rf/todos-los-proyectos">Ver todos los Proyectos</NavDropdown.Item>
                   </NavDropdown>
+                  <Nav.Link as={Link} to="/rf/registrar-gastos">Registrar Gastos</Nav.Link>
                 </div>
                 <Button variant="outline-danger" onClick={exitApp}>Cerrar Sesion</Button>
               </Nav>

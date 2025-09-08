@@ -9,6 +9,7 @@ import { CreateNewProject } from '../pages/newProject'
 import { AllProjects } from '../pages/allProjects'
 import { ProjectPage } from '../pages/viewProject'
 import { NewExpenditureProject } from '../pages/newExpenditureProject'
+import { NewExpenditure } from '../pages/newExpenditure'
 export function Layout() {
   return<div>
     <div className="">
@@ -40,6 +41,11 @@ export function Layout() {
           <Route path="registrar-gastos-proyecto/:idProyecto" element={
             <ProtectedRoute>
               <NewExpenditureProject/>
+            </ProtectedRoute>
+          } />
+          <Route path="registrar-gastos" element={
+            <ProtectedRoute>
+              <NewExpenditure/>
             </ProtectedRoute>
           } />
         </Route>

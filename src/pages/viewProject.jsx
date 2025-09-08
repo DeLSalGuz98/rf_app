@@ -4,6 +4,8 @@ import { Badge, Button, ButtonGroup, Card, Col, Dropdown, DropdownButton, Row, S
 import { getInfoProject } from "../querysDB/projects/getInfoProject"
 import { useEffect } from "react"
 import { ModalComponet } from "../components/modalComponent"
+import { SetCapitalLetter } from "../utils/setCapitalLetterString"
+import { TableExpenditure } from "../components/tableExpenditureProject"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
@@ -37,10 +39,10 @@ export function ProjectPage() {
         <Card.Body className="d-flex justify-content-between align-items-center">
           <div className="w-25">
             <h3 className="text-uppercase">{proyecto.nombre_proyecto}</h3>
-            <small className="text-muted">{proyecto.tipo.charAt(0).toUpperCase() + proyecto.tipo.slice(1)}</small>
+            <small className="text-muted">{SetCapitalLetter(proyecto.tipo)}</small>
           </div>
           <div className="text-center">
-            <p className="fst-italic m-0 fs-2">{proyecto.descripcion_proyecto.charAt(0).toUpperCase()+proyecto.descripcion_proyecto.slice(1)}</p>
+            <p className="fst-italic m-0 fs-2">{SetCapitalLetter(proyecto.descripcion_proyecto)}</p>
             {proyecto.exp_siaf?<small className="text-muted">Exp. SIAF: {proyecto.exp_siaf}</small>:<></>}
           </div>
           <div className="text-end w-25">
@@ -94,7 +96,9 @@ export function ProjectPage() {
         </Card.Body>
       </Card>
     </Col>
-    <Col lg={8} className="border border-black bg-secondary p-2 text-white">lista de gasto</Col>
+    <Col lg={8} className="p-2 overflow-x-scroll">
+      <TableExpenditure idProject={proyecto.id}/>
+    </Col>
     <Col lg={4}>
       <Row>
         <Col lg={12} className="border border-black bg-secondary p-2 text-white">vista total gastos facturados y no facturados</Col>
@@ -105,7 +109,3 @@ export function ProjectPage() {
   </Row>
   </div>
 }
-
-
-
-
