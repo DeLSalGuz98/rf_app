@@ -19,7 +19,7 @@ export function TableExpenditure({idProject}) {
     <TableComponent>
       <thead>
         <tr>
-          <th>fecha</th>
+          <th>Fecha</th>
           <th>Cantidad</th>
           <th>Unidad <br/> medida</th>
           <th>Descripcion</th>
@@ -32,7 +32,7 @@ export function TableExpenditure({idProject}) {
         {
           list.map(e=>{
             return(
-              <tr>
+              <tr key={e.id}>
                 <td className="text-nowrap">{e.fecha}</td>
                 <td>{e.cantidad}</td>
                 <td>{e.unidad_medida}</td>

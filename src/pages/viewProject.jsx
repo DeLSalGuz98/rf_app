@@ -6,32 +6,41 @@ import { useEffect } from "react"
 import { ModalComponet } from "../components/modalComponent"
 import { SetCapitalLetter } from "../utils/setCapitalLetterString"
 import { TableExpenditure } from "../components/tableExpenditureProject"
+import { getTotalExpenditureProject } from "../querysDB/gastos/getTotalExpenditureProject"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
   const [proyecto, setProyecto] = useState(null);
-    const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchProyecto();
+  }, []);
+  const fetchProyecto = async () => {
+    const data = await getInfoProject(idProyecto)
+    const totalExpenditure = await getTotalExpenditure()
+    const dif = data.monto_ofertado - totalExpenditure
+    const porcentaje =  (dif * 100)/data.monto_ofertado
+    setProyecto({...data, total_expenditure: totalExpenditure, dif: dif, porcentaje: porcentaje});
+    setLoading(false);
+  };
   
-    useEffect(() => {
-      const fetchProyecto = async () => {
-        const data = await getInfoProject(idProyecto)
-        setProyecto(data);
-        setLoading(false);
-      };
-      fetchProyecto();
-    }, []);
-  
-    if (loading) {
-      return (
-        <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
-          <Spinner animation="border" variant="primary" />
-        </div>
-      );
-    }
-  
-    if (!proyecto) {
-      return <p className="text-center text-muted">No se encontró el proyecto.</p>;
-    }
+  const getTotalExpenditure = async()=>{
+    const res = await getTotalExpenditureProject(idProyecto)
+    return res.toFixed(2)
+  }
+
+  if (loading) {
+    return (
+      <div className="d-flex justify-content-center align-items-center" style={{ height: "200px" }}>
+        <Spinner animation="border" variant="primary" />
+      </div>
+    );
+  }
+
+  if (!proyecto) {
+    return <p className="text-center text-muted">No se encontró el proyecto.</p>;
+  }
   return <div className="container">
   <Row>
     <Col lg={12} className="mb-2">
@@ -89,10 +98,10 @@ export function ProjectPage() {
       <Card className="h-100">
         <Card.Header><strong>Costos y Gastos</strong></Card.Header>
         <Card.Body>
-          <p><strong>Monto ofertado:</strong> S/. {Number(proyecto.monto_ofertado).toFixed(2)}</p>
-          <p><strong>Monto invertido:</strong>  S/. {Number("15300").toFixed(2)}</p> {/*//todo: falta sumar el total de gastos*/}
-          <p><strong>Diferencia</strong>  S/. {"3400.56"}</p> {/*//todo: falta calcualr la diferencia*/}
-          <p><strong>Prcentaje Restante:</strong> {"15.49"}%</p>
+          <p><strong>Monto ofertado:</strong> S/. {proyecto.monto_ofertado.toFixed(2)}</p>
+          <p><strong>Monto invertido:</strong>  S/. {proyecto.total_expenditure}</p>
+          <p><strong>Diferencia</strong>  S/. {proyecto.dif.toFixed(2)}</p>
+          <p><strong>Porcentaje Restante:</strong> {proyecto.porcentaje.toFixed(2)} %</p>
         </Card.Body>
       </Card>
     </Col>
