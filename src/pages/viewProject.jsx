@@ -1,12 +1,13 @@
 import { Link, useParams } from "react-router-dom"
 import { useState } from "react"
-import { Badge, Button, ButtonGroup, Card, Col, Dropdown, DropdownButton, Row, Spinner } from "react-bootstrap"
+import { Badge, Button, ButtonGroup, Card, Col, Dropdown, DropdownButton, Form, Modal, Row, Spinner } from "react-bootstrap"
 import { getInfoProject } from "../querysDB/projects/getInfoProject"
 import { useEffect } from "react"
 import { ModalComponet } from "../components/modalComponent"
 import { SetCapitalLetter } from "../utils/setCapitalLetterString"
 import { TableExpenditure } from "../components/tableExpenditureProject"
 import { getTotalExpenditureProject } from "../querysDB/gastos/getTotalExpenditureProject"
+import { updateStateProjectDB } from "../querysDB/projects/updateStateProject"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
@@ -15,7 +16,7 @@ export function ProjectPage() {
 
   useEffect(() => {
     fetchProyecto();
-  }, []);
+  });
   const fetchProyecto = async () => {
     const data = await getInfoProject(idProyecto)
     const totalExpenditure = await getTotalExpenditure()
@@ -28,6 +29,25 @@ export function ProjectPage() {
   const getTotalExpenditure = async()=>{
     const res = await getTotalExpenditureProject(idProyecto)
     return res.toFixed(2)
+  }
+  const [show, setShow] = useState(false)
+
+  const handleClose = async (e) => {
+    const {name} = e.target
+    if(name === "save"){
+      await updateStateProjectDB({"estado":stateProjectValue},idProyecto)
+    }
+    setShow(false)
+  }
+  const handleShow = () => {
+    setStateProjectValue(proyecto.estado)
+    setShow(true)
+  }
+
+  const [stateProjectValue, setStateProjectValue] = useState(proyecto !== null? proyecto.estado:"")
+  const updateStateProject = (e)=>{
+    const {value} = e.target
+    setStateProjectValue(value)
   }
 
   if (loading) {
@@ -65,7 +85,32 @@ export function ProjectPage() {
         <ButtonGroup>
           <Link className="btn btn-primary" to={"/rf/todos-los-proyectos"} > <i className="bi bi-arrow-left"></i> Regresar</Link>
           <DropdownButton as={ButtonGroup} title="Editar" id="bg-nested-dropdown">
-            <Dropdown.Item eventKey="1" onClick={()=>alert("cambiar estado del proyecto")}>Estado del Proyecto</Dropdown.Item>
+            <>
+              <Dropdown.Item variant="primary" onClick={handleShow}>
+                Estado del Proyecto
+              </Dropdown.Item>
+
+              <Modal show={show} onHide={handleClose}>
+                <Modal.Header>
+                  <Modal.Title>Actualizar Estado el Proyecto</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                  <Form.Select onChange={updateStateProject} value={stateProjectValue}>
+                    <option value="pendiente">Pendiente</option>
+                    <option value="paralizado">Paralizado</option>
+                    <option value="finalizado">Finalizado</option>
+                  </Form.Select>
+                </Modal.Body>
+                <Modal.Footer>
+                  <Button name="close" variant="secondary" onClick={handleClose}>
+                    Cerrar
+                  </Button>
+                  <Button name="save" variant="primary" onClick={handleClose}>
+                    Guardar Cambios
+                  </Button>
+                </Modal.Footer>
+              </Modal>
+            </>
             <Dropdown.Item as={Link} to={"/rf/modificar-proyecto"} eventKey="2">Informacion del Proyecto</Dropdown.Item>
           </DropdownButton>
           <Button as={Link} to={`/rf/registrar-gastos-proyecto/${idProyecto}`} >Registrar gastos</Button>
@@ -106,7 +151,7 @@ export function ProjectPage() {
       </Card>
     </Col>
     <Col lg={8} className="p-2 overflow-x-scroll">
-      <TableExpenditure idProject={proyecto.id}/>
+      <TableExpenditure idProject={idProyecto}/>
     </Col>
     <Col lg={4}>
       <Row>
