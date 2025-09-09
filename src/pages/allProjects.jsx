@@ -1,4 +1,4 @@
-import { Button, Container } from "react-bootstrap";
+import { Button, Col, Container, Form, InputGroup, Row, Spinner } from "react-bootstrap";
 import { TableComponent } from "../components/tableComponent";
 import { useEffect } from "react";
 import { GetAllListProjects } from "../querysDB/projects/getAllProjects";
@@ -6,19 +6,50 @@ import { GetUserNameAndNameCompany } from "../utils/getUserAndCompany";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
+import { toast } from "react-toastify";
 
 export function AllProjects() {
   const [headTable] = useState(["Proyecto","Tipo","Descripción","Fecha Final","Dias Restantes","Monto Ofertado","Acciones"]) 
   const [listProjects, setListProjects] =  useState([]) 
+  const [loading, setLoading] = useState(true);
   useEffect(()=>{
     GetAllProjects()
   },[])
   const GetAllProjects = async ()=>{
+    setLoading(true);
     const resOne = await GetUserNameAndNameCompany()
     const resTwo = await GetAllListProjects("pendiente", resOne.idEmpresa)
     setListProjects(resTwo)
+    setLoading(false);
+  }
+  const [stateProjectValue, setStateProjectValue] = useState("pendiente")
+  const updateStateProject = async (e)=>{
+    setLoading(true);
+    const {value} = e.target
+    setStateProjectValue(value)
+    const resOne = await GetUserNameAndNameCompany()
+    const resTwo = await GetAllListProjects(value, resOne.idEmpresa)
+    console.log(resTwo)
+    if(resTwo.length === 0){
+      toast.warning("La lista esta vacia no existen elementos para mostrar")
+    }
+    setLoading(false);
+    setListProjects(resTwo)
+
   }
   return <Container>
+    <Row className="mb-2">
+      <Col md="3">
+        <InputGroup className="mb-3">
+          <InputGroup.Text>Estado</InputGroup.Text>
+          <Form.Select onChange={updateStateProject} defaultValue={stateProjectValue}>
+            <option value="pendiente">Pendiente</option>
+            <option value="paralizado">Paralizado</option>
+            <option value="finalizado">Finalizado</option>
+          </Form.Select>
+        </InputGroup>
+      </Col>
+    </Row>
     <TableComponent>
       <thead>
         <tr>
@@ -44,6 +75,16 @@ export function AllProjects() {
 
               return dias > 0 ? dias : 0; // Si ya venció, devuelve 0
             }
+            if(loading){
+              return<tr key={"loading"}>
+                <td colSpan={7}>
+                  <div className="d-flex justify-content-center align-items-center">
+                    <Spinner animation="border" variant="primary" />
+                  </div>
+                </td>
+              </tr>
+            }
+            
             return<tr key={e.id}>
               <td>{e.nombre_proyecto}</td>
               <td>{SetCapitalLetter(e.tipo)}</td>
