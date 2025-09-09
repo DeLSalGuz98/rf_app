@@ -3,11 +3,11 @@ import { useState } from "react"
 import { Badge, Button, ButtonGroup, Card, Col, Dropdown, DropdownButton, Form, Modal, Row, Spinner } from "react-bootstrap"
 import { getInfoProject } from "../querysDB/projects/getInfoProject"
 import { useEffect } from "react"
-import { ModalComponet } from "../components/modalComponent"
 import { SetCapitalLetter } from "../utils/setCapitalLetterString"
 import { TableExpenditure } from "../components/tableExpenditureProject"
 import { getTotalExpenditureProject } from "../querysDB/gastos/getTotalExpenditureProject"
 import { updateStateProjectDB } from "../querysDB/projects/updateStateProject"
+import { toast } from "react-toastify"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
@@ -48,6 +48,10 @@ export function ProjectPage() {
   const updateStateProject = (e)=>{
     const {value} = e.target
     setStateProjectValue(value)
+  }
+
+  const addWorker = ()=>{
+    toast.success("prueba exitosa")
   }
 
   if (loading) {
@@ -114,7 +118,7 @@ export function ProjectPage() {
             <Dropdown.Item as={Link} to={"/rf/modificar-proyecto"} eventKey="2">Informacion del Proyecto</Dropdown.Item>
           </DropdownButton>
           <Button as={Link} to={`/rf/registrar-gastos-proyecto/${idProyecto}`} >Registrar gastos</Button>
-          <Button >Agregar personal</Button>
+          <Button onClick={addWorker} >Agregar personal</Button>
         </ButtonGroup>
       </Card>
     </Col>  
