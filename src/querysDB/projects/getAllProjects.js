@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
 
 export async function GetAllListProjects(estado, idEmpresa) {
@@ -8,10 +9,12 @@ export async function GetAllListProjects(estado, idEmpresa) {
     descripcion_proyecto,
     fecha_fin,
     fecha_inicio,
-    monto_ofertado
+    monto_ofertado,
+    estado
     `).eq("estado",estado).eq("id_empresa", idEmpresa)
   if (error) {
     console.log(error)
+    toast.warning("No se pudo optener a data")
     return null
   }
   return data

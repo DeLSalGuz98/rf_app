@@ -65,7 +65,7 @@ export function CreateNewProject() {
           <Col md={3}><InputField label="Departamento" name="departamento" /></Col>
           <Col md={3}><InputField label="Fecha de Inicio" name="fecha_inicio" type="date" /></Col>
           <Col md={3}><InputField label="Plazo (días)" name="plazo_dias" type="number" /></Col>
-          <Col md={3}><InputField label="Monto Ofertado (S/.)" name="monto_ofertado" type="number" /></Col>
+          <Col md={3}><InputField label="Monto Ofertado (S/.)" name="monto_ofertado" type="number" step="0.01" /></Col>
           <Col md={3}>
             <SelectField
               name="tipo"

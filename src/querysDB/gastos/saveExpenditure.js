@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
 import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
@@ -10,8 +11,8 @@ export async function saveExpenditure(dataExpenditure={}) {
   })
   if(error){
     console.error(error)
-    alert("hubo un error, no se guardo la informacion")
+    toast.warning("hubo un error, no se guardo la informacion")
     return null
   }
-  alert("informacion registrada exitosamente")
+  toast.success("informacion registrada exitosamente")
 }

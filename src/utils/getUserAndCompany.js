@@ -1,3 +1,4 @@
+import { toast } from "react-toastify";
 import { supabase } from "../services/supabaseClient";
 
 export async function GetUserNameAndNameCompany() {
@@ -18,11 +19,10 @@ export async function GetUserNameAndNameCompany() {
         )
       )
     `)
-    .eq("id", user.user.id)
-    .single();
-
+    .eq("id", user.user.id).single()
     if (error) {
       console.error("Error al obtener datos:", error);
+      toast.warning("Error. No se pudo obtener los datos")
       return null;
     }
     return {idUser:data.id,username:data.username, razonSocial:data.empleado.empresa.razon_social, idEmpresa: data.empleado.empresa.id}

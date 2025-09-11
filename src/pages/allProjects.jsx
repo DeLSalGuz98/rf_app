@@ -12,19 +12,19 @@ export function AllProjects() {
   const [headTable] = useState(["Proyecto","Tipo","Descripción","Fecha Final","Dias Restantes","Monto Ofertado","Acciones"]) 
   const [listProjects, setListProjects] =  useState([]) 
   const [loading, setLoading] = useState(true);
+  const [stateProjectValue, setStateProjectValue] = useState("pendiente")
   useEffect(()=>{
     GetAllProjects()
   },[])
   const GetAllProjects = async ()=>{
-    setLoading(true);
+    setLoading(true)
     const resOne = await GetUserNameAndNameCompany()
-    const resTwo = await GetAllListProjects("pendiente", resOne.idEmpresa)
+    const resTwo = await GetAllListProjects(stateProjectValue, resOne.idEmpresa)
     setListProjects(resTwo)
     setLoading(false);
   }
-  const [stateProjectValue, setStateProjectValue] = useState("pendiente")
   const updateStateProject = async (e)=>{
-    setLoading(true);
+    setLoading(true)
     const {value} = e.target
     setStateProjectValue(value)
     const resOne = await GetUserNameAndNameCompany()
@@ -33,8 +33,8 @@ export function AllProjects() {
     if(resTwo.length === 0){
       toast.warning("La lista esta vacia no existen elementos para mostrar")
     }
-    setLoading(false);
     setListProjects(resTwo)
+    setLoading(false);
 
   }
   return <Container>
@@ -61,7 +61,15 @@ export function AllProjects() {
         </tr>
       </thead>
       <tbody>
-        {
+        {loading ? (
+            <tr>
+              <td colSpan={7}>
+                <div className="d-flex justify-content-center align-items-center">
+                  <Spinner animation="border" variant="primary" />
+                </div>
+              </td>
+            </tr>
+          ) : 
           listProjects.map(e=>{
             function diasRestantes(fechaFin) {
               const hoy = new Date();
@@ -74,23 +82,13 @@ export function AllProjects() {
               const dias = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
 
               return dias > 0 ? dias : 0; // Si ya venció, devuelve 0
-            }
-            if(loading){
-              return<tr key={"loading"}>
-                <td colSpan={7}>
-                  <div className="d-flex justify-content-center align-items-center">
-                    <Spinner animation="border" variant="primary" />
-                  </div>
-                </td>
-              </tr>
-            }
-            
+            }            
             return<tr key={e.id}>
               <td>{e.nombre_proyecto}</td>
               <td>{SetCapitalLetter(e.tipo)}</td>
               <td className="text-start">{SetCapitalLetter(e.descripcion_proyecto)}</td>
               <td className="text-nowrap">{e.fecha_fin}</td>
-              <td>{diasRestantes(e.fecha_fin)}</td>
+              <td className={diasRestantes(e.fecha_fin)<=3&&e.estado==="pendiente"?"bg-danger text-white":""}>{diasRestantes(e.fecha_fin)}</td>
               <td> S/. {e.monto_ofertado.toFixed(2)}</td>
               <td>
                 <div className="d-flex gap-1">

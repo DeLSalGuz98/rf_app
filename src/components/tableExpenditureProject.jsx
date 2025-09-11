@@ -10,7 +10,7 @@ export function TableExpenditure({idProject}) {
   const [list, setList] = useState([])
   useEffect(()=>{
     getListExpenditure()
-  },[])
+  }, [])
   const getListExpenditure = async ()=>{
     const res = await getListExpenditureProject(idProject)
     setList(res)
@@ -25,6 +25,7 @@ export function TableExpenditure({idProject}) {
           <th>Descripcion</th>
           <th>Precio unitario</th>
           <th>Monto total</th>
+          <th>Comprobante</th>
           <th>Acciones</th>
         </tr>
       </thead>
@@ -39,6 +40,7 @@ export function TableExpenditure({idProject}) {
                 <td className="text-nowrap text-start">{SetCapitalLetter(e.descripcion)}</td>
                 <td className="text-nowrap">S/. {e.precio_unitario.toFixed(2)}</td>
                 <td className="text-nowrap">S/. {e.monto_total.toFixed(2)}</td>
+                <td className="text-nowrap text-uppercase">{e.serie_comprobante + "-" + e.nro_comprobante}</td>
                 <td>
                   <div className="d-flex gap-1">
                     <Link className="btn btn-primary" to={`/rf/proyecto/${e.id}`} ><i className="bi bi-eye-fill"></i></Link>

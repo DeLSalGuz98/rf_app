@@ -87,7 +87,7 @@ export function ProjectPage() {
     <Col lg={12}>
       <Card>
         <ButtonGroup>
-          <Link className="btn btn-primary" to={"/rf/todos-los-proyectos"} > <i className="bi bi-arrow-left"></i> Regresar</Link>
+          <Button as={Link} to={"/rf/todos-los-proyectos"} > <i className="bi bi-arrow-left"></i> Regresar</Button>
           <DropdownButton as={ButtonGroup} title="Editar" id="bg-nested-dropdown">
             <>
               <Dropdown.Item variant="primary" onClick={handleShow}>
@@ -154,12 +154,20 @@ export function ProjectPage() {
         </Card.Body>
       </Card>
     </Col>
-    <Col lg={8} className="p-2 overflow-x-scroll">
+    <Col lg={8} className="p-2">
       <TableExpenditure idProject={idProyecto}/>
     </Col>
     <Col lg={4}>
       <Row>
-        <Col lg={12} className="border border-black bg-secondary p-2 text-white">vista total gastos facturados y no facturados</Col>
+        <Col lg={12} className="p-2">
+          <Card className="h-100">
+            <Card.Header><strong>Gastos facturasdos y no facturados</strong></Card.Header>
+            <Card.Body>
+              <p><strong>Total de gastos facturados:</strong> S/. {proyecto.monto_ofertado.toFixed(2)}</p>
+              <p><strong>Total de gastos no facturados:</strong>  S/. {proyecto.total_expenditure}</p>
+            </Card.Body>
+          </Card>
+        </Col>
         <Col lg={12} className="border border-black bg-secondary p-2 text-white">grafico del monto total gastado por dia</Col>
         <Col lg={12} className="border border-black bg-secondary p-2 text-white">lista del personal asignado al proyecto</Col>
       </Row>
