@@ -29,7 +29,6 @@ export function AllProjects() {
     setStateProjectValue(value)
     const resOne = await GetUserNameAndNameCompany()
     const resTwo = await GetAllListProjects(value, resOne.idEmpresa)
-    console.log(resTwo)
     if(resTwo.length === 0){
       toast.warning("La lista esta vacia no existen elementos para mostrar")
     }

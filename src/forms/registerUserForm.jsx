@@ -6,6 +6,7 @@ import FormComponent from "../components/formComponent";
 import { BtnSubmitForm, InputField, SelectField } from "../components/inputComponent";
 import { registerUser } from "../services/registerUser";
 import { supabase } from "../services/supabaseClient";
+import { toast } from "react-toastify";
 
 const registerSchema = z.object({
   username: z.string().min(2, "El nombre es requerido"),
@@ -31,8 +32,7 @@ export function RegisterUserForm() {
         console.error("Error al insertar datos en empleado:", insertError.message);
         return null
       }
-      alert("Usuario registrado exitosamente")
-      console.log(user.id);
+      toast.success("Usuario registrado exitosamente")
     }
 
   }

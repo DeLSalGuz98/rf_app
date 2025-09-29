@@ -4,6 +4,7 @@ import { EndSession } from "../services/handleEndSession";
 import { useState } from "react";
 import { useEffect } from "react";
 import { GetUserNameAndNameCompany } from "../utils/getUserAndCompany";
+import { toast } from "react-toastify";
 
 export function NavbarComponent() {
   const [userName, setUserName] = useState("")
@@ -24,8 +25,8 @@ export function NavbarComponent() {
   const exitApp = async()=>{
     const res = await EndSession()
     if(res.staus === "error"){
-      console.log(res.data)
-      alert("Error al intentar finalizar la session")
+      console.error(res.data)
+      toast.error("Error al intentar finalizar la session")
       return null
     }else{
       navigate("/")
@@ -67,6 +68,10 @@ export function NavbarComponent() {
                     <NavDropdown.Item as={Link} to="/rf/todos-los-proyectos">Ver todos los Proyectos</NavDropdown.Item>
                   </NavDropdown>
                   <Nav.Link as={Link} to="/rf/registrar-gastos">Registrar Gastos</Nav.Link>
+                  <NavDropdown title="Documentos Tributarios" id="offcanvasNavbarDropdown">
+                    <NavDropdown.Item as={Link} to="/rf/registrar-documentos-tributarios">Registrar Nuevo Documento</NavDropdown.Item>
+                    <NavDropdown.Item as={Link} to="/rf/lista-documentos-tributarios">Ver todos los Documentos</NavDropdown.Item>
+                  </NavDropdown>
                 </div>
                 <Button variant="outline-danger" onClick={exitApp}>Cerrar Sesion</Button>
               </Nav>

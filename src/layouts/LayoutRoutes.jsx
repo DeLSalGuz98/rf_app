@@ -10,6 +10,8 @@ import { AllProjects } from '../pages/allProjects'
 import { ProjectPage } from '../pages/viewProject'
 import { NewExpenditureProject } from '../pages/newExpenditureProject'
 import { NewExpenditure } from '../pages/newExpenditure'
+import { NewTaxDocument } from '../pages/newTaxDocument'
+import { ListTaxDocumetPage } from '../pages/listTaxDocument'
 export function Layout() {
   return<div>
     <div className="">
@@ -46,6 +48,16 @@ export function Layout() {
           <Route path="registrar-gastos" element={
             <ProtectedRoute>
               <NewExpenditure/>
+            </ProtectedRoute>
+          } />
+          <Route path="registrar-documentos-tributarios" element={
+            <ProtectedRoute>
+              <NewTaxDocument/>
+            </ProtectedRoute>
+          } />
+          <Route path="lista-documentos-tributarios" element={
+            <ProtectedRoute>
+              <ListTaxDocumetPage/>
             </ProtectedRoute>
           } />
         </Route>

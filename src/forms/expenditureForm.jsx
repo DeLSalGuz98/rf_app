@@ -70,6 +70,7 @@ export function ExpenditureForm({children, idProyecto="", title, backPage}) {
                 { value: "und", label: "Unidades" },
                 { value: "m2", label: "Metros cuadrados" },
                 { value: "m3", label: "Metros cúbicos" },
+                { value: "srv", label: "servicio" },
               ]}
             />
           </Col>

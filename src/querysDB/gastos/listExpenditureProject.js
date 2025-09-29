@@ -8,6 +8,5 @@ export async function getListExpenditureProject(idProyecto) {
     toast.error("Error al obtener los datos")
     return null
   }
-  console.log(data)
   return data
 }

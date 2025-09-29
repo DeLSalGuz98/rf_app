@@ -8,6 +8,7 @@ import { TableExpenditure } from "../components/tableExpenditureProject"
 import { getTotalExpenditureProject } from "../querysDB/gastos/getTotalExpenditureProject"
 import { updateStateProjectDB } from "../querysDB/projects/updateStateProject"
 import { toast } from "react-toastify"
+import { getListExpenditureProject } from "../querysDB/gastos/listExpenditureProject"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
@@ -15,14 +16,21 @@ export function ProjectPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchProyecto();
-  });
+    fetchProyecto()
+  },[]);
   const fetchProyecto = async () => {
     const data = await getInfoProject(idProyecto)
     const totalExpenditure = await getTotalExpenditure()
+    const invoice = await invoiceNoInvoice()
     const dif = data.monto_ofertado - totalExpenditure
     const porcentaje =  (dif * 100)/data.monto_ofertado
-    setProyecto({...data, total_expenditure: totalExpenditure, dif: dif, porcentaje: porcentaje});
+    setProyecto({...data, 
+      total_expenditure: totalExpenditure, 
+      dif: dif, 
+      porcentaje: porcentaje, 
+      facturado: invoice.facturado.toFixed(2),
+      noFacturado: invoice.noFacturado.toFixed(2)
+    });
     setLoading(false);
   };
   
@@ -43,6 +51,23 @@ export function ProjectPage() {
     setStateProjectValue(proyecto.estado)
     setShow(true)
   }
+  const invoiceNoInvoice = async ()=>{
+    const res = await getListExpenditureProject(idProyecto)
+    let invoice = 0
+    let noInvoice = 0
+    res.map(e=>{
+      let totalSoles = e.moneda!=="PEN"?e.monto_total * e.tipo_cambio : e.monto_total
+      if(e.nro_comprobante === "" && e.serie_comprobante === ""){
+        noInvoice = noInvoice + totalSoles
+      }else{
+        invoice = invoice + totalSoles
+      }
+    })
+    return {
+      "facturado": invoice,
+      "noFacturado":noInvoice
+    }
+  }
 
   const [stateProjectValue, setStateProjectValue] = useState(proyecto !== null? proyecto.estado:"")
   const updateStateProject = (e)=>{
@@ -51,7 +76,7 @@ export function ProjectPage() {
   }
 
   const addWorker = ()=>{
-    toast.success("prueba exitosa")
+    toast.error("modulo aun no implementado")
   }
 
   if (loading) {
@@ -155,7 +180,10 @@ export function ProjectPage() {
       </Card>
     </Col>
     <Col lg={8} className="p-2">
-      <TableExpenditure idProject={idProyecto}/>
+      <div className="border p-2 rounded">
+        <h4>Tabla de gastos y compras</h4>
+        <TableExpenditure idProject={idProyecto}/>
+      </div>
     </Col>
     <Col lg={4}>
       <Row>
@@ -163,8 +191,8 @@ export function ProjectPage() {
           <Card className="h-100">
             <Card.Header><strong>Gastos facturasdos y no facturados</strong></Card.Header>
             <Card.Body>
-              <p><strong>Total de gastos facturados:</strong> S/. {proyecto.monto_ofertado.toFixed(2)}</p>
-              <p><strong>Total de gastos no facturados:</strong>  S/. {proyecto.total_expenditure}</p>
+              <p><strong>Total de gastos facturados:</strong> S/. {proyecto.facturado}</p>
+              <p><strong>Total de gastos no facturados:</strong>  S/. {proyecto.noFacturado}</p>
             </Card.Body>
           </Card>
         </Col>
