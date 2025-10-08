@@ -7,16 +7,19 @@ import { SetCapitalLetter } from "../utils/setCapitalLetterString"
 import { TableExpenditure } from "../components/tableExpenditureProject"
 import { getTotalExpenditureProject } from "../querysDB/gastos/getTotalExpenditureProject"
 import { updateStateProjectDB } from "../querysDB/projects/updateStateProject"
-import { toast } from "react-toastify"
 import { getListExpenditureProject } from "../querysDB/gastos/listExpenditureProject"
+import { GraphExpenditureProject } from "../components/graphExpenditureProject"
+import { getListToGraphProjectDB } from "../querysDB/gastos/getListToGraphProject"
 
 export function ProjectPage() {
   let {idProyecto}= useParams()
   const [proyecto, setProyecto] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [listGraphProject, setListGraphProject] = useState([])
 
   useEffect(() => {
     fetchProyecto()
+    getListToGraphProject()
   },[]);
   const fetchProyecto = async () => {
     const data = await getInfoProject(idProyecto)
@@ -33,6 +36,10 @@ export function ProjectPage() {
     });
     setLoading(false);
   };
+  const getListToGraphProject = async ()=>{
+    const res = await getListToGraphProjectDB(idProyecto)
+    setListGraphProject(res)
+  }
   
   const getTotalExpenditure = async()=>{
     const res = await getTotalExpenditureProject(idProyecto)
@@ -73,10 +80,6 @@ export function ProjectPage() {
   const updateStateProject = (e)=>{
     const {value} = e.target
     setStateProjectValue(value)
-  }
-
-  const addWorker = ()=>{
-    toast.error("modulo aun no implementado")
   }
 
   if (loading) {
@@ -143,7 +146,8 @@ export function ProjectPage() {
             <Dropdown.Item as={Link} to={"/rf/modificar-proyecto"} eventKey="2">Informacion del Proyecto</Dropdown.Item>
           </DropdownButton>
           <Button as={Link} to={`/rf/registrar-gastos-proyecto/${idProyecto}`} >Registrar gastos</Button>
-          <Button onClick={addWorker} >Agregar personal</Button>
+          <Button as={Link} to={`/rf/registrar-documentos/${idProyecto}`} >Registrar Documentos</Button>
+          <Button as={Link} to={`/rf/reporte-proyecto/${idProyecto}`} >Generar Reporte</Button>
         </ButtonGroup>
       </Card>
     </Col>  
@@ -196,8 +200,14 @@ export function ProjectPage() {
             </Card.Body>
           </Card>
         </Col>
-        <Col lg={12} className="border border-black bg-secondary p-2 text-white">grafico del monto total gastado por dia</Col>
-        <Col lg={12} className="border border-black bg-secondary p-2 text-white">lista del personal asignado al proyecto</Col>
+        <Col lg={12} className="p-2">
+          <div className=" border rounded">
+            {
+              listGraphProject.length!==0?
+              <GraphExpenditureProject data={listGraphProject}/>:<></>
+            }
+          </div>
+        </Col>
       </Row>
     </Col>
   </Row>

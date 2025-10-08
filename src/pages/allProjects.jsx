@@ -36,6 +36,9 @@ export function AllProjects() {
     setLoading(false);
 
   }
+  const deleteProject = (e)=>{
+    alert("Se eliminara el projecto: "+e)
+  }
   return <Container>
     <Row className="mb-2">
       <Col md="3">
@@ -92,7 +95,7 @@ export function AllProjects() {
               <td>
                 <div className="d-flex gap-1">
                   <Link className="btn btn-primary" to={`/rf/proyecto/${e.id}`} ><i className="bi bi-eye-fill"></i></Link>
-                  <Button variant="danger"><i className="bi bi-trash-fill"></i></Button>
+                  <Button variant="danger" onClick={()=>deleteProject(e.id)}><i className="bi bi-trash-fill"></i></Button>
                 </div>
               </td>
             </tr>

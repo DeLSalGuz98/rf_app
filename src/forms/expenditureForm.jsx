@@ -6,6 +6,9 @@ import { useEffect } from "react";
 import { saveExpenditure } from "../querysDB/gastos/saveExpenditure";
 import FormComponent from "../components/formComponent";
 import { BtnSubmitForm, InputField, SelectField } from "../components/inputComponent";
+import { useState } from "react";
+import { GetUserNameAndNameCompany } from "../utils/getUserAndCompany";
+import { GetAllListProjects } from "../querysDB/projects/getAllProjects";
 
 const gastoSchema = z.object({
   cantidad: z.coerce.number().min(1, "La cantidad es requerida"),
@@ -18,11 +21,12 @@ const gastoSchema = z.object({
   moneda: z.enum(["PEN", "USD"], { required_error: "Selecciona una moneda" }),
   tipo_cambio: z.coerce.number().optional(),
   fecha: z.string().min(1, "La fecha es requerida"),
-  serie_comprobante: z.string().optional(),
-  nro_comprobante: z.string().optional(),
+  serie_comprobante:z.string().optional(),
+  nro_comprobante:z.string().optional(),
+  id_proyecto:z.string().optional()
 });
 
-export function ExpenditureForm({children, idProyecto="", title, backPage}) {
+export function ExpenditureForm({idProyecto="", title, backPage}) {
   const methods = useForm({
     resolver: zodResolver(gastoSchema),
     defaultValues: {
@@ -52,6 +56,23 @@ export function ExpenditureForm({children, idProyecto="", title, backPage}) {
     }
     reset()
   };
+  const [listProjects, setListProjects] = useState([])
+  useEffect(()=>{
+    GetListProjects()
+  },[])
+  const GetListProjects = async ()=>{
+    const resOne = await GetUserNameAndNameCompany()
+    const list = [{value:"",label:"Sin proyecto"}]
+    const resTwo = await GetAllListProjects("pendiente", resOne.idEmpresa)
+    resTwo.map((p)=>{
+      let newItem = {
+        value:p.id,
+        label:p.nombre_proyecto
+      }
+      list.push(newItem)
+    })
+    setListProjects(list)
+  }
   return(
     <Container>
       <FormComponent methods={methods} onSubmit={onSubmit} title={title}>
@@ -129,14 +150,22 @@ export function ExpenditureForm({children, idProyecto="", title, backPage}) {
           <Col md={idProyecto===""?3:4}>
             <InputField label="Fecha" name="fecha" type="date" />
           </Col>
-
           <Col md={idProyecto===""?3:4}>
-            <InputField label="Serie Comprobante" name="serie_comprobante"/>
+            <InputField label="Serie del Comprobante" name="serie_comprobante"/>
           </Col>
           <Col md={idProyecto===""?3:4}>
-            <InputField label="Número de Comprobante" name="nro_comprobante" />
+            <InputField label="Nro. del Comprobante" name="nro_comprobante"/>
           </Col>
-          {children}
+          { 
+            idProyecto===""?
+            <Col md={3}>
+              <SelectField
+                name="id_proyecto"
+                label="Enlazar a un Proyecto"
+                options={listProjects}
+              />
+            </Col>:<></>
+          }
         </Row>
         <BtnSubmitForm />
         <Button onClick={backPage} variant="secondary" className="w-100 mt-2">Regresar</Button>

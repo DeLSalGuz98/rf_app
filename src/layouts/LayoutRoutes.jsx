@@ -12,6 +12,7 @@ import { NewExpenditureProject } from '../pages/newExpenditureProject'
 import { NewExpenditure } from '../pages/newExpenditure'
 import { NewTaxDocument } from '../pages/newTaxDocument'
 import { ListTaxDocumetPage } from '../pages/listTaxDocument'
+import { NewDocumentProject } from '../pages/newDocumentProject'
 export function Layout() {
   return<div>
     <div className="">
@@ -43,6 +44,11 @@ export function Layout() {
           <Route path="registrar-gastos-proyecto/:idProyecto" element={
             <ProtectedRoute>
               <NewExpenditureProject/>
+            </ProtectedRoute>
+          } />
+          <Route path="registrar-documentos/:idProyecto" element={
+            <ProtectedRoute>
+              <NewDocumentProject/>
             </ProtectedRoute>
           } />
           <Route path="registrar-gastos" element={

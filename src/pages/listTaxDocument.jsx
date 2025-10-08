@@ -1,7 +1,7 @@
 import { Button, Col, Container, Form, InputGroup, Row, Spinner } from "react-bootstrap";
 import { TableComponent } from "../components/tableComponent";
 import { useEffect } from "react";
-import { getListTaxDocumentsDB } from "../querysDB/taxDocument/getListTaxDoc";
+import { getListTaxDocumentsByDateDB, getListTaxDocumentsDB } from "../querysDB/taxDocument/getListTaxDoc";
 import { useState } from "react";
 
 export function ListTaxDocumetPage() {
@@ -9,12 +9,18 @@ export function ListTaxDocumetPage() {
   const [listTaxDocument, setListTaxDocument] =  useState([]) 
   const [loading, setLoading] = useState(true);
   const [filtrosDocs, setFiltrosDocs] = useState(filtrosIniciales)
+  const [dateFilter, setDateFilter] = useState(false)
   useEffect(()=>{
     getListTaxDocuments()
   },[])
 
   const getListTaxDocuments = async ()=>{
-    const res = await getListTaxDocumentsDB(filtrosDocs.desde, filtrosDocs.hasta, filtrosDocs.tipo_doc, filtrosDocs.mes_declarado, filtrosDocs.estado)
+    let res
+    if(!dateFilter){
+      res = await getListTaxDocumentsDB(filtrosDocs.tipo_doc, filtrosDocs.mes_declarado, filtrosDocs.estado)
+    }else{
+      res = await getListTaxDocumentsByDateDB(filtrosDocs.desde, filtrosDocs.hasta, filtrosDocs.tipo_doc, filtrosDocs.estado)
+    }
     setLoading(false)
     setListTaxDocument(res)
   }
@@ -46,32 +52,48 @@ export function ListTaxDocumetPage() {
   const sendFilters = ()=>{
     getListTaxDocuments()
   }
+
+  const activateDateFilter = (e)=>{
+    const {checked} = e.target
+    setDateFilter(checked)
+  }
   
   return(
     <Container>
+      <Form.Check
+        type="switch"
+        id="dateFilter"
+        label="Filtrar por fecha"
+        onChange={activateDateFilter}
+      />
       <Row className="mb-2">
-        <Col md="4">
-          <InputGroup className="mb-3">
-            <InputGroup.Text>Desde</InputGroup.Text>
-            <Form.Control
-              name="desde" 
-              type="date"
-              onChange={addFilterDocs}
-              defaultValue={filtrosDocs.desde} 
-            />
-          </InputGroup>
-        </Col>
-        <Col md="4">
-          <InputGroup className="mb-3">
-            <InputGroup.Text>Hasta</InputGroup.Text>
-            <Form.Control
-              name="hasta" 
-              type="date"
-              onChange={addFilterDocs}
-              defaultValue={filtrosDocs.hasta} 
-            />
-          </InputGroup>
-        </Col>
+        {
+          dateFilter === false? <></>:
+          <>
+            <Col md="4">
+              <InputGroup className="mb-3">
+                <InputGroup.Text>Desde</InputGroup.Text>
+                <Form.Control
+                  name="desde" 
+                  type="date"
+                  onChange={addFilterDocs}
+                  defaultValue={filtrosDocs.desde} 
+                />
+              </InputGroup>
+            </Col>
+            <Col md="4">
+              <InputGroup className="mb-3">
+                <InputGroup.Text>Hasta</InputGroup.Text>
+                <Form.Control
+                  name="hasta" 
+                  type="date"
+                  onChange={addFilterDocs}
+                  defaultValue={filtrosDocs.hasta} 
+                />
+              </InputGroup>
+            </Col>
+          </>
+        }
         <Col md="4">
           <InputGroup className="mb-3">
             <InputGroup.Text>Tipo Documento</InputGroup.Text>
@@ -85,17 +107,20 @@ export function ListTaxDocumetPage() {
             </Form.Select>
           </InputGroup>
         </Col>
-        <Col md="4">
-          <InputGroup className="mb-3">
-            <InputGroup.Text>Mes declarado</InputGroup.Text>
-            <Form.Control
-              name="year" 
-              type="month"
-              onChange={addFilterDocs}
-              defaultValue={filtrosDocs.mes_declarado} 
-            />
-          </InputGroup>
-        </Col>
+        {
+          dateFilter === true?<></>:
+          <Col md="4">
+            <InputGroup className="mb-3">
+              <InputGroup.Text>Mes declarado</InputGroup.Text>
+              <Form.Control
+                name="mes_declarado" 
+                type="month"
+                onChange={addFilterDocs}
+                defaultValue={filtrosDocs.mes_declarado} 
+              />
+            </InputGroup>
+          </Col>
+        }
         <Col md="4">
           <InputGroup className="mb-3">
             <InputGroup.Text>Estado de la Factura</InputGroup.Text>

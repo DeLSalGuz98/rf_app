@@ -2,11 +2,12 @@ import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
 import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
-export async function saveTaxDocumentDB(taxDocData = {}) {
+export async function saveTaxDocumentDB(taxDocData = {}, idProject="") {
   const res = await GetUserNameAndNameCompany()
   const {error} = await supabase.from("documentos_tributarios").insert({
     ...taxDocData,
     id_empresa:res.idEmpresa,
+    id_proyecto:idProject,
     id_usuario:res.idUser
   })
 
