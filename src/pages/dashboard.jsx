@@ -41,6 +41,11 @@ export function DasboardPage() {
           </Card>
         </Col>
         <Col className="p-2" md="8">
+          <div className="border rounded" style={{height: "200px"}}>
+            <GraphYearIncomeAndExpenses></GraphYearIncomeAndExpenses>
+          </div>
+        </Col>
+        <Col className="p-2" md="8">
         <p className="fw-bold">Facturas Pendientes de pago</p>
           <TableComponent>
             <thead>
@@ -73,10 +78,7 @@ export function DasboardPage() {
               }
             </tbody>
           </TableComponent>
-        </Col>
-        <Col className="p-2" md="8">
-          <GraphYearIncomeAndExpenses></GraphYearIncomeAndExpenses>
-        </Col>
+        </Col>        
         <Col className="border" md="4">
           personal activo
         </Col>
