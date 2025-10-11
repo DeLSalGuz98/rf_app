@@ -1,6 +1,11 @@
 // ProjectReport.jsx
 import { Container, Row, Col, Table, Card, Button } from "react-bootstrap";
 import { usePrintReport } from "../hooks/printReportHook";
+import { useEffect } from "react";
+import { getReportProjectDataDB } from "../querysDB/projects/getReportProjectData";
+import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 
 // --- Simulación de datos (Recomendación: Obtener esto de tu base de datos) ---
 const projectData = {
@@ -22,7 +27,41 @@ const projectData = {
   ],
 };
 
-export function ProjectReport({ data = projectData }) {
+export function ProjectReport({ data = projectData}) {
+  const {idProyecto} = useParams()
+  const [dataReportProject, setDataReportProject] = useState({})
+  const [dataExpenditure, setDataExpenditure] = useState([])
+  const [dataTaxDoc, setDataTaxDoc] = useState([])
+  useEffect(()=>{
+    getReportProjectData()
+  },[])
+  const getReportProjectData = async ()=>{
+    const res = await getReportProjectDataDB(idProyecto)
+    console.log(res)
+    setDataReportProject(res)
+    setDataExpenditure(res.gastos)
+    setDataTaxDoc(res.documentos_tributarios)
+  }
+
+  const gastosFacturanoYNo = (gastos)=>{
+    let totalFacturado = 0 
+    let totalNoFacturado = 0
+    let totalGastos = 0
+    gastos.map(g=>{
+      let montoTotal = g.moneda !== "PEN"? g.monto_total * g.tipo_cambio: g.monto_total
+      if(g.serie_comprobante && g.nro_comprobante){
+        totalFacturado = totalFacturado + montoTotal
+      }else{
+        totalNoFacturado = totalNoFacturado + montoTotal
+      }
+    })
+    totalGastos = totalFacturado + totalNoFacturado
+    return {
+      facturado: totalFacturado,
+      noFacturado: totalNoFacturado,
+      total: totalGastos
+    }
+  }
   const [printRef, handlePrint] = usePrintReport();
 
   // --- LÓGICA FINANCIERA CLAVE ---
@@ -31,8 +70,8 @@ export function ProjectReport({ data = projectData }) {
   const totalRetenido = data.pagos.reduce((sum, p) => sum + p.montoRetenido, 0);
   const ingresoNetoRecibido = data.pagos.reduce((sum, p) => sum + p.importePagado, 0);
   
-  const utilidadNeta = ingresoNetoRecibido - totalGastos;
-  const margenBrutoPorc = (ingresoFacturado > 0) ? ((ingresoFacturado - totalGastos) / ingresoFacturado) * 100 : 0;
+  const utilidadNeta = dataReportProject.monto_ofertado - gastosFacturanoYNo(dataExpenditure).total
+  const margenBrutoPorc = ((dataReportProject.monto_ofertado - gastosFacturanoYNo(dataExpenditure).total)/dataReportProject.monto_ofertado)*100
   // ----------------------------------
 
   return (
@@ -40,17 +79,30 @@ export function ProjectReport({ data = projectData }) {
       <Card>
         <Card.Body>
           <div ref={printRef}>
-            <h3 className="text-primary mb-4">{data.nombre}</h3>
+            <h3 className="text-primary mb-4">{dataReportProject.nombre_proyecto} - {SetCapitalLetter(dataReportProject.descripcion_proyecto)} - {SetCapitalLetter(dataReportProject.tipo)}</h3>
             
             <h4>1. Información General</h4>
             <Row>
                 <Col md={6}>
-                    <p><strong>Descripción:</strong> {data.descripcion}</p>
-                    <p><strong>Cliente:</strong> {data.cliente} (RUC: {data.rucCliente})</p>
+                    <p><strong>Cliente:</strong> {SetCapitalLetter(dataReportProject.rs_cliente)} (RUC: {dataReportProject.ruc_cliente})</p>
+                    {
+                      dataReportProject.unidad_ejecutora!==""?<>
+                        <p><strong>Unidad Ejecutora:</strong> {dataReportProject.unidad_ejecutora}</p>
+                        <p><strong>Expediente SIAF:</strong> {dataReportProject.exp_siaf}</p>
+                      </>:<></>
+                    }
+                    <p><strong>Direccion:</strong>
+                      {SetCapitalLetter(dataReportProject.direccion)+", "}
+                      {SetCapitalLetter(dataReportProject.distrito)+", "}
+                      {SetCapitalLetter(dataReportProject.departamento)+", "} 
+                      {SetCapitalLetter(dataReportProject.provincia)}
+                    </p>
                 </Col>
                 <Col md={6}>
-                    <p><strong>Monto Contratado:</strong> S/ {data.montoContratado.toFixed(2)}</p>
-                    <p><strong>Estado:</strong> Finalizado / Cobrado</p>
+                    <p><strong>Fecha de Inicio:</strong> {dataReportProject.fecha_inicio}</p>
+                    <p><strong>Fecha de Final:</strong> {dataReportProject.fecha_fin}</p>
+                    <p><strong>Monto Contratado:</strong> S/ {Number(dataReportProject.monto_ofertado).toFixed(2)}</p>
+                    <p><strong>Estado:</strong> {SetCapitalLetter(dataReportProject.estado)}</p>
                 </Col>
             </Row>
 
@@ -59,19 +111,29 @@ export function ProjectReport({ data = projectData }) {
               <tbody>
                 <tr className="summary-row">
                     <td className="text-left">A. Ingresos Totales Facturados</td>
-                    <td>S/ {ingresoFacturado.toFixed(2)}</td>
+                    <td>S/. {Number(dataReportProject.monto_ofertado).toFixed(2)}</td>
                 </tr>
                 <tr className="summary-row">
                     <td className="text-left">B. Costo Real Total (CRT)</td>
-                    <td>S/ {totalGastos.toFixed(2)}</td>
+                    <td>S/. {Number(gastosFacturanoYNo(dataExpenditure).total).toFixed(2)}</td>
+                </tr>
+                <tr className="summary-row">
+                    <td className="text-left fst-italic">B.1. Costos facturados</td>
+                    <td className="fst-italic">S/. {Number(gastosFacturanoYNo(dataExpenditure).facturado).toFixed(2)}</td>
+                </tr>
+                <tr className="summary-row">
+                    <td className="text-left fst-italic">B.2. Costos no facturados</td>
+                    <td className="fst-italic">S/. {Number(gastosFacturanoYNo(dataExpenditure).noFacturado).toFixed(2)}</td>
                 </tr>
                 <tr className="summary-row">
                     <td className="text-left">C. Utilidad Bruta (A - B)</td>
-                    <td>S/ {(ingresoFacturado - totalGastos).toFixed(2)}</td>
+                    <td>S/. {utilidadNeta.toFixed(2)}</td>
                 </tr>
                 <tr>
                     <td className="text-left">Margen Bruto (%)</td>
-                    <td className={`font-weight-bold ${margenBrutoPorc >= 0 ? 'utilidad' : 'text-danger'}`}>{margenBrutoPorc.toFixed(2)} %</td>
+                    <td className={`fw-bold ${margenBrutoPorc >= 0 ? 'text-success' : 'text-danger'}`}>
+                      {margenBrutoPorc.toFixed(2)} %
+                    </td>
                 </tr>
               </tbody>
             </Table>
