@@ -5,6 +5,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Button } from "react-bootstrap";
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
+import { deleteExpenditureProjectDB } from "../querysDB/gastos/deleteExpenditure";
 
 export function TableExpenditure({idProject}) {
   const [list, setList] = useState([])
@@ -12,8 +13,24 @@ export function TableExpenditure({idProject}) {
     getListExpenditure()
   }, [])
   const getListExpenditure = async ()=>{
+    const listExpenditure = []
     const res = await getListExpenditureProject(idProject)
+    res.map(g =>{
+      let new_precio_unit = 0
+      let new_monto_total = 0
+      if(g.moneda !== "PEN"){
+        new_precio_unit = g.precio_unitario * g.tipo_cambio
+        new_monto_total = new_precio_unit * g.cantidad
+        g.precio_unitario = new_precio_unit
+        g.monto_total = new_monto_total
+      }
+      listExpenditure.push(g)
+    })
     setList(res)
+  }
+  const delteExpenditureProject = async (idExpenditure)=>{
+    await deleteExpenditureProjectDB(idExpenditure)
+    await getListExpenditure()
   }
   return(
     <TableComponent>
@@ -44,7 +61,7 @@ export function TableExpenditure({idProject}) {
                 <td>
                   <div className="d-flex gap-1">
                     <Link className="btn btn-primary" to={`/rf/proyecto/${e.id}`} ><i className="bi bi-eye-fill"></i></Link>
-                    <Button variant="danger"><i className="bi bi-trash-fill"></i></Button>
+                    <Button variant="danger" onClick={()=>delteExpenditureProject(e.id)}><i className="bi bi-trash-fill"></i></Button>
                   </div>
                 </td>
               </tr>

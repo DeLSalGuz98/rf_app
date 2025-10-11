@@ -12,6 +12,7 @@ export async function GetUserNameAndNameCompany() {
     .select(`
       id,
       username,
+      permisos,
       empleado (
         empresa (
           id,
@@ -25,6 +26,11 @@ export async function GetUserNameAndNameCompany() {
       toast.warning("Error. No se pudo obtener los datos")
       return null;
     }
-    return {idUser:data.id,username:data.username, razonSocial:data.empleado.empresa.razon_social, idEmpresa: data.empleado.empresa.id}
+    return {
+      idUser:data.id,
+      username:data.username,
+      permisosUser:data.permisos, 
+      razonSocial:data.empleado.empresa.razon_social, 
+      idEmpresa: data.empleado.empresa.id}
   }
 }
