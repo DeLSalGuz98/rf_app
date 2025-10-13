@@ -1,348 +1,301 @@
 // ProjectReport.jsx
 import { Container, Row, Col, Table, Card, Button } from "react-bootstrap";
 import { usePrintReport } from "../hooks/printReportHook";
-import { useEffect } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getReportProjectDataDB } from "../querysDB/projects/getReportProjectData";
-import { useParams } from "react-router-dom";
-import { useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 
-// --- Simulación de datos (Recomendación: Obtener esto de tu base de datos) ---
-const projectData = {
-  nombre: "Orden de Compra: 2255",
-  descripcion: "Pinza amperimétrica (Suministro y Entrega)",
-  montoContratado: 920.00,
-  cliente: "Municipalidad Provincial del Cusco",
-  rucCliente: "20177217043",
-  gastos: [
-    { fecha: "17/09/25", desc: "Pinza amperimétrica", tipo: "Materiales", facturado: true, monto: 540.00 },
-    { fecha: "18/09/25", desc: "Transporte Segetuc", tipo: "Transporte", facturado: true, monto: 55.00 },
-    { fecha: "19/09/25", desc: "Transporte entrega (Viático)", tipo: "Viático", facturado: false, monto: 2.00 },
-  ],
-  facturasEmitidas: [
-    { fechaEmision: "19/09/25", serie: "E001-278", monto: 920.00, fechaVencimiento: "19/10/25" },
-  ],
-  pagos: [
-    { fecha: "07/10/25", serieRetencion: "E001-16444", montoRetenido: 27.60, importePagado: 892.40 },
-  ],
-};
+export function ProjectReport() {
+  const { idProyecto } = useParams();
+  const [dataReportProject, setDataReportProject] = useState({});
+  const [dataExpenditure, setDataExpenditure] = useState([]);
+  const [dataTaxDoc, setDataTaxDoc] = useState([]);
+  const [printRef, handlePrint] = usePrintReport();
+  const navigation = useNavigate()
 
-export function ProjectReport({ data = projectData}) {
-  const {idProyecto} = useParams()
-  const [dataReportProject, setDataReportProject] = useState({})
-  const [dataExpenditure, setDataExpenditure] = useState([])
-  const [dataTaxDoc, setDataTaxDoc] = useState([])
-  useEffect(()=>{
-    getReportProjectData()
-  },[])
-  const getReportProjectData = async ()=>{
-    const res = await getReportProjectDataDB(idProyecto)
-    console.log(res)
-    setDataReportProject(res)
-    setDataExpenditure(res.gastos)
-    setDataTaxDoc(res.documentos_tributarios)
+  // 🔹 Obtiene la información del proyecto al montar el componente
+  useEffect(() => {
+    const fetchData = async () => {
+      const res = await getReportProjectDataDB(idProyecto);
+      setDataReportProject(res);
+      setDataExpenditure(res.gastos || []);
+      setDataTaxDoc(res.documentos_tributarios || []);
+    };
+    fetchData();
+  }, [idProyecto]);
+
+  const backPage = ()=>{
+    navigation(-1)
   }
 
-  const gastosFacturanoYNo = (gastos)=>{
-    let totalFacturado = 0 
-    let totalNoFacturado = 0
-    let totalGastos = 0
-    gastos.map(g=>{
-      let montoTotal = g.moneda !== "PEN"? g.monto_total * g.tipo_cambio: g.monto_total
-      if(g.serie_comprobante && g.nro_comprobante){
-        totalFacturado = totalFacturado + montoTotal
-      }else{
-        totalNoFacturado = totalNoFacturado + montoTotal
-      }
-    })
-    totalGastos = totalFacturado + totalNoFacturado
+  // 🔹 Calcula los gastos facturados, no facturados y total
+  const gastosFacturanoYNo = useMemo(() => {
+    let totalFacturado = 0;
+    let totalNoFacturado = 0;
+
+    dataExpenditure.forEach((g) => {
+      const monto =
+        g.moneda !== "PEN" ? g.monto_total * g.tipo_cambio : g.monto_total;
+      g.serie_comprobante && g.nro_comprobante
+        ? (totalFacturado += monto)
+        : (totalNoFacturado += monto);
+    });
+
     return {
       facturado: totalFacturado,
       noFacturado: totalNoFacturado,
-      total: totalGastos
-    }
-  }
-  const [printRef, handlePrint] = usePrintReport();
+      total: totalFacturado + totalNoFacturado,
+    };
+  }, [dataExpenditure]);
 
-  // --- LÓGICA FINANCIERA CLAVE ---
-  const totalGastos = data.gastos.reduce((sum, g) => sum + g.monto, 0);
-  const ingresoFacturado = data.facturasEmitidas.reduce((sum, i) => sum + i.monto, 0);
-  const totalRetenido = data.pagos.reduce((sum, p) => sum + p.montoRetenido, 0);
-  const ingresoNetoRecibido = data.pagos.reduce((sum, p) => sum + p.importePagado, 0);
-  
-  const utilidadNeta = dataReportProject.monto_ofertado - gastosFacturanoYNo(dataExpenditure).total
-  const margenBrutoPorc = ((dataReportProject.monto_ofertado - gastosFacturanoYNo(dataExpenditure).total)/dataReportProject.monto_ofertado)*100
-  // ----------------------------------
+  // 🔹 Agrupa gastos por categoría
+  const gastosPorCategoria = useMemo(() => {
+    const agrupado = dataExpenditure.reduce((acc, g) => {
+      const categoria = g.categoria;
+      const monto =
+        g.moneda !== "PEN" ? g.monto_total * g.tipo_cambio : g.monto_total;
+      acc[categoria] = (acc[categoria] || 0) + monto;
+      return acc;
+    }, {});
+    return Object.entries(agrupado).map(([categoria, montoTotal]) => ({
+      categoria,
+      montoTotal,
+    }));
+  }, [dataExpenditure]);
+
+  // 🔹 Calcula flujo de caja (liquidez)
+  const flujoCaja = useMemo(() => {
+    const totalRetenido = dataTaxDoc
+      .filter((d) => d.tipo_doc === "retencion recibido")
+      .reduce((acc, d) => acc + d.monto, 0);
+
+    const facturado = dataReportProject.monto_ofertado || 0;
+    const gastosTotal = gastosFacturanoYNo.total;
+
+    return {
+      montoFacturado: facturado,
+      totalGastos: gastosTotal,
+      retencionSunat: totalRetenido,
+      ingresoNeto: facturado - totalRetenido,
+      utilidadNeta: facturado - totalRetenido - gastosTotal,
+    };
+  }, [dataTaxDoc, dataReportProject, gastosFacturanoYNo]);
+
+  // 🔹 Cálculos derivados del proyecto
+  const utilidadNeta =
+    (dataReportProject.monto_ofertado || 0) - gastosFacturanoYNo.total;
+  const margenBrutoPorc = useMemo(() => {
+    if (!dataReportProject.monto_ofertado) return 0;
+    return (
+      (utilidadNeta / dataReportProject.monto_ofertado) *
+      100
+    );
+  }, [dataReportProject, utilidadNeta]);
 
   return (
     <Container className="my-5">
-      <Card>
+      <Card className="shadow-lg border-0 rounded-4">
         <Card.Body>
+          {/* Sección imprimible */}
           <div ref={printRef}>
-            <h3 className="text-primary mb-4">{dataReportProject.nombre_proyecto} - {SetCapitalLetter(dataReportProject.descripcion_proyecto)} - {SetCapitalLetter(dataReportProject.tipo)}</h3>
-            
+            <h3 className="text-primary mb-4">
+              {dataReportProject.nombre_proyecto} -{" "}
+              {SetCapitalLetter(dataReportProject.descripcion_proyecto)} -{" "}
+              {SetCapitalLetter(dataReportProject.tipo)}
+            </h3>
+
+            {/* 1️⃣ Información General */}
             <h4>1. Información General</h4>
             <Row>
-                <Col md={6}>
-                    <p><strong>Cliente:</strong> {SetCapitalLetter(dataReportProject.rs_cliente)} (RUC: {dataReportProject.ruc_cliente})</p>
-                    {
-                      dataReportProject.unidad_ejecutora!==""?<>
-                        <p><strong>Unidad Ejecutora:</strong> {dataReportProject.unidad_ejecutora}</p>
-                        <p><strong>Expediente SIAF:</strong> {dataReportProject.exp_siaf}</p>
-                      </>:<></>
-                    }
-                    <p><strong>Direccion:</strong>
-                      {SetCapitalLetter(dataReportProject.direccion)+", "}
-                      {SetCapitalLetter(dataReportProject.distrito)+", "}
-                      {SetCapitalLetter(dataReportProject.departamento)+", "} 
-                      {SetCapitalLetter(dataReportProject.provincia)}
+              <Col md={6}>
+                <p>
+                  <strong>Cliente:</strong>{" "}
+                  {SetCapitalLetter(dataReportProject.rs_cliente)} (RUC:{" "}
+                  {dataReportProject.ruc_cliente})
+                </p>
+                {dataReportProject.unidad_ejecutora && (
+                  <>
+                    <p>
+                      <strong>Unidad Ejecutora:</strong>{" "}
+                      {dataReportProject.unidad_ejecutora}
                     </p>
-                </Col>
-                <Col md={6}>
-                    <p><strong>Fecha de Inicio:</strong> {dataReportProject.fecha_inicio}</p>
-                    <p><strong>Fecha de Final:</strong> {dataReportProject.fecha_fin}</p>
-                    <p><strong>Monto Contratado:</strong> S/ {Number(dataReportProject.monto_ofertado).toFixed(2)}</p>
-                    <p><strong>Estado:</strong> {SetCapitalLetter(dataReportProject.estado)}</p>
-                </Col>
+                    <p>
+                      <strong>Expediente SIAF:</strong>{" "}
+                      {dataReportProject.exp_siaf}
+                    </p>
+                  </>
+                )}
+                <p>
+                  <strong>Dirección:</strong>{" "}
+                  {`${SetCapitalLetter(dataReportProject.direccion)}, ${SetCapitalLetter(
+                    dataReportProject.distrito
+                  )}, ${SetCapitalLetter(
+                    dataReportProject.departamento
+                  )}, ${SetCapitalLetter(dataReportProject.provincia)}`}
+                </p>
+              </Col>
+              <Col md={6}>
+                <p>
+                  <strong>Fecha de Inicio:</strong>{" "}
+                  {dataReportProject.fecha_inicio}
+                </p>
+                <p>
+                  <strong>Fecha de Final:</strong>{" "}
+                  {dataReportProject.fecha_fin}
+                </p>
+                <p>
+                  <strong>Monto Contratado:</strong> S/{" "}
+                  {Number(dataReportProject.monto_ofertado || 0).toFixed(2)}
+                </p>
+                <p>
+                  <strong>Estado:</strong>{" "}
+                  {SetCapitalLetter(dataReportProject.estado)}
+                </p>
+              </Col>
             </Row>
 
-            <h4>2. Balance de Rentabilidad (Gerencial) 📈</h4>
-            <Table bordered responsive className="text-right">
+            {/* 2️⃣ Balance de Rentabilidad */}
+            <h4>2. Balance de Rentabilidad (Gerencial)</h4>
+            <Table bordered responsive className="text-right align-middle">
               <tbody>
-                <tr className="summary-row">
-                    <td className="text-left">A. Ingresos Totales Facturados</td>
-                    <td>S/. {Number(dataReportProject.monto_ofertado).toFixed(2)}</td>
-                </tr>
-                <tr className="summary-row">
-                    <td className="text-left">B. Costo Real Total (CRT)</td>
-                    <td>S/. {Number(gastosFacturanoYNo(dataExpenditure).total).toFixed(2)}</td>
-                </tr>
-                <tr className="summary-row">
-                    <td className="text-left fst-italic">B.1. Costos facturados</td>
-                    <td className="fst-italic">S/. {Number(gastosFacturanoYNo(dataExpenditure).facturado).toFixed(2)}</td>
-                </tr>
-                <tr className="summary-row">
-                    <td className="text-left fst-italic">B.2. Costos no facturados</td>
-                    <td className="fst-italic">S/. {Number(gastosFacturanoYNo(dataExpenditure).noFacturado).toFixed(2)}</td>
-                </tr>
-                <tr className="summary-row">
-                    <td className="text-left">C. Utilidad Bruta (A - B)</td>
-                    <td>S/. {utilidadNeta.toFixed(2)}</td>
+                <tr>
+                  <td className="text-left">A. Ingresos Totales Facturados</td>
+                  <td>S/. {dataReportProject.monto_ofertado?.toFixed(2)}</td>
                 </tr>
                 <tr>
-                    <td className="text-left">Margen Bruto (%)</td>
-                    <td className={`fw-bold ${margenBrutoPorc >= 0 ? 'text-success' : 'text-danger'}`}>
-                      {margenBrutoPorc.toFixed(2)} %
-                    </td>
+                  <td className="text-left">B. Costo Real Total (CRT)</td>
+                  <td>S/. {gastosFacturanoYNo.total.toFixed(2)}</td>
+                </tr>
+                <tr className="text-secondary fst-italic">
+                  <td className="text-left">B.1. Costos facturados</td>
+                  <td>S/. {gastosFacturanoYNo.facturado.toFixed(2)}</td>
+                </tr>
+                <tr className="text-secondary fst-italic">
+                  <td className="text-left">B.2. Costos no facturados</td>
+                  <td>S/. {gastosFacturanoYNo.noFacturado.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td className="text-left">C. Utilidad Bruta (A - B)</td>
+                  <td>S/. {utilidadNeta.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td className="text-left fw-bold">Margen Bruto (%)</td>
+                  <td
+                    className={`fw-bold ${
+                      margenBrutoPorc >= 0 ? "text-success" : "text-danger"
+                    }`}
+                  >
+                    {margenBrutoPorc.toFixed(2)}%
+                  </td>
                 </tr>
               </tbody>
             </Table>
 
-            <h4>3. Control de Gastos por Tipo (CRT)</h4>
+            {/* 3️⃣ Control de Gastos por Categoría */}
+            <h4>3. Control de Gastos por Categoría (CGC)</h4>
             <Table bordered hover responsive>
               <thead>
                 <tr>
-                  <th>Fecha</th>
-                  <th>Descripción</th>
                   <th>Categoría</th>
-                  <th>Facturado (Respaldo)</th>
                   <th>Monto (S/.)</th>
                 </tr>
               </thead>
               <tbody>
-                {data.gastos.map((gasto, index) => (
-                  <tr key={index}>
-                    <td>{gasto.fecha}</td>
-                    <td>{gasto.desc}</td>
-                    <td>{gasto.tipo}</td>
-                    <td>{gasto.facturado ? 'Sí' : 'No (Viático/Rendición)'}</td>
-                    <td>{gasto.monto.toFixed(2)}</td>
+                {gastosPorCategoria.map((g, i) => (
+                  <tr key={i}>
+                    <td>{SetCapitalLetter(g.categoria)}</td>
+                    <td>S/. {g.montoTotal.toFixed(2)}</td>
                   </tr>
                 ))}
-                <tr className="total-row">
-                  <td colSpan="4">Total Costo Real del Proyecto (CRT)</td>
-                  <td>{totalGastos.toFixed(2)}</td>
+                <tr className="fw-bold bg-light">
+                  <td>Total Costo Real del Proyecto</td>
+                  <td>S/. {gastosFacturanoYNo.total.toFixed(2)}</td>
                 </tr>
               </tbody>
             </Table>
 
-            <h4>4. Flujo de Caja (Liquidez) 💧</h4>
-            <Table bordered responsive className="text-right">
-                <tbody>
-                    <tr><td className="text-left">Monto Facturado al Cliente</td><td>S/ {ingresoFacturado.toFixed(2)}</td></tr>
-                    <tr><td className="text-left">(-) Total Gastos Pagados (CRT)</td><td>S/ {totalGastos.toFixed(2)}</td></tr>
-                    <tr><td className="text-left">(-) Retención SUNAT aplicada</td><td>S/ {totalRetenido.toFixed(2)}</td></tr>
-                    <tr><td className="text-left"><strong>Ingreso Neto en Banco (Efectivo)</strong></td><td><strong>S/ {ingresoNetoRecibido.toFixed(2)}</strong></td></tr>
-                    <tr className="total-row">
-                        <td className="text-left"><strong>Utilidad Neta en Efectivo (Liquidez)</strong></td>
-                        <td className={`font-weight-bold ${utilidadNeta >= 0 ? 'utilidad' : 'text-danger'}`}>S/ {utilidadNeta.toFixed(2)}</td>
-                    </tr>
-                </tbody>
+            {/* 4️⃣ Documentos Relacionados */}
+            <h4>4. Documentos Relacionados</h4>
+            <Table bordered hover responsive>
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Tipo Documento</th>
+                  <th>Serie</th>
+                  <th>Número</th>
+                  <th>Moneda</th>
+                  <th>Tipo Cambio</th>
+                  <th>Monto</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dataTaxDoc.map((d) => (
+                  <tr key={d.id}>
+                    <td>{d.fecha_emision}</td>
+                    <td>{SetCapitalLetter(d.tipo_doc)}</td>
+                    <td className="text-uppercase">{d.serie_comprobante}</td>
+                    <td>{d.nro_comprobante}</td>
+                    <td>{d.moneda}</td>
+                    <td>{d.tipo_cambio?.toFixed(3) || "0.000"}</td>
+                    <td>
+                      {d.moneda === "PEN" ? "S/ " : "$ "}
+                      {d.monto.toFixed(2)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
             </Table>
-            
-            {/* Ocultamos las tablas de comprobantes en el reporte final para enfocarnos en el resumen, pero se mantienen en el código si las necesitas */}
 
+            {/* 5️⃣ Flujo de Caja */}
+            <h4>5. Flujo de Caja (Liquidez)</h4>
+            <Table bordered responsive className="text-right">
+              <tbody>
+                <tr>
+                  <td className="text-left">Monto Facturado al Cliente</td>
+                  <td>S/ {flujoCaja.montoFacturado.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td className="text-left">(-) Total Gastos Pagados (CRT)</td>
+                  <td>S/ {flujoCaja.totalGastos.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td className="text-left">(-) Retención SUNAT</td>
+                  <td>S/ {flujoCaja.retencionSunat.toFixed(2)}</td>
+                </tr>
+                <tr>
+                  <td className="text-left fw-bold">Ingreso Neto</td>
+                  <td className="fw-bold">
+                    S/ {flujoCaja.ingresoNeto.toFixed(2)}
+                  </td>
+                </tr>
+                <tr className="fw-bold bg-light">
+                  <td className="text-left">Utilidad Neta</td>
+                  <td
+                    className={
+                      flujoCaja.utilidadNeta >= 0
+                        ? "text-success fw-bold"
+                        : "text-danger fw-bold"
+                    }
+                  >
+                    S/ {flujoCaja.utilidadNeta.toFixed(2)}
+                  </td>
+                </tr>
+              </tbody>
+            </Table>
           </div>
         </Card.Body>
-        <Card.Footer className="text-center">
-          <Button variant="primary" onClick={handlePrint}>🖨️ Imprimir Reporte Oficial</Button>
+
+        {/* Botón de impresión */}
+        <Card.Footer className="d-flex gap-2 justify-content-center">
+          <Button className="" variant="primary" onClick={handlePrint}>
+            Imprimir 
+          </Button>
+          <Button className="" variant="outline-secondary" onClick={backPage}>
+            Regresar
+          </Button>
         </Card.Footer>
       </Card>
     </Container>
   );
 }
-// import { Container, Row, Col, Table, Card, Button } from "react-bootstrap";
-// import { useRef } from "react";
-
-// export function ProjectReport() {
-//   const printRef = useRef();
-//   const handlePrint = () => {
-//     const printContents = printRef.current.innerHTML;
-//     const printWindow = window.open("", "", "height=800,width=1000");
-//     printWindow.document.write(`
-//       <html>
-//         <head>
-//           <title>Reporte Financiero</title>
-//           <style>
-//             body {
-//               font-family: Arial, sans-serif;
-//               margin: 40px;
-//               color: #333;
-//             }
-//             h4 {
-//               border-bottom: 2px solid #0d6efd;
-//               padding-bottom: 6px;
-//               margin-top: 30px;
-//               color: #0d6efd;
-//             }
-//             table {
-//               width: 100%;
-//               border-collapse: collapse;
-//               margin-bottom: 20px;
-//             }
-//             th, td {
-//               border: 1px solid #ddd;
-//               padding: 8px;
-//               text-align: left;
-//             }
-//             th {
-//               background-color: #f8f9fa;
-//             }
-//             .total-row {
-//               font-weight: bold;
-//               background-color: #f1f1f1;
-//             }
-//           </style>
-//         </head>
-//         <body>${printContents}</body>
-//       </html>
-//     `);
-//     printWindow.document.close();
-//     printWindow.print();
-//   };
-
-//   return (
-//     <Container className="my-5">
-//       <div
-//         ref={printRef}
-//         className="p-4 rounded"
-//         style={{
-//           backgroundColor: "#fdfdfd",
-//           border: "1px solid #dee2e6",
-//           boxShadow: "0 0 10px rgba(0,0,0,0.05)",
-//         }}
-//       >
-//         <h4>1. Información general</h4>
-//         <p><strong>Descripción:</strong> Pinza amperimétrica</p>
-//         <p><strong>Monto contratado:</strong> S/ 920.00</p>
-//         <p><strong>Cliente:</strong> Municipalidad Provincial del Cusco</p>
-//         <p><strong>Periodo de ejecución:</strong> Septiembre - Octubre 2025</p>
-
-//         <h4>2. Gastos realizados</h4>
-//         <Table bordered hover responsive>
-//           <thead>
-//             <tr>
-//               <th>Fecha</th>
-//               <th>Descripción</th>
-//               <th>Tipo</th>
-//               <th>Facturado</th>
-//               <th>Monto (S/.)</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             <tr><td>17/09/25</td><td>Pinza amperimétrica</td><td>Directo</td><td>Sí</td><td>540.00</td></tr>
-//             <tr><td>18/09/25</td><td>Transporte Segetuc</td><td>Indirecto</td><td>Sí</td><td>55.00</td></tr>
-//             <tr><td>19/09/25</td><td>Transporte entrega</td><td>Indirecto</td><td>No</td><td>2.00</td></tr>
-//             <tr className="total-row"><td colSpan="4">Total Gastos</td><td>597.00</td></tr>
-//           </tbody>
-//         </Table>
-
-//         <h4>3. Facturas Recibidas (Proveedores)</h4>
-//         <Table bordered hover responsive>
-//           <thead>
-//             <tr>
-//               <th>Fecha</th>
-//               <th>Serie</th>
-//               <th>Proveedor</th>
-//               <th>RUC</th>
-//               <th>Monto (S/.)</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             <tr><td>17/09/25</td><td>FF30-102734</td><td>Sonepar Perú SAC</td><td>20111740438</td><td>540.00</td></tr>
-//             <tr><td>18/09/25</td><td>FF01-37236</td><td>Segetuc SCRL</td><td>20227342456</td><td>55.00</td></tr>
-//           </tbody>
-//         </Table>
-
-//         <h4>4. Facturas Emitidas (Cliente)</h4>
-//         <Table bordered hover responsive>
-//           <thead>
-//             <tr>
-//               <th>Fecha Emisión</th>
-//               <th>Serie</th>
-//               <th>Cliente</th>
-//               <th>Monto (S/.)</th>
-//               <th>Fecha Vencimiento</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             <tr><td>19/09/25</td><td>E001-278</td><td>Municipalidad Provincial del Cusco</td><td>920.00</td><td>19/10/25</td></tr>
-//           </tbody>
-//         </Table>
-
-//         <h4>5. Retenciones / Pagos Recibidos</h4>
-//         <Table bordered hover responsive>
-//           <thead>
-//             <tr>
-//               <th>Fecha</th>
-//               <th>Serie Retención</th>
-//               <th>Monto Retenido (S/.)</th>
-//               <th>Importe Pagado (S/.)</th>
-//             </tr>
-//           </thead>
-//           <tbody>
-//             <tr><td>07/10/25</td><td>E001-16444</td><td>27.60</td><td>892.40</td></tr>
-//           </tbody>
-//         </Table>
-
-//         <h4>6. Balance General del Proyecto</h4>
-//         <Table bordered hover responsive>
-//           <tbody>
-//             <tr><td>Ingresos (facturado al cliente)</td><td>920.00</td></tr>
-//             <tr><td>(-) Retención SUNAT (3%)</td><td>27.60</td></tr>
-//             <tr><td><strong>= Ingreso Neto Recibido</strong></td><td><strong>892.40</strong></td></tr>
-//             <tr><td>(-) Total Gastos (directos + indirectos)</td><td>597.00</td></tr>
-//             <tr className="total-row">
-//               <td><strong>= Resultado del Proyecto (Utilidad)</strong></td>
-//               <td><strong>295.40</strong></td>
-//             </tr>
-//           </tbody>
-//         </Table>
-//       </div>
-
-//       <div className="text-center mt-4">
-//         <Button variant="primary" onClick={handlePrint}>Imprimir reporte</Button>
-//       </div>
-//     </Container>
-// );
-// }
