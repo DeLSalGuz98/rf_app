@@ -95,7 +95,7 @@ export function ProjectReport() {
 
   return (
     <Container className="my-5">
-      <Card className="shadow-lg border-0 rounded-4">
+      <Card className="border ">
         <Card.Body>
           {/* Sección imprimible */}
           <div ref={printRef}>
@@ -230,20 +230,24 @@ export function ProjectReport() {
                 </tr>
               </thead>
               <tbody>
-                {dataTaxDoc.map((d) => (
-                  <tr key={d.id}>
-                    <td>{d.fecha_emision}</td>
-                    <td>{SetCapitalLetter(d.tipo_doc)}</td>
-                    <td className="text-uppercase">{d.serie_comprobante}</td>
-                    <td>{d.nro_comprobante}</td>
-                    <td>{d.moneda}</td>
-                    <td>{d.tipo_cambio?.toFixed(3) || "0.000"}</td>
-                    <td>
-                      {d.moneda === "PEN" ? "S/ " : "$ "}
-                      {d.monto.toFixed(2)}
-                    </td>
-                  </tr>
-                ))}
+                {dataTaxDoc.map((d) => {
+                  if(d.tipo_doc !== "factura recibida"){
+                    return (
+                    <tr key={d.id}>
+                      <td>{d.fecha_emision}</td>
+                      <td>{SetCapitalLetter(d.tipo_doc)}</td>
+                      <td className="text-uppercase">{d.serie_comprobante}</td>
+                      <td>{d.nro_comprobante}</td>
+                      <td>{d.moneda}</td>
+                      <td>{d.tipo_cambio?.toFixed(3) || "0.000"}</td>
+                      <td>
+                        {d.moneda === "PEN" ? "S/ " : "$ "}
+                        {d.monto.toFixed(2)}
+                      </td>
+                    </tr>
+                    )  
+                  }
+                })}
               </tbody>
             </Table>
 
@@ -281,6 +285,78 @@ export function ProjectReport() {
                     S/ {flujoCaja.utilidadNeta.toFixed(2)}
                   </td>
                 </tr>
+              </tbody>
+            </Table>
+            {/* 5️⃣ Flujo de Caja */}
+            <h4>6. Lista de Gastos</h4>
+            <h5>6.1. Gastos Directos</h5>
+            <Table bordered responsive className="text-right">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Cantidad</th>
+                  <th>Unidad <br />Medida</th>
+                  <th>Descripcion</th>
+                  <th>P. Unitario</th>
+                  <th>Total</th>
+                  <th>Comprobante</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  dataExpenditure.map(g=>{
+                    if(g.tipo==="directo"){
+                      let precioUnit = g.moneda!=="PEN"?g.precio_unitario*g.tipo_cambio:g.precio_unitario
+                      let total = g.cantidad * precioUnit
+                      return(
+                        <tr>
+                          <td className="text-left">{g.fecha}</td>
+                          <td>{g.cantidad}</td>
+                          <td>{g.unidad_medida}</td>
+                          <td className="description-expenditure-report">{g.descripcion}</td>
+                          <td>S/. {precioUnit.toFixed(2)}</td>
+                          <td>S/. {total.toFixed(2)}</td>
+                          <td className="text-uppercase">{g.serie_comprobante}-{g.nro_comprobante}</td>
+                        </tr>
+                      )
+                    }
+                  })
+                }
+              </tbody>
+            </Table>
+            <h5>6.2. Gastos Indirectos</h5>
+            <Table bordered responsive className="text-right">
+              <thead>
+                <tr>
+                  <th>Fecha</th>
+                  <th>Cantidad</th>
+                  <th>Unidad <br />Medida</th>
+                  <th>Descripcion</th>
+                  <th>P. Unitario</th>
+                  <th>Total</th>
+                  <th>Comprobante</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  dataExpenditure.map(g=>{
+                    if(g.tipo==="indirecto"){
+                      let precioUnit = g.moneda!=="PEN"?g.precio_unitario*g.tipo_cambio:g.precio_unitario
+                      let total = g.cantidad * precioUnit
+                      return(
+                        <tr>
+                          <td className="text-left">{g.fecha}</td>
+                          <td>{g.cantidad}</td>
+                          <td>{g.unidad_medida}</td>
+                          <td className="description-expenditure-report">{g.descripcion}</td>
+                          <td>S/. {precioUnit.toFixed(2)}</td>
+                          <td>S/. {total.toFixed(2)}</td>
+                          <td className="text-uppercase">{g.serie_comprobante}-{g.nro_comprobante}</td>
+                        </tr>
+                      )
+                    }
+                  })
+                }
               </tbody>
             </Table>
           </div>
