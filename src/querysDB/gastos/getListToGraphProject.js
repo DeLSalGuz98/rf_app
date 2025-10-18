@@ -1,4 +1,6 @@
+
 import { supabase } from "../../services/supabaseClient";
+import { frmtFecha } from "../../utils/formatDate";
 
 export async function getListToGraphProjectDB(idProyecto) {
   const { data, error } = await supabase
@@ -9,7 +11,7 @@ export async function getListToGraphProjectDB(idProyecto) {
       tipo_cambio,
       serie_comprobante
     `)
-    .eq("id_proyecto", idProyecto);
+    .eq("id_proyecto", idProyecto).order("fecha",{ascending:true});
 
   if (error) {
     console.error("Error al obtener los gastos:", error);
@@ -19,10 +21,8 @@ export async function getListToGraphProjectDB(idProyecto) {
   // Agrupamos los datos
   const resumen = {};
 
-  data.forEach((gasto) => {
-    // Formatear fecha a "dd-mm-yy"
-    const date = new Date(gasto.fecha);
-    const name = `${String(date.getDate()+1).padStart(2, "0")}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getFullYear()).slice(-2)}`;
+  data.map((gasto) => {
+    const name = frmtFecha(gasto.fecha, "dd/MM")
 
     // Inicializar si no existe la fecha
     if (!resumen[name]) {

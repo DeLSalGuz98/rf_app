@@ -1,6 +1,6 @@
 import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
-import { formatDate } from "../../utils/formatDate";
+import { frmtFecha } from "../../utils/formatDate";
 
 export async function getListExpenditureProject(idProyecto) {
   const {data, error} = await supabase.from("gastos").select("*").eq("id_proyecto", idProyecto).order("fecha", { ascending: true })
@@ -11,7 +11,7 @@ export async function getListExpenditureProject(idProyecto) {
   }
   const listExpenditure = []
   data.map(gasto =>{
-    listExpenditure.push({...gasto, fecha: formatDate(gasto.fecha)})
+    listExpenditure.push({...gasto, fecha: frmtFecha(gasto.fecha)})
   })
   return listExpenditure
 }
