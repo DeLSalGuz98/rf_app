@@ -60,7 +60,7 @@ export function TableExpenditure({idProject}) {
                 <td className="text-nowrap text-uppercase">{e.serie_comprobante + "-" + e.nro_comprobante}</td>
                 <td>
                   <div className="d-flex gap-1">
-                    <Link className="btn btn-primary" to={`/rf/proyecto/gasto/${e.id}`} ><i className="bi bi-eye-fill"></i></Link>
+                    <Link className="btn btn-primary" to={`/rf/proyecto/${idProject}/gasto/${e.id}`} ><i className="bi bi-eye-fill"></i></Link>
                     <Button variant="danger" onClick={()=>delteExpenditureProject(e.id)}><i className="bi bi-trash-fill"></i></Button>
                   </div>
                 </td>
