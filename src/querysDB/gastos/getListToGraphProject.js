@@ -32,14 +32,20 @@ export async function getListToGraphProjectDB(idProyecto) {
         "Gastos sin Factura": 0,
       };
     }
-
+    let gastoConFactura = 0
+    let gastoSinFactura = 0
+    const montoTotal = gasto.tipo_cambio?Number(gasto.monto_total*gasto.tipo_cambio):Number(gasto.monto_total)
     // Sumar según tipo
     if (gasto.serie_comprobante) {
-      resumen[name]["Gastos con Factura"] += Number(gasto.tipo_cambio?gasto.monto_total*gasto.tipo_cambio:gasto.monto_total || 0);
+      gastoConFactura += montoTotal || 0;
+      resumen[name]["Gastos con Factura"] = gastoConFactura.toFixed(2)
     } else {
-      resumen[name]["Gastos sin Factura"] += Number(gasto.monto_total || 0);
+      gastoSinFactura += montoTotal || 0;
+      resumen[name]["Gastos sin Factura"] = gastoSinFactura.toFixed(2)
     }
   });
+
+  console.log(resumen)
 
   // Convertir el objeto en array
   return Object.values(resumen);
