@@ -45,8 +45,6 @@ export async function getListToGraphProjectDB(idProyecto) {
     }
   });
 
-  console.log(resumen)
-
   // Convertir el objeto en array
   return Object.values(resumen);
 }
