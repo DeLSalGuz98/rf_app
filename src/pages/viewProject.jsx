@@ -186,7 +186,9 @@ export function ProjectPage() {
     <Col lg={8} className="p-2">
       <div className="border p-2 rounded">
         <h4>Tabla de gastos y compras</h4>
-        <TableExpenditure idProject={idProyecto}/>
+        <div className="overflow-scroll" style={{maxHeight:"400px"}}>
+          <TableExpenditure idProject={idProyecto}/>
+        </div>
       </div>
     </Col>
     <Col lg={4}>
