@@ -7,8 +7,9 @@ export async function saveTaxDocumentDB(taxDocData = {}, idProject="") {
   const {error} = await supabase.from("documentos_tributarios").insert({
     ...taxDocData,
     id_empresa:res.idEmpresa,
-    id_proyecto:idProject,
-    id_usuario:res.idUser
+    id_proyecto:idProject!==""?idProject:null,
+    id_usuario:res.idUser,
+    tipo_cambio:null
   })
 
   if(error){

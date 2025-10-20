@@ -7,6 +7,7 @@ import { BtnSubmitForm, InputField, SelectField } from "../components/inputCompo
 import { saveTaxDocumentDB } from "../querysDB/taxDocument/saveTaxDocument";
 import { useEffect } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
 
 const docTributarioSchema = z.object({
   tipo_doc: z.string().min(1, "El tipo de documento es requerido"),
@@ -32,10 +33,24 @@ export function NewDocumentProject() {
     const {reset, watch, setValue} = methods
     const emitDate = watch("fecha_emision")
     const typeCoin = watch("moneda")
+    const ruc = watch("ruc")
+
+  useEffect(()=>{
+    getRsByRuc(ruc)
+  },[ruc])
 
     useEffect(()=>{
       setValue("fecha_vencimiento", emitDate)
     },[emitDate, setValue])
+
+    const getRsByRuc = async (ruc="")=>{
+        if(ruc.length<11){
+          return
+        }else{
+          const res = await obtenerRazonSocialPorRUC(ruc)
+          setValue("razon_social", res)
+        }
+      }
   
     const onSubmit = async (data) => {
       await saveTaxDocumentDB(data, idProyecto)

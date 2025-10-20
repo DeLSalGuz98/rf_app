@@ -7,6 +7,7 @@ import { BtnSubmitForm, InputField, SelectField } from "../components/inputCompo
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 import { saveTaxDocumentDB } from "../querysDB/taxDocument/saveTaxDocument";
 import { useEffect } from "react";
+import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
 
 const docTributarioSchema = z.object({
   tipo_doc: z.string().min(1, "El tipo de documento es requerido"),
@@ -30,10 +31,25 @@ export function NewTaxDocument(){
   })
   const {reset, watch, setValue} = methods
   const emitDate = watch("fecha_emision")
+  const ruc = watch("ruc")
+  const moneda = watch("moneda")
+
+  useEffect(()=>{
+    getRsByRuc(ruc)
+  },[ruc])
+
   useEffect(()=>{
     setValue("fecha_vencimiento", emitDate)
-  },[emitDate, setValue])
+  },[emitDate])
 
+  const getRsByRuc = async (ruc="")=>{
+    if(ruc.length<11){
+      return
+    }else{
+      const res = await obtenerRazonSocialPorRUC(ruc)
+      setValue("razon_social", res)
+    }
+  }
   const onSubmit = async (data) => {
     await saveTaxDocumentDB(data)
     reset()
@@ -74,10 +90,10 @@ export function NewTaxDocument(){
           <Col md={5}>
             <InputField label="Razón Social" name="razon_social" />
           </Col>
-          <Col md={4}>
+          <Col md={moneda==="PEN"?6:4}>
             <InputField label="Monto" name="monto" type="number" step="0.01" />
           </Col>
-          <Col md={4}>
+          <Col md={moneda==="PEN"?6:4}>
             <SelectField
               name="moneda"
               label="Moneda"
@@ -87,9 +103,12 @@ export function NewTaxDocument(){
               ]}
             />
           </Col>
-          <Col md={4}>
-            <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.01" />
-          </Col>
+          {
+            moneda!=="PEN"?
+            <Col md={4}>
+              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.01" />
+            </Col>:<></>
+          }
           <Col md={6}>
             <InputField 
               label={"Mes Declarado"}
