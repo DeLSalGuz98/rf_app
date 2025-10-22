@@ -4,6 +4,7 @@ import { TableComponent } from "../components/tableComponent"
 import { useState } from "react"
 import { useEffect } from "react"
 import { getListPendingInvoice } from "../querysDB/taxDocument/getListPendingInvoice"
+import { Link } from "react-router-dom"
 
 export function DasboardPage() {
   const [invoices, setInvoices] = useState([])
@@ -72,6 +73,7 @@ export function DasboardPage() {
                   <td>
                     <div className="d-flex gap-1">
                       <a className="btn btn-primary" href={`https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx`} target="_blank"><i className="bi bi-eye-fill"></i></a>
+                      <Link className="btn btn-secondary" to={`/rf/editar-documento/${e.id}`} ><i className="bi bi-pen-fill"></i></Link>
                     </div>
                   </td>
                 </tr>)

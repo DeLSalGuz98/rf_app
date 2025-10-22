@@ -6,6 +6,7 @@ import { useState } from "react";
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 import { Link } from "react-router-dom";
 import { frmtFecha } from "../utils/formatDate";
+import { deleteTaxDocumentDB } from "../querysDB/taxDocument/deleteTaxDocument";
 
 export function ListTaxDocumetPage() {
   const headTable = ["fecha emision", "fecha vencimiento", "serie", "numero", "ruc", "razon social", "tipo cambio", "monto dolares", "montol soles", "tipo documento", "estado", "accion"]
@@ -60,8 +61,12 @@ export function ListTaxDocumetPage() {
     const {checked} = e.target
     setDateFilter(checked)
   }
-  const delteTaxDocument = ()=>{
-    alert("borrando")
+  const delteTaxDocument = async(e)=>{
+    const deleteDoc = confirm("Esta a punto de eliminar un documento, esta seguro de continuar")
+    if(deleteDoc){
+      await deleteTaxDocumentDB(e)
+    }
+    getListTaxDocuments()
   }
   const [activeKey, setActiveKey] = useState("0");
   return(
