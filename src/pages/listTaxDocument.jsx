@@ -208,7 +208,7 @@ export function ListTaxDocumetPage() {
                 <td>{SetCapitalLetter(e.estado_comprobante)}</td>
                 <td>
                   <div className="d-flex gap-1">
-                    <Link className="btn btn-primary" to={`/rf/tax-document/${e.id}`} ><i className="bi bi-pen-fill"></i></Link>
+                    <Link className="btn btn-primary" to={`/rf/editar-documento/${e.id}`} ><i className="bi bi-pen-fill"></i></Link>
                     <Button variant="danger" onClick={()=>delteTaxDocument(e.id)}><i className="bi bi-trash-fill"></i></Button>
                   </div>
                 </td>

@@ -4,9 +4,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Row, Col, Container } from "react-bootstrap";
 import FormComponent from "../components/formComponent";
 import { BtnSubmitForm, InputField, SelectField } from "../components/inputComponent";
-import { saveTaxDocumentDB } from "../querysDB/taxDocument/saveTaxDocument";
 import { useEffect } from "react";
 import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
+import { useNavigate, useParams } from "react-router-dom";
+import { getTaxDocumentDataDB } from "../querysDB/taxDocument/getTaxDocumentData";
+import { useState } from "react";
+import { updateTaxDocDataDB } from "../querysDB/taxDocument/updateTaxDocumentData";
 
 const docTributarioSchema = z.object({
   tipo_doc: z.string().min(1, "El tipo de documento es requerido"),
@@ -24,22 +27,32 @@ const docTributarioSchema = z.object({
 });
 
 
-export function NewTaxDocument(){
+export function EditTaxDocument(){
+  const {idTaxDocument} = useParams()
+  const navigation = useNavigate()
+  const [initialData, setInitialData] = useState({})
   const methods = useForm({
     resolver: zodResolver(docTributarioSchema),
+    defaultValues: initialData
   })
   const {reset, watch, setValue} = methods
-  const emitDate = watch("fecha_emision")
   const ruc = watch("ruc")
   const moneda = watch("moneda")
+
+  useEffect(()=>{
+    getTaxDocumentData()
+  },[])
+  const getTaxDocumentData = async()=>{
+    const res = await getTaxDocumentDataDB(idTaxDocument)
+    console.log(res)
+    setInitialData(res)
+    reset(res)
+  }
 
   useEffect(()=>{
     getRsByRuc(ruc)
   },[ruc])
 
-  useEffect(()=>{
-    setValue("fecha_vencimiento", emitDate)
-  },[emitDate])
 
   const getRsByRuc = async (ruc="")=>{
     if(ruc.length<11){
@@ -49,13 +62,33 @@ export function NewTaxDocument(){
       setValue("razon_social", res)
     }
   }
-  const onSubmit = async (data) => {
-    await saveTaxDocumentDB(data)
-    reset()
-  };
+  // ✅ Función para detectar qué campos cambiaron
+    const getUpdatedFields = (newData, originalData) => {
+      const updated = {};
+      for (const key in newData) {
+        if (newData[key] !== originalData[key]) {
+          updated[key] = newData[key];
+        }
+      }
+      return updated;
+    };
+    // 💾 Guardar gasto
+    const onSubmit = async (data) => {
+      const updatedFields = getUpdatedFields({...data, tipo_cambio: data.tipo_cambio===0?null:data.tipo_cambio}, initialData);
+      if (Object.keys(updatedFields).length === 0) {
+        alert("No se ha modificado ningún campo.");
+        return;
+      }
+      await updateTaxDocDataDB(updatedFields, idTaxDocument)
+      backPage()
+      
+    };
+    const backPage = ()=>{
+      navigation(-1)
+    }
   return(
     <Container>
-      <FormComponent methods={methods} onSubmit={onSubmit} title="Registrar Documento Tributario">
+      <FormComponent methods={methods} onSubmit={onSubmit} title="Editar Documento Tributario">
         <Row>
           <Col md={4}>
             <SelectField
