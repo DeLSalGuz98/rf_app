@@ -8,6 +8,8 @@ import { BtnSubmitForm, InputField, SelectField } from "../components/inputCompo
 import { GetUserNameAndNameCompany } from "../utils/getUserAndCompany";
 import { SaveNewProjectData } from "../querysDB/projects/saveNewProject";
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
+import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
 
 const proyectoSchema = z.object({
   nombre_proyecto: z.string().min(3, "El nombre del proyecto es obligatorio"),
@@ -34,6 +36,22 @@ export function CreateNewProject() {
       estado: "pendiente",
     },
   });
+  const {watch, setValue} = methods
+  const rucCliente = watch("ruc_cliente")
+
+  useEffect(()=>{
+      getRsByRuc(rucCliente)
+    },[rucCliente])
+  
+  const getRsByRuc = async (ruc="")=>{
+    if(ruc.length<11){
+      return
+    }else{
+      const res = await obtenerRazonSocialPorRUC(ruc)
+      console.log(res)
+      setValue("rs_cliente", res)
+    }
+  }
 
   const onSubmit = async (data) => {
     const res = await GetUserNameAndNameCompany()
@@ -77,8 +95,8 @@ export function CreateNewProject() {
               ]}
             />
           </Col>
-          <Col md={3}><InputField label="Razón Social Cliente" name="rs_cliente" /></Col>
           <Col md={3}><InputField label="RUC Cliente" name="ruc_cliente" /></Col>
+          <Col md={3}><InputField label="Razón Social Cliente" name="rs_cliente" /></Col>
           <Col md={3}><InputField label="Unidad Ejecutora" name="unidad_ejecutora" /></Col>
           <Col md={3}><InputField label="Expediente SIAF" name="exp_siaf" /></Col>
         </Row>

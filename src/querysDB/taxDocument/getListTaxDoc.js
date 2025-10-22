@@ -2,14 +2,13 @@ import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
 import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
-export async function getListTaxDocumentsDB(tipoDoc,mesDeclarado, estadoComprobante) {
+export async function getListTaxDocumentsDB(mesDeclarado) {
   const res = await GetUserNameAndNameCompany()
   const {data, error} = await supabase.from("documentos_tributarios")
   .select("*")
-  .eq("tipo_doc",tipoDoc)
   .eq("id_empresa", res.idEmpresa)
   .eq("mes_declarado", mesDeclarado)
-  .eq("estado_comprobante", estadoComprobante)
+  .order("fecha_emision", {ascending:true})
 
   if(error){
     console.error(error)
@@ -21,15 +20,14 @@ export async function getListTaxDocumentsDB(tipoDoc,mesDeclarado, estadoComproba
   }
   return data
 }
-export async function getListTaxDocumentsByDateDB(desde, hasta,tipoDoc,estadoComprobante) {
+export async function getListTaxDocumentsByDateDB(desde, hasta) {
   const res = await GetUserNameAndNameCompany()
   const {data, error} = await supabase.from("documentos_tributarios")
   .select("*")
-  .eq("tipo_doc",tipoDoc)
   .eq("id_empresa", res.idEmpresa)
-  .eq("estado_comprobante", estadoComprobante)
   .gte("fecha_emision", desde)
   .lte("fecha_emision", hasta)
+  .order("fecha_emision", {ascending:true})
 
   if(error){
     console.error(error)
