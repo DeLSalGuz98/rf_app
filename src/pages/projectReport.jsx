@@ -227,6 +227,7 @@ export function ProjectReport() {
                   <th>Moneda</th>
                   <th>Tipo Cambio</th>
                   <th>Monto</th>
+                  <th>Estado</th>
                 </tr>
               </thead>
               <tbody>
@@ -244,6 +245,7 @@ export function ProjectReport() {
                         {d.moneda === "PEN" ? "S/ " : "$ "}
                         {d.monto.toFixed(2)}
                       </td>
+                      <td>{d.estado_comprobante}</td>
                     </tr>
                     )  
                   }
@@ -260,10 +262,6 @@ export function ProjectReport() {
                   <td>S/ {flujoCaja.montoFacturado.toFixed(2)}</td>
                 </tr>
                 <tr>
-                  <td className="text-left">(-) Total Gastos Pagados (CRT)</td>
-                  <td>S/ {flujoCaja.totalGastos.toFixed(2)}</td>
-                </tr>
-                <tr>
                   <td className="text-left">(-) Retención SUNAT</td>
                   <td>S/ {flujoCaja.retencionSunat.toFixed(2)}</td>
                 </tr>
@@ -272,6 +270,10 @@ export function ProjectReport() {
                   <td className="fw-bold">
                     S/ {flujoCaja.ingresoNeto.toFixed(2)}
                   </td>
+                </tr>
+                <tr>
+                  <td className="text-left">(-) Total Gastos Pagados (CRT)</td>
+                  <td>S/ {flujoCaja.totalGastos.toFixed(2)}</td>
                 </tr>
                 <tr className="fw-bold bg-light">
                   <td className="text-left">Utilidad Neta</td>
