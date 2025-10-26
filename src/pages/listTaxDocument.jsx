@@ -7,6 +7,7 @@ import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 import { Link } from "react-router-dom";
 import { frmtFecha } from "../utils/formatDate";
 import { deleteTaxDocumentDB } from "../querysDB/taxDocument/deleteTaxDocument";
+import { exportToExcel } from "../utils/exportToExcel";
 
 export function ListTaxDocumetPage() {
   const headTable = ["fecha emision", "fecha vencimiento", "serie", "numero", "ruc", "razon social", "tipo cambio", "monto dolares", "montol soles", "tipo documento", "estado", "accion"]
@@ -14,6 +15,8 @@ export function ListTaxDocumetPage() {
   const [loading, setLoading] = useState(true);
   const [filtrosDocs, setFiltrosDocs] = useState(filtrosIniciales)
   const [dateFilter, setDateFilter] = useState(false)
+  //const [dataToExport, setDataToExport] = useState([])
+  const dataToExport = []
   useEffect(()=>{
     getListTaxDocuments()
   },[])
@@ -35,14 +38,14 @@ export function ListTaxDocumetPage() {
     const year = hoy.getFullYear();
     const month = String(hoy.getMonth() + 1).padStart(2, "0");
 
-    const primerDia = `${year}-${month}-01`;
+    //const primerDia = `${year}-${month}-01`;
 
-    const dia = String(hoy.getDate()).padStart(2, "0");
-    const fechaActual = `${year}-${month}-${dia}`;
+    //const dia = String(hoy.getDate()).padStart(2, "0");
+    //const fechaActual = `${year}-${month}-${dia}`;
 
     return {
-      desde: primerDia,
-      hasta: fechaActual,
+      desde: "",
+      hasta: "",
       tipo_doc: "todos",
       mes_declarado: `${year}-${month}`,
       estado: "todos"
@@ -51,7 +54,7 @@ export function ListTaxDocumetPage() {
 
   const addFilterDocs = async (e)=>{
     const {name, value} = e.target
-    setFiltrosDocs({...filtrosDocs, [name]: value})  
+    setFiltrosDocs({...filtrosDocs, [name]: value})
   }
   const sendFilters = ()=>{
     getListTaxDocuments()
@@ -67,6 +70,20 @@ export function ListTaxDocumetPage() {
       await deleteTaxDocumentDB(e)
     }
     getListTaxDocuments()
+  }
+  const getTotalFacturas = ()=>{
+    let total = 0
+    listTaxDocument.map((e)=>{
+      if(e.tipo_doc === filtrosDocs.tipo_doc){
+        total = total + e.monto
+      }
+    })
+    return total
+  }
+  const handleExport = ()=>{
+    //console.log(dataToExport)
+    const fileName = filtrosDocs.tipo_doc+"-"+filtrosDocs.mes_declarado
+    exportToExcel(dataToExport, fileName)
   }
   const [activeKey, setActiveKey] = useState("0");
   return(
@@ -125,7 +142,7 @@ export function ListTaxDocumetPage() {
               )}
               <Col md="4">
                 <Button className="w-100" variant="primary" onClick={sendFilters}>
-                  Aplicar rango de fechas
+                  <i className="bi bi-calendar-check-fill"></i> Aplicar rango de fechas
                 </Button>
               </Col>
             </Row>
@@ -178,6 +195,17 @@ export function ListTaxDocumetPage() {
         </Accordion.Item>
       </Accordion>
       <br />
+      <div className="d-flex p-2 justify-content-between">
+        <div className="h4 m0"><span className="">Total:</span> {getTotalFacturas().toFixed(2)}</div>
+        <div className="d-flex gap-2">
+          <Button variant="success" onClick={handleExport}>
+            <i className="bi bi-file-earmark-excel-fill"></i> Exportar a Excel
+          </Button>
+          <Link className="btn btn-secondary" to={`/rf/reporte-mensual`} state={{filtros: filtrosDocs}}>
+            <i className="bi bi-file-earmark-spreadsheet"></i> Generar Reporte
+          </Link>
+        </div>
+      </div>
       <TableComponent>
         <thead>
           <tr>
@@ -199,6 +227,16 @@ export function ListTaxDocumetPage() {
               </tr>
             ) : 
             listTaxDocument.map(e=>{
+              let objFactura = {
+                  fecha_emision:e.fecha_emision,
+                  fecha_vencimiento:e.fecha_vencimiento,
+                  serie_comprobante:e.serie_comprobante,
+                  nro_comprobante:e.nro_comprobante,
+                  ruc:e.ruc,
+                  razon_social:e.razon_social,
+                  tipo_cambio:e.tipo_cambio,
+                  monto:e.monto
+                }
               let rowList = <tr key={e.id}>
                 <td>{frmtFecha(e.fecha_emision)}</td>
                 <td>{frmtFecha(e.fecha_vencimiento)}</td>
@@ -219,6 +257,7 @@ export function ListTaxDocumetPage() {
                 </td>
               </tr>
               if (filtrosDocs.tipo_doc === "todos" && filtrosDocs.estado === "todos") {
+                dataToExport.push(objFactura)
                 return rowList
               }
               if (
@@ -226,6 +265,7 @@ export function ListTaxDocumetPage() {
                 (filtrosDocs.estado === "todos" && e.tipo_doc === filtrosDocs.tipo_doc) ||
                 (e.tipo_doc === filtrosDocs.tipo_doc && e.estado_comprobante === filtrosDocs.estado)
               ) {
+                dataToExport.push(objFactura)
                 return rowList;
               }
               

@@ -16,6 +16,7 @@ import { NewDocumentProject } from '../pages/newDocumentProject'
 import { ProjectReport } from '../pages/projectReport'
 import { EditExpenditureProyect } from '../pages/editExpenditureProject'
 import { EditTaxDocument } from '../pages/editTaxDocument'
+import { ReportTaxDocument } from '../pages/reportTaxDocument'
 export function Layout() {
   return<div>
     <div className="">
@@ -82,6 +83,11 @@ export function Layout() {
           <Route path="lista-documentos-tributarios" element={
             <ProtectedRoute>
               <ListTaxDocumetPage/>
+            </ProtectedRoute>
+          } />
+          <Route path="reporte-mensual" element={
+            <ProtectedRoute>
+              <ReportTaxDocument/>
             </ProtectedRoute>
           } />
         </Route>
