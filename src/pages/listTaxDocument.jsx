@@ -201,7 +201,7 @@ export function ListTaxDocumetPage() {
           <Button variant="success" onClick={handleExport}>
             <i className="bi bi-file-earmark-excel-fill"></i> Exportar a Excel
           </Button>
-          <Link className="btn btn-secondary" to={`/rf/reporte-mensual`} state={{filtros: filtrosDocs}}>
+          <Link className="btn btn-secondary" to={`/rf/reporte-mensual`}>
             <i className="bi bi-file-earmark-spreadsheet"></i> Generar Reporte
           </Link>
         </div>
