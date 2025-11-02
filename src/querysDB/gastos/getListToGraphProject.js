@@ -18,13 +18,11 @@ export async function getListToGraphProjectDB(idProyecto) {
     return [];
   }
 
-  // Agrupamos los datos
   const resumen = {};
 
-  data.map((gasto) => {
-    const name = frmtFecha(gasto.fecha, "dd/MM")
+  data.forEach((gasto) => {
+    const name = frmtFecha(gasto.fecha, "dd/MM");
 
-    // Inicializar si no existe la fecha
     if (!resumen[name]) {
       resumen[name] = {
         name,
@@ -32,17 +30,19 @@ export async function getListToGraphProjectDB(idProyecto) {
         "Gastos sin Factura": 0,
       };
     }
-    let gastoConFactura = 0
-    let gastoSinFactura = 0
-    const montoTotal = gasto.tipo_cambio?Number(gasto.monto_total*gasto.tipo_cambio):Number(gasto.monto_total)
-    // Sumar según tipo
+
+    const montoTotal = Number(gasto.monto_total || 0) * Number(gasto.tipo_cambio || 1);
+
     if (gasto.serie_comprobante) {
-      gastoConFactura += montoTotal || 0;
-      resumen[name]["Gastos con Factura"] = gastoConFactura.toFixed(2)
+      resumen[name]["Gastos con Factura"] += montoTotal;
     } else {
-      gastoSinFactura += montoTotal || 0;
-      resumen[name]["Gastos sin Factura"] = gastoSinFactura.toFixed(2)
+      resumen[name]["Gastos sin Factura"] += montoTotal;
     }
+  });
+
+  Object.values(resumen).forEach(r => {
+    r["Gastos con Factura"] = r["Gastos con Factura"].toFixed(2);
+    r["Gastos sin Factura"] = r["Gastos sin Factura"].toFixed(2);
   });
 
   // Convertir el objeto en array
