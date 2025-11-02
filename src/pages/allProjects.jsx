@@ -7,6 +7,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
 import { toast } from "react-toastify";
+import { deleteProjectDB } from "../querysDB/projects/deleteProject";
 
 export function AllProjects() {
   const [headTable] = useState(["Proyecto","Tipo","Descripción","Fecha Final","Dias Restantes","Monto Ofertado","Acciones"]) 
@@ -36,8 +37,10 @@ export function AllProjects() {
     setLoading(false);
 
   }
-  const deleteProject = (e)=>{
-    alert("Se eliminara el projecto: "+e)
+  const deleteProject = async(e)=>{
+    const areYouSure = confirm("Se eliminara el projecto definitivamente")
+    areYouSure? await deleteProjectDB(e):null
+    GetAllProjects()
   }
   return <Container>
     <Row className="mb-2">
