@@ -61,7 +61,7 @@ export function NewDocumentProject() {
     }
   return(
     <Container>
-      <FormComponent methods={methods} onSubmit={onSubmit} title="Registrar Documento Tributario">
+      <FormComponent methods={methods} onSubmit={onSubmit} title="Registrar Documento Tributario - Proyecto">
         <Row>
           <Col md={4}>
             <SelectField

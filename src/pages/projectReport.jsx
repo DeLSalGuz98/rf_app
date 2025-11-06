@@ -72,13 +72,14 @@ export function ProjectReport() {
 
     const facturado = dataReportProject.monto_ofertado || 0;
     const gastosTotal = gastosFacturanoYNo.total;
+    const totalRetenidoEstimado = facturado * 0.03 //todo: este valor solo se aplica a las OC, hay que variarlo segun OS o privado
 
     return {
       montoFacturado: facturado,
       totalGastos: gastosTotal,
-      retencionSunat: totalRetenido,
-      ingresoNeto: facturado - totalRetenido,
-      utilidadNeta: facturado - totalRetenido - gastosTotal,
+      retencionSunat: totalRetenido<=0? `${totalRetenidoEstimado.toFixed(2)} (monto estimado)`: totalRetenido.toFixed(2),
+      ingresoNeto: facturado - (totalRetenido<=0?totalRetenidoEstimado:totalRetenido),
+      utilidadNeta: facturado - (totalRetenido<=0?totalRetenidoEstimado:totalRetenido) - gastosTotal,
     };
   }, [dataTaxDoc, dataReportProject, gastosFacturanoYNo]);
 
@@ -263,7 +264,7 @@ export function ProjectReport() {
                 </tr>
                 <tr>
                   <td className="text-left">(-) Retención SUNAT</td>
-                  <td>S/ {flujoCaja.retencionSunat.toFixed(2)}</td>
+                  <td>S/ {flujoCaja.retencionSunat}</td>
                 </tr>
                 <tr>
                   <td className="text-left fw-bold">Ingreso Neto</td>
@@ -311,7 +312,7 @@ export function ProjectReport() {
                       let precioUnit = g.moneda!=="PEN"?g.precio_unitario*g.tipo_cambio:g.precio_unitario
                       let total = g.cantidad * precioUnit
                       return(
-                        <tr>
+                        <tr key={g.id}>
                           <td className="text-left">{g.fecha}</td>
                           <td>{g.cantidad}</td>
                           <td>{g.unidad_medida}</td>
