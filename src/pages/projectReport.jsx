@@ -5,6 +5,7 @@ import { useEffect, useState, useMemo } from "react";
 import { getReportProjectDataDB } from "../querysDB/projects/getReportProjectData";
 import { useNavigate, useParams } from "react-router-dom";
 import { SetCapitalLetter } from "../utils/setCapitalLetterString";
+import { exportToExcel } from "../utils/exportToExcel";
 
 export function ProjectReport() {
   const { idProyecto } = useParams();
@@ -93,6 +94,41 @@ export function ProjectReport() {
       100
     );
   }, [dataReportProject, utilidadNeta]);
+
+  const exportarGastos = (g)=>{
+    const dataToExport = []
+    g.map(e=>{
+      if(e.tipo === "directo"){
+        const montoTotal = e.moneda==="PEN"?e.monto_total:e.monto_total*e.tipo_cambio
+        const fact = e.serie_comprobante.toUpperCase() +"-"+ e.nro_comprobante
+        dataToExport.push({
+          Fecha: e.fecha,
+          Cantidad: e.cantidad,
+          "U. Medida": e.unidad_medida,
+          Descripcion: e.descripcion,
+          "Monto Total (S/.)":montoTotal,
+          Comprobante: fact,
+          Tipo: e.tipo
+        })
+      }
+    })
+    g.map(e=>{if(e.tipo === "indirecto"){
+        const montoTotal = e.moneda==="PEN"?e.monto_total:e.monto_total*e.tipo_cambio
+        const fact = e.serie_comprobante.toUpperCase() +"-"+ e.nro_comprobante
+        dataToExport.push({
+          Fecha: e.fecha,
+          Cantidad: e.cantidad,
+          "U. Medida": e.unidad_medida,
+          Descripcion: e.descripcion,
+          "Monto Total (S/.)":montoTotal,
+          Comprobante: fact,
+          Tipo: e.tipo
+        })
+      }
+    })
+    const fileName = "Lista de gastos - "+dataReportProject.nombre_proyecto
+    exportToExcel(dataToExport, fileName)
+  }
 
   return (
     <Container className="my-5">
@@ -291,7 +327,10 @@ export function ProjectReport() {
               </tbody>
             </Table>
             {/* 5️⃣ Flujo de Caja */}
-            <h4>6. Lista de Gastos</h4>
+            <div className="d-flex justify-content-between">
+              <h4>6. Lista de Gastos</h4>
+              <Button variant="success" onClick={()=>exportarGastos(dataExpenditure)}><i className="bi bi-file-earmark-excel-fill"></i>Exportar gastos</Button>
+            </div>
             <h5>6.1. Gastos Directos</h5>
             <Table bordered responsive className="text-right">
               <thead>
@@ -300,8 +339,8 @@ export function ProjectReport() {
                   <th>Cantidad</th>
                   <th>Unidad <br />Medida</th>
                   <th>Descripcion</th>
-                  <th>P. Unitario</th>
-                  <th>Total</th>
+                  <th>P. Unitario (S/.)</th>
+                  <th>Total (S/.)</th>
                   <th>Comprobante</th>
                 </tr>
               </thead>
@@ -317,8 +356,8 @@ export function ProjectReport() {
                           <td>{g.cantidad}</td>
                           <td>{g.unidad_medida}</td>
                           <td className="description-expenditure-report">{g.descripcion}</td>
-                          <td>S/. {precioUnit.toFixed(2)}</td>
-                          <td>S/. {total.toFixed(2)}</td>
+                          <td>{precioUnit.toFixed(2)}</td>
+                          <td>{total.toFixed(2)}</td>
                           <td className="text-uppercase">{g.serie_comprobante}-{g.nro_comprobante}</td>
                         </tr>
                       )
@@ -335,8 +374,8 @@ export function ProjectReport() {
                   <th>Cantidad</th>
                   <th>Unidad <br />Medida</th>
                   <th>Descripcion</th>
-                  <th>P. Unitario</th>
-                  <th>Total</th>
+                  <th>P. Unitario (S/.)</th>
+                  <th>Total (S/.)</th>
                   <th>Comprobante</th>
                 </tr>
               </thead>
@@ -352,8 +391,8 @@ export function ProjectReport() {
                           <td>{g.cantidad}</td>
                           <td>{g.unidad_medida}</td>
                           <td className="description-expenditure-report">{g.descripcion}</td>
-                          <td>S/. {precioUnit.toFixed(2)}</td>
-                          <td>S/. {total.toFixed(2)}</td>
+                          <td className="text-left">{precioUnit.toFixed(2)}</td>
+                          <td>{total.toFixed(2)}</td>
                           <td className="text-uppercase">{g.serie_comprobante}-{g.nro_comprobante}</td>
                         </tr>
                       )
