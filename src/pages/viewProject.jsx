@@ -143,7 +143,7 @@ export function ProjectPage() {
                 </Modal.Footer>
               </Modal>
             </>
-            <Dropdown.Item as={Link} to={"/rf/modificar-proyecto"} eventKey="2">Informacion del Proyecto</Dropdown.Item>
+            <Dropdown.Item  as={Link} to={`/rf/proyecto/${idProyecto}/editar-datos`} state={proyecto} eventKey="2">Informacion del Proyecto</Dropdown.Item>
           </DropdownButton>
           <Button as={Link} to={`/rf/registrar-gastos-proyecto/${idProyecto}`} >Registrar gastos</Button>
           <Button as={Link} to={`/rf/registrar-documentos/${idProyecto}`} >Registrar Documentos</Button>

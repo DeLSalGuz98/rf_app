@@ -17,6 +17,7 @@ import { ProjectReport } from '../pages/projectReport'
 import { EditExpenditureProyect } from '../pages/editExpenditureProject'
 import { EditTaxDocument } from '../pages/editTaxDocument'
 import { ReportTaxDocument } from '../pages/reportTaxDocument'
+import { EditProjectData } from '../pages/editProjectData'
 export function Layout() {
   return<div>
     <div className="">
@@ -48,6 +49,11 @@ export function Layout() {
           <Route path="proyecto/:idProyecto/gasto/:idGasto" element={
             <ProtectedRoute>
               <EditExpenditureProyect/>
+            </ProtectedRoute>
+          } />
+          <Route path="proyecto/:idProyecto/editar-datos" element={
+            <ProtectedRoute>
+              <EditProjectData/>
             </ProtectedRoute>
           } />
           <Route path="registrar-gastos-proyecto/:idProyecto" element={
