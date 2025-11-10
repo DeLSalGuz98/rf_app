@@ -4,6 +4,7 @@ import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
 export async function saveExpenditure(dataExpenditure={}) {
   const res = await GetUserNameAndNameCompany()
+  console.log(dataExpenditure)
   const {error} = await supabase.from("gastos").insert({
     ...dataExpenditure,
     id_usuario: res.idUser,

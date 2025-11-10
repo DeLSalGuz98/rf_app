@@ -1,7 +1,7 @@
 import { supabase } from "../../services/supabaseClient";
 import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
-export async function getListPendingInvoice(estadoComprobante = "pendiente", tipoDoc = "factura emitida") {
+export async function getListPendingInvoice(estadoComprobante = ["pendiente"], tipoDoc = "factura emitida") {
   const res = await GetUserNameAndNameCompany()
   const { data, error } = await supabase
   .from("documentos_tributarios")
@@ -12,6 +12,7 @@ export async function getListPendingInvoice(estadoComprobante = "pendiente", tip
     moneda,
     monto,
     tipo_cambio,
+    estado_comprobante,
     proyectos (
       id,
       nombre_proyecto,
@@ -21,7 +22,7 @@ export async function getListPendingInvoice(estadoComprobante = "pendiente", tip
     )
   `)
   .eq("id_empresa", res.idEmpresa)
-  .eq("estado_comprobante", estadoComprobante)
+  .in("estado_comprobante", estadoComprobante)
   .eq("tipo_doc", tipoDoc);
 
   if (error){ 

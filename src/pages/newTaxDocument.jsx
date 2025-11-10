@@ -7,6 +7,7 @@ import { BtnSubmitForm, InputField, SelectField } from "../components/inputCompo
 import { saveTaxDocumentDB } from "../querysDB/taxDocument/saveTaxDocument";
 import { useEffect } from "react";
 import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
+import { listStateTaxDocument } from "../utils/listStateTaxDocument";
 
 const docTributarioSchema = z.object({
   tipo_doc: z.string().min(1, "El tipo de documento es requerido"),
@@ -20,7 +21,7 @@ const docTributarioSchema = z.object({
   moneda: z.enum(["PEN", "USD"], { message: "Seleccione una moneda válida" }),
   tipo_cambio: z.coerce.number().optional(),
   mes_declarado: z.string().min(1, "El mes declarado es requerido"),
-  estado_comprobante: z.enum(["pendiente", "pagado", "atrasado", "anulado", "archivado"])
+  estado_comprobante: z.enum(["pendiente","devengado", "girado", "con retencion", "pagado", "atrasado", "anulado", "archivado"])
 });
 
 
@@ -119,13 +120,7 @@ export function NewTaxDocument(){
             <SelectField
               name="estado_comprobante"
               label="Estado del Comprobante"
-              options={[
-                { value: "pendiente", label: "Pendiente" },
-                { value: "pagado", label: "Pagado" },
-                { value: "atrasado", label: "Atrasado" },
-                { value: "anulado", label: "Anulado" },
-                { value: "archivado", label: "Archivado" },
-              ]}
+              options={listStateTaxDocument}
             />
           </Col>
         </Row>

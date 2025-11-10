@@ -83,13 +83,6 @@ export function EditProjectData() {
   }
 
 
-  /*const onSubmit = async (data) => {
-    const res = await GetUserNameAndNameCompany()
-    const dataProject = {...data, fecha_fin: calcularFechaFin(data.fecha_inicio, data.plazo_dias), id_empresa: res.idEmpresa, estado: "pendiente", id_usuario: res.idUser}
-    await SaveNewProjectData(dataProject)
-    navigate("/rf/todos-los-proyectos")
-  };*/
-
   function calcularFechaFin(fechaInicio, plazoDias) {
     const fecha = new Date(fechaInicio)
     fecha.setDate(fecha.getDate() + plazoDias+1)

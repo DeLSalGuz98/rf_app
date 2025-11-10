@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useEffect } from "react"
 import { getListPendingInvoice } from "../querysDB/taxDocument/getListPendingInvoice"
 import { Link } from "react-router-dom"
+import { SetCapitalLetter } from "../utils/setCapitalLetterString"
 
 export function DasboardPage() {
   const [invoices, setInvoices] = useState([])
@@ -11,7 +12,7 @@ export function DasboardPage() {
     getPedingInvoices()
   },[])
   const getPedingInvoices = async()=>{
-    const res = await getListPendingInvoice()
+    const res = await getListPendingInvoice(["pendiente", "devengado", "girado", "con retencion"])
     setInvoices(res)
   }
   return<>
@@ -57,6 +58,7 @@ export function DasboardPage() {
                 <th>Fecha Emision</th>
                 <th>Fecha Venciento</th>
                 <th>Monto Total</th>
+                <th>Estado</th>
                 <th>Acciones</th>
               </tr>
             </thead>
@@ -82,6 +84,7 @@ export function DasboardPage() {
                     <td className="text-nowrap">{e.fecha_emision}</td>
                     <td className={`text-nowrap ${estaVencido?"bg-danger-subtle":""}`}>{e.fecha_vencimiento}</td>
                     <td className="text-nowrap">S/. {Number(e.monto).toFixed(2)}</td>
+                    <td className="text-nowrap">{SetCapitalLetter(e.estado_comprobante)}</td>
                     <td>
                       <div className="d-flex gap-1">
                         <a className="btn btn-primary" href={`https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx`} target="_blank"><i className="bi bi-eye-fill"></i></a>

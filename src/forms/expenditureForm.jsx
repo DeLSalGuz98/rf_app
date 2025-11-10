@@ -102,7 +102,7 @@ export function ExpenditureForm({ idProyecto = "", title, backPage, defaultData 
       await updateDataExpenditureProjectDB(updatedFields, defaultData.id);
       backPage()
     }else{
-      const payload = idProyecto ? { ...data, id_proyecto: idProyecto } : data;
+      const payload = idProyecto ? { ...data, id_proyecto: idProyecto } : { ...data, id_proyecto: null };
       await saveExpenditure(payload);
       reset(initialData);
     }
