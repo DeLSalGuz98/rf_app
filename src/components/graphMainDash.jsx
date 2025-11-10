@@ -1,33 +1,32 @@
+import { useEffect } from "react";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { getDocsToMainDashDB } from "../querysDB/taxDocument/getDocsToMainDash";
+import { useState } from "react";
 
-const data = [
-  { name: "Ene", "Total gastos": 1200, "Gastos Facturados": 950,  "Total de Ingresos": 3000 },
-  { name: "Feb", "Total gastos": 900,  "Gastos Facturados": 700,  "Total de Ingresos": 2500 },
-  { name: "Mar", "Total gastos": 1400, "Gastos Facturados": 1100, "Total de Ingresos": 3200 },
-  { name: "Abr", "Total gastos": 1000, "Gastos Facturados": 800,  "Total de Ingresos": 2800 },
-  { name: "May", "Total gastos": 1600, "Gastos Facturados": 1300, "Total de Ingresos": 3500 },
-  { name: "Jun", "Total gastos": 1100, "Gastos Facturados": 850,  "Total de Ingresos": 2700 },
-  { name: "Jul", "Total gastos": 1500, "Gastos Facturados": 1200, "Total de Ingresos": 3300 },
-  { name: "Ago", "Total gastos": 1300, "Gastos Facturados": 1000, "Total de Ingresos": 3100 },
-  { name: "Sep", "Total gastos": 1700, "Gastos Facturados": 1400, "Total de Ingresos": 3600 },
-  { name: "Oct", "Total gastos": null, "Gastos Facturados": null, "Total de Ingresos": null },
-  { name: "Nov", "Total gastos": null, "Gastos Facturados": null, "Total de Ingresos": null },
-  { name: "Dic", "Total gastos": null, "Gastos Facturados": null, "Total de Ingresos": null },
-];
 
 export function GraphYearIncomeAndExpenses() {
+  const [data, setData] = useState([]) 
+
+  useEffect(()=>{
+    getDocsLastYear()
+  },[])
+  const getDocsLastYear = async()=>{
+    const res = await getDocsToMainDashDB()
+    setData(res)
+  }
   return (
     <ResponsiveContainer width="100%">
-      <BarChart data={data} barGap={-20}>
+      <BarChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="name" />
+        <XAxis dataKey="mes_declarado" />
         <YAxis />
         <Tooltip />
-
-        <Bar dataKey="Total gastos" fill="#f87171" barSize={40} />
-        <Bar dataKey="Gastos Facturados" fill="#60a5fa" barSize={20} />
-        <Bar dataKey="Total de Ingresos" fill="#34d399" barSize={60} />
-      </BarChart>
+        <Bar dataKey="total_facturas_emitidas" fill="#007bff" barSize={20} />
+        <Bar dataKey="total_facturas_recibidas" fill="#28a745" barSize={20} />
+        <Bar dataKey="total_nc_emitidas" fill="#fd7e14" barSize={20} />
+        <Bar dataKey="total_nc_recibidas" fill="#6f42c1" barSize={20} />
+        <Bar dataKey="total_retenciones_recibidas" fill="#dc3545" barSize={20} />
+      </BarChart>      
     </ResponsiveContainer>
   );
 }
