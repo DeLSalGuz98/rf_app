@@ -1,11 +1,12 @@
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Row, Col } from "react-bootstrap";
-import FormComponent from "../components/formComponent";
-import { BtnSubmitForm, InputField, SelectField } from "../components/inputComponent";
-import { HandleRegister } from "../services/handleRegister";
+import { Button, Col, Form, Row } from "react-bootstrap";
+import { BtnSubmitForm, InputField, SelectField } from "../../components/inputComponent";
+import FormComponent from "../../components/formComponent";
 import { useNavigate } from "react-router-dom";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { HandleRegister } from "../../services/handleRegister";
+import { useState } from "react";
+import { z } from "zod";
 
 const registerSchema = z.object({
   nombre: z.string().min(2, "El nombre es requerido"),
@@ -26,23 +27,19 @@ const registerSchema = z.object({
   permisos: z.enum(["admin", "general"])
 });
 
-export function RegisterEmployeeForm({dataCompany={}, title="Datos del Representante Legal"}) {
+export function NewWorker({title=""}) {
   const navigate = useNavigate()
   const methods = useForm({
       resolver: zodResolver(registerSchema),
     });
 
+  const [addCredentials, setAddCredentials] = useState(false)
+
+  const activateCredentialsForm =(e)=>{
+    setAddCredentials(e.target.checked)
+  }
+
   const onSubmit = async(data) => {
-    const empresa = {
-      ruc: dataCompany.ruc,
-      representante_legal: dataCompany.representante_legal.toLowerCase(),
-      razon_social: dataCompany.razon_social.toLowerCase(),
-      direccion: dataCompany.direccion.toLowerCase(),
-      distrito: dataCompany.distrito.toLowerCase(),
-      provincia: dataCompany.provincia.toLowerCase(),
-      departamento: dataCompany.departamento.toLowerCase(),
-      correo: dataCompany.correo
-    }
     const usuario = {
       id: "",
       username: data.nombre.charAt(0)+data.apellidoPaterno,
@@ -66,8 +63,11 @@ export function RegisterEmployeeForm({dataCompany={}, title="Datos del Represent
       tipo_doc: data.tipoDoc.toLowerCase(),
       tipo_trabajo: data.tipoTrabajo.toLowerCase()
     }
-    await HandleRegister(empresa, usuario, empleado, data.password)
+    await HandleRegister(usuario, empleado, data.password)
     navigate("/")
+  }
+  const backPage =()=>{
+    navigate(-1)
   }
 
   return (
@@ -141,25 +141,36 @@ export function RegisterEmployeeForm({dataCompany={}, title="Datos del Represent
           <Col md={6}>
             <InputField label="Teléfono" name="telf" type="text"  />
           </Col>
-          <Col md={6}>
-            <InputField label="Email" name="email" type="email"  />
-          </Col>
-          <Col md={6}>
-            <InputField label="Contraseña" name="password" type="password"  />
-          </Col>
-          <Col md={6}>
-            <SelectField
-              name="permisos"
-              label="Tipo de permisos"
-              options={[
-                { value: "admin", label: "administrador" },
-                { value: "general", label: "general" },
-              ]}
-            />
-          </Col>
+          <Form.Check // prettier-ignore
+            className="mx-3"
+            type="switch"
+            label="Asignar Credenciales al Trabajador"
+            onChange={activateCredentialsForm}
+          />
+          {
+            addCredentials?<>
+              <Col md={6}>
+                <InputField label="Email" name="email" type="email"  />
+              </Col>
+              <Col md={6}>
+                <InputField label="Contraseña" name="password" type="password"  />
+              </Col>
+              <Col md={6}>
+                <SelectField
+                  name="permisos"
+                  label="Tipo de permisos"
+                  options={[
+                    { value: "admin", label: "administrador" },
+                    { value: "general", label: "general" },
+                  ]}
+                />
+              </Col>
+            </>:<></>
+            }
         </Row>
         <BtnSubmitForm/>
+        <Button variant="outline-secondary" className="w-100 mt-3" onClick={backPage}>Regresar</Button>
       </FormComponent>
     </div>
-  );
+  )
 }

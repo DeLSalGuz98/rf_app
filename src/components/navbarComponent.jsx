@@ -72,6 +72,9 @@ export function NavbarComponent() {
                     <NavDropdown.Item as={Link} to="/rf/registrar-documentos-tributarios">Registrar Nuevo Documento</NavDropdown.Item>
                     <NavDropdown.Item as={Link} to="/rf/lista-documentos-tributarios">Ver todos los Documentos</NavDropdown.Item>
                   </NavDropdown>
+                  <NavDropdown title="Trabajadores" id="offcanvasNavbarDropdown">
+                    <NavDropdown.Item as={Link} to="/rf/registrar-trabajador">Registrar Nuevo Traabajador</NavDropdown.Item>
+                  </NavDropdown>
                 </div>
                 <Button variant="outline-danger" onClick={exitApp}>Cerrar Sesion</Button>
               </Nav>

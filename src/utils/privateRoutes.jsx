@@ -12,6 +12,7 @@ import { NewTaxDocument } from "../pages/newTaxDocument";
 import { ProjectReport } from "../pages/projectReport";
 import { ReportTaxDocument } from "../pages/reportTaxDocument";
 import { ProjectPage } from "../pages/viewProject";
+import { NewWorker } from "../pages/workers/newWorker";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardPage /> },
@@ -28,4 +29,5 @@ export const privateRoutes = [
   { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
   { path: "lista-documentos-tributarios", element: <ListTaxDocumetPage /> },
   { path: "reporte-mensual", element: <ReportTaxDocument /> },
+  { path: "registrar-trabajador", element: <NewWorker /> },
 ];
