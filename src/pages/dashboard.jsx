@@ -82,7 +82,7 @@ export function DasboardPage() {
               }
             </tbody>
           </Table>
-          <p className="fs-5 fw-bold">Preyectos Pendientes</p>
+          <p className="fs-5 fw-bold">Proyectos Pendientes</p>
           <Table  hover className="align-middle text-center border ">
             <thead>
               <tr>
@@ -117,10 +117,7 @@ export function DasboardPage() {
           </Table>
         </Col>        
         <Col className="pt-2" md="3">
-          <div className="d-flex justify-content-between">
-            <p className="fs-5 fw-bold">Personal Activo</p>
-            
-          </div>
+          <p className="fs-5 fw-bold">Personal Activo</p>
           <div className="border p-2">
             <Table  hover className="align-middle text-center ">
               <thead>
