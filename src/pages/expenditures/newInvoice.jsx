@@ -1,13 +1,11 @@
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Row, Col, Container, Button } from "react-bootstrap";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Row, Col, Button } from "react-bootstrap";
 import { useEffect } from "react";
 import { obtenerRazonSocialPorRUC } from "../../utils/rsPorRuc";
-import { saveTaxDocumentDB } from "../../querysDB/taxDocument/saveTaxDocument";
 import { listStateTaxDocument } from "../../utils/listStateTaxDocument";
-import { BtnSubmitForm, InputField, SelectField } from "../../components/inputComponent";
+import { InputField, SelectField } from "../../components/inputComponent";
 import FormComponent from "../../components/formComponent";
 
 
@@ -27,8 +25,6 @@ const docTributarioSchema = z.object({
 });
 
 export function NewInvoice({hideInvoiceForm}) {
-  const {idProyecto} = useParams()
-  const navigate = useNavigate()
   const initData = {
     tipo_doc: "factura recibida",
     fecha_emision:"",
@@ -62,14 +58,9 @@ export function NewInvoice({hideInvoiceForm}) {
       }
   
     const onSubmit = async (data) => {
-      //console.log(data, idProyecto)
-      //await saveTaxDocumentDB(data, idProyecto)
       hideInvoiceForm(data)
       reset(initData)
     };
-    const backLink = ()=>{
-      navigate(-1)
-    }
   return(
     <>
       <FormComponent moreClasses="" methods={methods} onSubmit={onSubmit} title="Registrar Documento Tributario - Proyecto">
@@ -141,8 +132,6 @@ export function NewInvoice({hideInvoiceForm}) {
           </Col>
         </Row>
         <Button type="submit" variant="primary" className="w-100 mt-2 fs-5"><i className="bi bi-floppy2-fill"></i> Guardar Factura</Button>
-        {/* <BtnSubmitForm/> */}
-        {/* <Button className="w-100 mt-2" variant="outline-secondary" onClick={backLink}>Regresar</Button> */}
       </FormComponent>
     </>
   )

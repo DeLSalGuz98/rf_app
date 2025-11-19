@@ -1,20 +1,14 @@
-import { Container, Row, Col, Button } from "react-bootstrap";
+import { Row, Col, Button } from "react-bootstrap";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect} from "react";
 
-
-import { saveExpenditure } from "../../querysDB/gastos/saveExpenditure";
 import FormComponent from "../../components/formComponent";
 import {
-  BtnSubmitForm,
   InputField,
   SelectField,
 } from "../../components/inputComponent";
-import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
-import { GetAllListProjects } from "../../querysDB/projects/getAllProjects";
-import { updateDataExpenditureProjectDB } from "../../querysDB/gastos/updateDataExpenditureProject";
 
 
 // 🧩 Esquema de validación del gasto
@@ -34,23 +28,7 @@ const gastoSchema = z.object({
   id_proyecto: z.string().optional(),
 });
 
-export function NewExpenditureItem({ idProyecto = "", title, backPage, defaultData = {serie:"",nro:"", fecha:""}, addItemInvoice}) {
-  
-  // 🧠 Datos iniciales del formulario
-  /*const initialData = useMemo(() => (
-    Object.keys(defaultData).length === 0
-      ? {
-          cantidad: "",
-          precio_unitario: "",
-          monto_total: 0.00,
-          moneda: "PEN",
-          fecha: new Date().toISOString().split("T")[0],
-          tipo:"directo",
-          categoria:"materiales",
-
-        }
-      : defaultData
-  ), [defaultData]);*/
+export function NewExpenditureItem({ idProyecto = "", title, defaultData = {serie:"",nro:"", fecha:""}, addItemInvoice}) {
 
   const initialData = {
     cantidad: "",
@@ -83,72 +61,16 @@ export function NewExpenditureItem({ idProyecto = "", title, backPage, defaultDa
     setValue("monto_total", total.toFixed(2));
   }, [cantidad, precio_unitario, setValue]);
 
-  // 🔁 Si llegan datos por props (modo edición), actualiza el formulario
-  /*useEffect(() => {
-    if (Object.keys(defaultData).length > 0) reset(defaultData);
-  }, [defaultData, reset]);*/
-
-  // ✅ Función para detectar qué campos cambiaron
-  /*const getUpdatedFields = (newData, originalData) => {
-    const updated = {};
-    for (const key in newData) {
-      if (newData[key] !== originalData[key]) {
-        updated[key] = newData[key];
-      }
-    }
-    return updated;
-  };*/
   // 💾 Guardar gasto
   const onSubmit = async (data) => {
     const payload = idProyecto ? { ...data, id_proyecto: idProyecto } : { ...data, id_proyecto: null };
     addItemInvoice(payload)
-    //await saveExpenditure(payload);
     reset(initialData);
-
-    /*if(editarGasto){
-      const updatedFields = getUpdatedFields(data, initialData);
-      if (Object.keys(updatedFields).length === 0) {
-        alert("No se ha modificado ningún campo.");
-        return;
-      }
-      await updateDataExpenditureProjectDB(updatedFields, defaultData.id);
-      backPage()
-    }else{
-      const payload = idProyecto ? { ...data, id_proyecto: idProyecto } : { ...data, id_proyecto: null };
-      await saveExpenditure(payload);
-      reset(initialData);
-    }*/
-    
   };
-
-  // 📋 Cargar lista de proyectos (solo si no hay idProyecto)
-  /*const [listProjects, setListProjects] = useState([]);
-
-  useEffect(() => {
-    if (idProyecto === "") loadProjects();
-  }, [idProyecto]);
-
-  const loadProjects = async () => {
-    try {
-      const { idEmpresa } = await GetUserNameAndNameCompany();
-      const proyectos = await GetAllListProjects("pendiente", idEmpresa);
-      const formatted = [
-        { value: "", label: "Sin proyecto" },
-        ...proyectos.map((p) => ({
-          value: p.id,
-          label: p.nombre_proyecto,
-        })),
-      ];
-      setListProjects(formatted);
-    } catch (error) {
-      console.error("Error al cargar proyectos:", error);
-    }
-  };*/
 
   return (
     <>
-      <FormComponent methods={methods} onSubmit={handleSubmit(onSubmit)} title={title}>
-        
+      <FormComponent methods={methods} onSubmit={handleSubmit(onSubmit)} title={title}>        
         {/* 🔹 Fila 1 */}
         <Row>
           <Col md={7}><InputField label="Descripción" name="descripcion" /></Col>
@@ -233,19 +155,10 @@ export function NewExpenditureItem({ idProyecto = "", title, backPage, defaultDa
           <Col md={idProyecto === "" ? 3 : 4}>
             <InputField label="Nro. del Comprobante" name="nro_comprobante" />
           </Col>
-          {/*idProyecto === "" && (
-            <Col md={3}>
-              <SelectField name="id_proyecto" label="Enlazar a un Proyecto" options={listProjects} />
-            </Col>
-          )*/}
         </Row>
 
         {/* 🔹 Botones */}
         <Button className="w-100 mt-1" type="submit"><i className="bi bi-plus-circle"></i> Agregar</Button>
-        {/* <Button onClick={backPage} variant="secondary" className="w-100 mt-2">
-        <BtnSubmitForm />
-          Regresar
-        </Button> */}
       </FormComponent>
     </>
   );
