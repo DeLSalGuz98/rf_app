@@ -15,7 +15,7 @@ export async function saveTaxDocumentDB(taxDocData = {}, idProject="") {
   if(error){
     console.error(error)
     toast.error("Error. No se pudo guardar los datos")
-    return null
+    throw new Error(`Fallo al guardar en DB: ${error.message || JSON.stringify(error)}`);;    
   }
   toast.success("Datos guardados correctamente")
 }

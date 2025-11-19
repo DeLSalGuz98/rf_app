@@ -3,6 +3,7 @@ import { DasboardPage } from "../pages/dashboard";
 import { EditExpenditureProyect } from "../pages/editExpenditureProject";
 import { EditProjectData } from "../pages/editProjectData";
 import { EditTaxDocument } from "../pages/editTaxDocument";
+import { NewExpensePage } from "../pages/expenditures/newExpense";
 import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
 import { NewExpenditure } from "../pages/newExpenditure";
@@ -21,7 +22,7 @@ export const privateRoutes = [
   { path: "proyecto/:idProyecto", element: <ProjectPage /> },
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
-  { path: "registrar-gastos-proyecto/:idProyecto", element: <NewExpenditureProject /> },
+  { path: "registrar-gastos-proyecto/:idProyecto", element: <NewExpensePage/>/*<NewExpenditureProject />*/ },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
