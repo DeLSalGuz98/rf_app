@@ -3,7 +3,7 @@ import { DasboardPage } from "../pages/dashboard";
 import { EditExpenditureProyect } from "../pages/editExpenditureProject";
 import { EditProjectData } from "../pages/editProjectData";
 import { EditTaxDocument } from "../pages/editTaxDocument";
-import { NewExpensePage } from "../pages/expenditures/newExpense";
+import { NewExpensePage } from "../pages/expendituresProject/newExpense";
 import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
 import { NewExpenditure } from "../pages/newExpenditure";
