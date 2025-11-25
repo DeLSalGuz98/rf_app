@@ -58,7 +58,7 @@ function estructurarDatos(data){
             acumulador[mes].factEmitidas += monto;
         }else if (tipoDoc === 'nc emitido') {
             acumulador[mes].ncEmitidas += monto;
-        }else if (tipoDoc === 'nc recibida') {
+        }else if (tipoDoc === 'nc recibido') {
             acumulador[mes].ncRecibidas += monto;
         }
         else if (tipoDoc === 'retencion recibido') {

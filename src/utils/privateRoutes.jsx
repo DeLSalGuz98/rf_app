@@ -6,7 +6,7 @@ import { EditTaxDocument } from "../pages/editTaxDocument";
 import { NewExpensePage } from "../pages/expendituresProject/newExpense";
 import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
-import { NewExpenditure } from "../pages/newExpenditure";
+//import { NewExpenditure } from "../pages/newExpenditure";
 import { NewExpenditureProject } from "../pages/newExpenditureProject";
 import { CreateNewProject } from "../pages/newProject";
 import { NewTaxDocument } from "../pages/newTaxDocument";
@@ -26,7 +26,7 @@ export const privateRoutes = [
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
-  { path: "registrar-gastos", element: <NewExpenditure /> },
+  { path: "registrar-gastos", element: <NewExpensePage/> /*<NewExpenditure />*/ },
   { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
   { path: "lista-documentos-tributarios", element: <ListTaxDocumetPage /> },
   { path: "reporte-mensual", element: <ReportTaxDocument /> },
