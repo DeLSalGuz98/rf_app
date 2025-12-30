@@ -97,7 +97,7 @@ export function NewDocumentProject() {
             <InputField label="Razón Social" name="razon_social" />
           </Col>
           <Col md={typeCoin==="USD"?4:6}>
-            <InputField label="Monto" name="monto" type="number" step="0.01" />
+            <InputField label="Monto" name="monto" type="number" step="0.0001" />
           </Col>
           <Col md={typeCoin==="USD"?4:6}>
             <SelectField
@@ -112,7 +112,7 @@ export function NewDocumentProject() {
           {
             typeCoin==="USD"?
             <Col md={4}>
-              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.01" />
+              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.0001" />
             </Col>:<></>
           }
           <Col md={6}>

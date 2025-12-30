@@ -188,7 +188,7 @@ export function ExpenditureForm({ idProyecto = "", title, backPage, defaultData 
         {/* 🔹 Fila 3 */}
         <Row>
           <Col md={moneda === "PEN" ? 4 : 3}>
-            <InputField label="Precio Unitario" name="precio_unitario" type="number" step="0.01" />
+            <InputField label="Precio Unitario" name="precio_unitario" type="number" step="0.0001" />
           </Col>
           <Col md={moneda === "PEN" ? 4 : 3}>
             <InputField label="Monto Total" name="monto_total" type="number" readOnly />

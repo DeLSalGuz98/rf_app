@@ -183,7 +183,7 @@ export function NewExpenditureItem({
               label="Precio Unitario" 
               name="precio_unitario" 
               type="number" 
-              step="0.01" 
+              step="0.0001" 
             />
           </Col>
           

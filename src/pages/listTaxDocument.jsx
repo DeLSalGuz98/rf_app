@@ -235,7 +235,8 @@ export function ListTaxDocumetPage() {
                   ruc:e.ruc,
                   razon_social:e.razon_social,
                   tipo_cambio:e.tipo_cambio,
-                  monto:e.monto
+                  monto:e.monto,
+                  tipo_doc:e.tipo_doc
                 }
               let rowList = <tr key={e.id}>
                 <td>{frmtFecha(e.fecha_emision)}</td>

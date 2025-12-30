@@ -22,7 +22,6 @@ export function DasboardPage() {
   const getAllProjects = async ()=>{
       const resOne = await GetUserNameAndNameCompany()
       const resTwo = await GetAllListProjects("pendiente", resOne.idEmpresa)
-      console.log(resTwo)
       setListProjects(resTwo)
     }
   return<>
@@ -36,7 +35,7 @@ export function DasboardPage() {
             <GraphYearIncomeAndExpenses></GraphYearIncomeAndExpenses>
           </div>
         </Col>
-        <Col className="p-2" md="9">
+        <Col className="p-2 overflow-scroll" lg="9">
           <p className="fs-5 fw-bold">Facturas Pendientes de pago</p>
           <Table  hover className="align-middle text-center border ">
             <thead>
@@ -63,17 +62,17 @@ export function DasboardPage() {
                   const dias = Math.ceil(diferencia / (1000 * 60 * 60 * 24));
                   const estaVencido = dias >= 3 ? false : true
                   return (<tr key={e.id}>
-                    <td className="text-nowrap">{e.proyectos.nombre_proyecto}</td>
-                    <td>{e.proyectos.descripcion_proyecto}</td>
-                    <td>{e.proyectos.unidad_ejecutora}</td>
-                    <td>{e.proyectos.exp_siaf}</td>
+                    <td className="text-nowrap">{e.proyectos?.nombre_proyecto}</td>
+                    <td>{e.proyectos?.descripcion_proyecto}</td>
+                    <td>{e.proyectos?.unidad_ejecutora}</td>
+                    <td>{e.proyectos?.exp_siaf}</td>
                     <td className="text-nowrap">{e.fecha_emision}</td>
                     <td className={`text-nowrap ${estaVencido?"bg-danger-subtle":""}`}>{e.fecha_vencimiento}</td>
                     <td className="text-nowrap">S/. {Number(e.monto).toFixed(2)}</td>
                     <td className="text-nowrap">{SetCapitalLetter(e.estado_comprobante)}</td>
                     <td>
                       <div className="d-flex gap-1">
-                        <a className="btn btn-primary" href={`https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx`} target="_blank"><i class="bi bi-display"></i></a>
+                        <a className="btn btn-primary" href={`https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx`} target="_blank"><i className="bi bi-display"></i></a>
                         <Link className="btn btn-secondary" to={`/rf/editar-documento/${e.id}`} ><i className="bi bi-pen-fill"></i></Link>
                       </div>
                     </td>
@@ -116,7 +115,7 @@ export function DasboardPage() {
             </tbody>
           </Table>
         </Col>        
-        <Col className="pt-2" md="3">
+        <Col className="pt-2" lg="3">
           <p className="fs-5 fw-bold">Personal Activo</p>
           <div className="border p-2">
             <Table  hover className="align-middle text-center ">
@@ -129,7 +128,7 @@ export function DasboardPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td className="text-nowrap fs-4 text-success fw-bold"><i class="bi bi-person-check"></i></td>
+                  <td className="text-nowrap fs-4 text-success fw-bold"><i className="bi bi-person-check"></i></td>
                   <td>{SetCapitalLetter("Daniel Chipa")}</td>
                   <td>
                     <div className="d-flex justify-content-center">
@@ -138,7 +137,7 @@ export function DasboardPage() {
                   </td>
                 </tr>
                 <tr>
-                  <td className="text-nowrap fs-4 text-success fw-bold"><i class="bi bi-person-check"></i></td>
+                  <td className="text-nowrap fs-4 text-success fw-bold"><i className="bi bi-person-check"></i></td>
                   <td>{SetCapitalLetter("Cesar Cahuascancco")}</td>
                   <td>
                     <div className="d-flex justify-content-center">
@@ -147,7 +146,7 @@ export function DasboardPage() {
                   </td>
                 </tr>
                 <tr>
-                  <td className="text-nowrap fs-4 text-danger fw-bold"><i class="bi bi-person-fill-x"></i></td>
+                  <td className="text-nowrap fs-4 text-danger fw-bold"><i className="bi bi-person-fill-x"></i></td>
                   <td>{SetCapitalLetter("Alan Wilson")}</td>
                   <td>
                     <div className="d-flex justify-content-center">
@@ -157,7 +156,7 @@ export function DasboardPage() {
                 </tr>
               </tbody>
             </Table>
-            <Button className="w-100" variant="secondary" onClick={()=>{alert("Esta opcion aun no esta disponible")}}><i class="bi bi-download"></i> Descargar lista (SCTR)</Button>
+            <Button className="w-100" variant="secondary" onClick={()=>{alert("Esta opcion aun no esta disponible")}}><i className="bi bi-download"></i> Descargar lista (SCTR)</Button>
           </div>
         </Col>
       </Row>

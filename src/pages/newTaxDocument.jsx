@@ -106,7 +106,7 @@ export function NewTaxDocument(){
           {
             moneda!=="PEN"?
             <Col md={4}>
-              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.01" />
+              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.0001" />
             </Col>:<></>
           }
           <Col md={6}>

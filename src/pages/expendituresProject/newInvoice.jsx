@@ -158,7 +158,7 @@ export function NewInvoice({ hideInvoiceForm, isProjectContext, idProyecto }) {
 
           {/* INFORMACIÓN MONETARIA */}
           <Col md={typeCoin === "USD" ? 4 : 6}>
-            <InputField label="Monto" name="monto" type="number" step="0.01" />
+            <InputField label="Monto" name="monto" type="number" step="0.0001" />
           </Col>
           <Col md={typeCoin === "USD" ? 4 : 6}>
             <SelectField
@@ -174,7 +174,7 @@ export function NewInvoice({ hideInvoiceForm, isProjectContext, idProyecto }) {
           {/* TIPO DE CAMBIO (SOLO PARA DÓLARES) */}
           {typeCoin === "USD" ? (
             <Col md={4}>
-              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.01" />
+              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.0001" />
             </Col>
           ) : <></>}
 
