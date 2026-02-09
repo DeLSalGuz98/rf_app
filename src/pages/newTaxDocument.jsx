@@ -8,6 +8,7 @@ import { saveTaxDocumentDB } from "../querysDB/taxDocument/saveTaxDocument";
 import { useEffect } from "react";
 import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
 import { listStateTaxDocument } from "../utils/listStateTaxDocument";
+import { Link } from "react-router-dom";
 
 const docTributarioSchema = z.object({
   tipo_doc: z.string().min(1, "El tipo de documento es requerido"),
@@ -125,6 +126,7 @@ export function NewTaxDocument(){
           </Col>
         </Row>
         <BtnSubmitForm />
+        <Link className="btn btn-outline-secondary w-100 mt-2" to={-1}>Regresar</Link>
       </FormComponent>
     </Container>
   )

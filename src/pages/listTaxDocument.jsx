@@ -75,7 +75,11 @@ export function ListTaxDocumetPage() {
     let total = 0
     listTaxDocument.map((e)=>{
       if(e.tipo_doc === filtrosDocs.tipo_doc){
-        total = total + e.monto
+        if(e.moneda==="USD"){
+          total = total + (e.monto*e.tipo_cambio)
+        }else{
+          total = total + e.monto
+        }
       }
     })
     return total
@@ -203,6 +207,9 @@ export function ListTaxDocumetPage() {
           </Button>
           <Link className="btn btn-secondary" to={`/rf/reporte-mensual`}>
             <i className="bi bi-file-earmark-spreadsheet"></i> Generar Reporte
+          </Link>
+          <Link className="btn btn-primary" to={`/rf/registrar-documentos-tributarios`}>
+            <i className="bi bi-plus-circle"></i> Agregar Nuevo Documento
           </Link>
         </div>
       </div>

@@ -36,7 +36,7 @@ export function NavbarComponent() {
     <>
       <Navbar bg="primary" data-bs-theme="dark" expand={false} className=" mb-3">
         <Container fluid>
-          <Navbar.Brand href="#" className="text-white fw-bold me-3">{nameCompany}</Navbar.Brand>
+          <Navbar.Brand href="/rf/dashboard" className="text-white fw-bold me-3">{nameCompany}</Navbar.Brand>
           <div className="px-3 py-2 rounded-pill shadow-sm fw-bold text-white me-3" 
             style={{
               background: "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)",
