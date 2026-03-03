@@ -1,4 +1,5 @@
 import { AllProjects } from "../pages/allProjects";
+import { DashPricesPage } from "../pages/consultarPrecios/dashPrices";
 import { DasboardPage } from "../pages/dashboard";
 import { EditExpenditureProyect } from "../pages/editExpenditureProject";
 import { EditProjectData } from "../pages/editProjectData";
@@ -31,4 +32,5 @@ export const privateRoutes = [
   { path: "lista-documentos-tributarios", element: <ListTaxDocumetPage /> },
   { path: "reporte-mensual", element: <ReportTaxDocument /> },
   { path: "registrar-trabajador", element: <NewWorker /> },
+  { path: "consultar-precios", element: <DashPricesPage /> },
 ];

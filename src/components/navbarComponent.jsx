@@ -75,6 +75,7 @@ export function NavbarComponent() {
                   <NavDropdown title="Trabajadores" id="offcanvasNavbarDropdown">
                     <NavDropdown.Item as={Link} to="/rf/registrar-trabajador">Registrar Nuevo Traabajador</NavDropdown.Item>
                   </NavDropdown>
+                  <Nav.Link as={Link} to="/rf/consultar-precios">Consultar Precios</Nav.Link>
                 </div>
                 <Button variant="outline-danger" onClick={exitApp}>Cerrar Sesion</Button>
               </Nav>
