@@ -8,7 +8,6 @@ import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
 //import { NewExpenditure } from "../pages/newExpenditure";
 import { NewExpenditureProject } from "../pages/newExpenditureProject";
-import { CreateNewProject } from "../pages/newProject";
 import { NewTaxDocument } from "../pages/newTaxDocument";
 import { ProjectReport } from "../pages/projectReport";
 import { ReportTaxDocument } from "../pages/reportTaxDocument";
@@ -17,10 +16,12 @@ import { NewWorker } from "../pages/workers/newWorker";
 
 //NUEVAS RUTAS
 import { DasboardHomePage } from "../pages/dashboardHome/dashboard";
+import { NuevoProyecto } from "../pages/proyecto/nuevoProyecto";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
-  { path: "crear-nuevo-proyecto", element: <CreateNewProject /> },
+  { path: "crear-nuevo-proyecto", element: <NuevoProyecto/> },
+
   { path: "todos-los-proyectos", element: <AllProjects /> },
   { path: "proyecto/:idProyecto", element: <ProjectPage /> },
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },

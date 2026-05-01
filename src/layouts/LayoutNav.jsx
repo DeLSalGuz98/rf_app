@@ -12,12 +12,12 @@ export function LayoutNavApp() {
       <Row className="g-0">
         
         {/* Sidebar escritorio */}
-        <Col lg={3} className="d-none d-lg-block">
+        <Col lg={2} className="d-none d-lg-block">
           <Sidebar/>
         </Col>
 
         {/* Contenido */}
-        <Col xs={12} lg={9} className="p-3">
+        <Col xs={12} lg={10} className="px-4 pt-5">
           <Outlet />
         </Col>
 
@@ -25,23 +25,3 @@ export function LayoutNavApp() {
     </>
   );
 }
-
-// import { Container, Row, Col } from "react-bootstrap";
-// import { NavbarComponent } from "../components/navbarComponent";
-// import { Outlet } from "react-router-dom";
-
-// import {Sidebar} from "../components/sideBar"
-
-// export function LayoutNavApp(){
-//   return<>
-//     {/* <NavbarComponent/> */}
-//     <Row className="w-100">
-//       <Col className="position-relative top-0" md="3">
-//         <Sidebar></Sidebar>
-//       </Col>
-//       <Col className="" md="9">
-//         <Outlet/>
-//       </Col>
-//     </Row>
-//   </>
-// }
