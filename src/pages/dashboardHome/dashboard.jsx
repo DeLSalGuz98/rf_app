@@ -24,11 +24,11 @@ export function DasboardHomePage(){
       <Col className="p-2 overflow-scroll" lg="9">
         <ProyectosPendientes></ProyectosPendientes>
       </Col>
+      {/*vista Personal activo*/}
       <Col className="pt-2" lg="3">
         <PersonalActivo></PersonalActivo>          
       </Col>
     </Row>
-  {/*vista Personal activo*/}
 
   </Container>
 }

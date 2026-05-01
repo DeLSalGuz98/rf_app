@@ -1,6 +1,5 @@
 import { AllProjects } from "../pages/allProjects";
 import { DashPricesPage } from "../pages/consultarPrecios/dashPrices";
-import { DasboardPage } from "../pages/dashboard";
 import { EditExpenditureProyect } from "../pages/editExpenditureProject";
 import { EditProjectData } from "../pages/editProjectData";
 import { EditTaxDocument } from "../pages/editTaxDocument";
