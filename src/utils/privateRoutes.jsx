@@ -1,4 +1,3 @@
-import { AllProjects } from "../pages/allProjects";
 import { DashPricesPage } from "../pages/consultarPrecios/dashPrices";
 import { EditExpenditureProyect } from "../pages/editExpenditureProject";
 import { EditProjectData } from "../pages/editProjectData";
@@ -17,12 +16,13 @@ import { NewWorker } from "../pages/workers/newWorker";
 //NUEVAS RUTAS
 import { DasboardHomePage } from "../pages/dashboardHome/dashboard";
 import { NuevoProyecto } from "../pages/proyecto/nuevoProyecto";
+import { AllProjects } from "../pages/proyecto/listaProyectos";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
   { path: "crear-nuevo-proyecto", element: <NuevoProyecto/> },
-
   { path: "todos-los-proyectos", element: <AllProjects /> },
+
   { path: "proyecto/:idProyecto", element: <ProjectPage /> },
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
