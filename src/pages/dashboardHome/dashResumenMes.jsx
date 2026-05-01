@@ -3,6 +3,8 @@ import { Card, Row, Col } from "react-bootstrap";
 import "bootstrap-icons/font/bootstrap-icons.css";
 import { useState } from "react";
 import { useEffect } from "react";
+import { format } from "date-fns";
+import { es } from "date-fns/locale";
 
 // Funciones
 import { getMonthDataDB } from "../../querysDB/dashInfo/getMonthData";
@@ -24,14 +26,12 @@ export const MonthlySummary = () => {
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, "0");
-
+    
     return `${year}-${month}`;
   };
   const getMonthDataArray = async()=>{
     const res = await getMonthDataDB(getCurrentYearMonth())
-    console.log(getResumenEstadoDelMes(res))
-    setDataMonth(getResumenEstadoDelMes(res))
-    
+    setDataMonth(getResumenEstadoDelMes(res))    
   }
   const getResumenEstadoDelMes = (facturas = []) => {
     // Mapeo de tus valores actuales a claves internas
@@ -97,10 +97,17 @@ export const MonthlySummary = () => {
       porcentajeNeto,
     }
   }
+  const getTituloResumenMes = () => {
+    const mes = format(new Date(), "MMMM", { locale: es });
+    
+    // Capitalizar primera letra
+    const mesCapitalizado = mes.charAt(0).toUpperCase() + mes.slice(1);
+
+    return `Resumen del Mes de ${mesCapitalizado}`;
+  };
   return (
     <div className="mb-4">
-      <h4 className="mb-3">Resumen del Mes</h4>
-
+      <h4 className="mb-3">{getTituloResumenMes()}</h4>
       <Row className="g-3">
         {/* Facturas Emitidas */}
         <Col md={3}>

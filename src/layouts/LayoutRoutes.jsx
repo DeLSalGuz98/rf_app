@@ -7,7 +7,6 @@ import { LayoutNavApp } from './LayoutNav'
 import { privateRoutes } from '../utils/privateRoutes'
 export function Layout() {
   return<div>
-    <div className="">
       <Routes>
         <Route path="/" element={<RedirectRoutesUserLogged><LandingPage /></RedirectRoutesUserLogged>} />
         <Route path="/login" element={<RedirectRoutesUserLogged><LoginPage /></RedirectRoutesUserLogged>} />
@@ -23,6 +22,5 @@ export function Layout() {
           ))}
         </Route>
       </Routes>
-    </div>
   </div>
 }

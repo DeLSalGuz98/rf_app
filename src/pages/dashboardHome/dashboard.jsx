@@ -7,7 +7,7 @@ import { ProyectosPendientes } from "./dashProyectosPendientes";
 import { PersonalActivo } from "./dashPersonalActivo";
 
 export function DasboardHomePage(){
-  return<Container>
+  return<>
     <Row>
       {/*vista - estado del mes*/}
       <Col className="p-2" md="12">
@@ -30,5 +30,5 @@ export function DasboardHomePage(){
       </Col>
     </Row>
 
-  </Container>
+  </>
 }
