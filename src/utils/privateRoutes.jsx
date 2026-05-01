@@ -16,8 +16,11 @@ import { ReportTaxDocument } from "../pages/reportTaxDocument";
 import { ProjectPage } from "../pages/viewProject";
 import { NewWorker } from "../pages/workers/newWorker";
 
+//NUEVAS RUTAS
+import { DasboardHomePage } from "../pages/dashboardHome/dashboard";
+
 export const privateRoutes = [
-  { path: "dashboard", element: <DasboardPage /> },
+  { path: "dashboard", element: <DasboardHomePage /> },
   { path: "crear-nuevo-proyecto", element: <CreateNewProject /> },
   { path: "todos-los-proyectos", element: <AllProjects /> },
   { path: "proyecto/:idProyecto", element: <ProjectPage /> },
