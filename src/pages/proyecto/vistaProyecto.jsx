@@ -20,7 +20,7 @@ import { getListExpenditureProject } from "../../querysDB/gastos/listExpenditure
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
 
 // Componentes
-import { TableExpenditure } from "../../components/tableExpenditureProject";
+import { TableExpenditure } from "./componentsVistaProyecto/tablaGastosProyecto";
 import { GraphExpenditureProject } from "../../components/graphExpenditureProject";
 
 export function ProjectPage() {
