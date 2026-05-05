@@ -5,28 +5,27 @@ import { EditTaxDocument } from "../pages/editTaxDocument";
 import { NewExpensePage } from "../pages/expendituresProject/newExpense";
 import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
-//import { NewExpenditure } from "../pages/newExpenditure";
 import { NewExpenditureProject } from "../pages/newExpenditureProject";
 import { NewTaxDocument } from "../pages/newTaxDocument";
 import { ProjectReport } from "../pages/projectReport";
 import { ReportTaxDocument } from "../pages/reportTaxDocument";
-import { ProjectPage } from "../pages/viewProject";
 import { NewWorker } from "../pages/workers/newWorker";
 
 //NUEVAS RUTAS
 import { DasboardHomePage } from "../pages/dashboardHome/dashboard";
 import { NuevoProyecto } from "../pages/proyecto/nuevoProyecto";
 import { AllProjects } from "../pages/proyecto/listaProyectos";
+import { ProjectPage } from "../pages/proyecto/vistaProyecto";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
   { path: "crear-nuevo-proyecto", element: <NuevoProyecto/> },
   { path: "todos-los-proyectos", element: <AllProjects /> },
-
   { path: "proyecto/:idProyecto", element: <ProjectPage /> },
+
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
-  { path: "registrar-gastos-proyecto/:idProyecto", element: <NewExpensePage/>/*<NewExpenditureProject />*/ },
+  { path: "registrar-gastos-proyecto/:idProyecto", element: <NewExpensePage/>},
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
