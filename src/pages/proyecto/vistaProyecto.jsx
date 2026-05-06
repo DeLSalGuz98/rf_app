@@ -22,6 +22,7 @@ import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
 // Componentes
 import { TableExpenditure } from "./componentsVistaProyecto/tablaGastosProyecto";
 import { GraphExpenditureProject } from "../../components/graphExpenditureProject";
+import { DataProyectComponent } from "./componentsVistaProyecto/datosGeneralesProyecto";
 
 export function ProjectPage() {
   const { idProyecto } = useParams();
@@ -101,12 +102,6 @@ export function ProjectPage() {
     }
     setShow(false);
   };
-
-  const formatCurrency = (value) =>
-    new Intl.NumberFormat("es-PE", {
-      style: "currency",
-      currency: "PEN",
-    }).format(value);
 
   if (loading) {
     return (
@@ -189,91 +184,8 @@ export function ProjectPage() {
         </Card.Body>
       </Card>
 
-      {/* MÉTRICAS */}
-      <Row className="mb-3">
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <small>Presupuesto</small>
-            <h5>{formatCurrency(proyecto.monto_ofertado)}</h5>
-          </Card>
-        </Col>
-
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <small>Invertido</small>
-            <h5>{formatCurrency(proyecto.total_expenditure)}</h5>
-          </Card>
-        </Col>
-
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <small>Diferencia</small>
-            <h5 className={proyecto.dif < 0 ? "text-danger" : "text-success"}>
-              {formatCurrency(proyecto.dif)}
-            </h5>
-          </Card>
-        </Col>
-
-        <Col md={3}>
-          <Card className="p-3 shadow-sm">
-            <small>Margen restante</small>
-            <h5>{proyecto.porcentaje.toFixed(2)}%</h5>
-            <small className="text-muted">% disponible del presupuesto</small>
-          </Card>
-        </Col>
-      </Row>
-
-      {/* INFO DETALLADA */}
-      <Row>
-
-        {/* CLIENTE */}
-        <Col md={4} className="p-2">
-          <Card className="h-100 shadow-sm">
-            <Card.Header><strong>Cliente</strong></Card.Header>
-            <Card.Body>
-
-              {proyecto.ruc_cliente && <p><strong>RUC:</strong> {proyecto.ruc_cliente}</p>}
-              <p><strong>Razón Social:</strong> {proyecto.rs_cliente}</p>
-
-              {proyecto.unidad_ejecutora && (
-                <p><strong>Unidad Ejecutora:</strong> {proyecto.unidad_ejecutora}</p>
-              )}
-
-              <p>
-                <strong>Dirección:</strong><br />
-                {proyecto.direccion},<br />
-                {proyecto.distrito?.toUpperCase()}, {proyecto.provincia?.toUpperCase()}<br />
-                {proyecto.departamento?.toUpperCase()}
-              </p>
-
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* FECHAS (RECUPERADO PLAZO) */}
-        <Col md={4} className="p-2">
-          <Card className="h-100 shadow-sm">
-            <Card.Header><strong>Fechas</strong></Card.Header>
-            <Card.Body>
-              <p><strong>Inicio:</strong> {proyecto.fecha_inicio}</p>
-              <p><strong>Plazo:</strong> {proyecto.plazo_dias} días</p>
-              <p><strong>Fin:</strong> {proyecto.fecha_fin}</p>
-            </Card.Body>
-          </Card>
-        </Col>
-
-        {/* FACTURACIÓN */}
-        <Col md={4} className="p-2">
-          <Card className="h-100 shadow-sm">
-            <Card.Header><strong>Facturación</strong></Card.Header>
-            <Card.Body>
-              <p><strong>Facturado:</strong> {formatCurrency(proyecto.facturado)}</p>
-              <p><strong>No facturado:</strong> {formatCurrency(proyecto.noFacturado)}</p>
-            </Card.Body>
-          </Card>
-        </Col>
-
-      </Row>
+      {/* DATA GENERAL PROYECTO */}
+      <DataProyectComponent proyecto={proyecto} />
 
       {/* TABLA */}
       <Card className="mt-3 shadow-sm">
