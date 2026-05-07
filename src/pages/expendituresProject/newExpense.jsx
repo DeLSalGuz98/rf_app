@@ -1,254 +1,600 @@
 /**
- * Componente para la creación de nuevos gastos/proyectos
- * Permite registrar gastos con o sin comprobante fiscal asociado
- * @component
+ * NUEVO FLUJO DE REGISTRO DE GASTOS
+ * --------------------------------
+ * OBJETIVO:
+ * - Convertir el registro en un flujo guiado
+ * - Mejorar UX sin romper la lógica existente
+ * - Mantener RHF + Zod + Queries actuales
+ * - Separar visualmente el proceso
  */
-import { useState } from "react"
-import { Button, Card, Col, Container, Form, Row, Table } from "react-bootstrap"
-import { NewInvoice } from "./newInvoice"
-import { NewExpenditureItem } from "./newItemExpense"
-import { useNavigate, useParams } from "react-router-dom"
-import { saveTaxDocumentDB } from "../../querysDB/taxDocument/saveTaxDocument"
-import { saveBolckExpenditureDB } from "../../querysDB/gastos/saveExpenditure"
 
-export function NewExpensePage(){
-  // Obtener parámetros de la URL y hook de navegación
-  const {idProyecto} = useParams()
-  const navigate = useNavigate()
-  
-  // Estados del componente
-  const [addInvoiceIsTrue, setAddInvoiceIsTrue] = useState(false) // Controla si se añade comprobante
-  const [hideInvoice, setHideInvoice] = useState(false) // Controla visibilidad del formulario de comprobante
-  const [dataInvoice, setDataInvoice] = useState({}) // Datos del comprobante fiscal
-  const [dataItemInvoice, setDataItemInvoice] = useState([]) // Lista de ítems de gasto
+import { useState } from "react";
+import {
+  Button,
+  Card,
+  Col,
+  Container,
+  Row,
+  Table,
+  Badge,
+  Alert
+} from "react-bootstrap";
 
-  // Determinar si estamos en contexto de proyecto
-  const isProjectContext = !!idProyecto // Convierte a booleano
+import { useNavigate, useParams } from "react-router-dom";
 
-  /**
-   * Maneja el cambio en el switch para añadir comprobante
-   * @param {Object} e - Evento del checkbox
-   */
-  const addInvoiceDoc = (e)=>{
-    setAddInvoiceIsTrue(e.target.checked)
-  }
+// COMPONENTES
+import { NewInvoice } from "./newInvoice";
+import { NewExpenditureItem } from "./newItemExpense";
+
+// QUERIES
+import { saveTaxDocumentDB } from "../../querysDB/taxDocument/saveTaxDocument";
+import { saveBolckExpenditureDB } from "../../querysDB/gastos/saveExpenditure";
+
+export function NewExpensePage() {
+
+  const { idProyecto } = useParams();
+  const navigate = useNavigate();
 
   /**
-   * Oculta el formulario de comprobante y guarda los datos
-   * @param {Object} data - Datos del comprobante fiscal
+   * =========================
+   * ESTADOS PRINCIPALES
+   * =========================
    */
-  const hideInvoiceForm = (data)=>{
-    setHideInvoice(true)
-    setDataInvoice(data)
-  }
+
+  // Flujo actual
+  const [currentStep, setCurrentStep] = useState("type");
+
+  // ¿Tiene comprobante?
+  const [hasInvoice, setHasInvoice] = useState(null);
+
+  // Datos factura
+  const [dataInvoice, setDataInvoice] = useState({});
+
+  // Lista items
+  const [dataItemInvoice, setDataItemInvoice] = useState([]);
+
+  // Loading guardado
+  const [saving, setSaving] = useState(false);
 
   /**
-   * Agrega un nuevo ítem de gasto a la lista
-   * @param {Object} dataItem - Datos del ítem de gasto
+   * =========================
+   * HELPERS
+   * =========================
    */
+
+  const isProjectContext = !!idProyecto;
+
+  const formatCurrency = (value) =>
+    new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency: "PEN",
+    }).format(value || 0);
+
+  /**
+   * =========================
+   * FLUJO
+   * =========================
+   */
+
+  // PASO 1
+  const handleSelectInvoiceOption = (value) => {
+
+    setHasInvoice(value);
+
+    if (value) {
+      setCurrentStep("invoice");
+    } else {
+      setCurrentStep("items");
+    }
+  };
+
+  // PASO 2
+  const handleInvoiceSaved = (data) => {
+
+    setDataInvoice(data);
+
+    // pasar automáticamente a items
+    setCurrentStep("items");
+  };
+
+  // PASO 3
   const addItemInvoice = (dataItem) => {
-    setDataItemInvoice(prevItems => {
-      const newItems = [...prevItems, dataItem];
-      return newItems;
-    })
-  }
 
-  /**
-   * Elimina un ítem de gasto de la lista por índice
-   * @param {number} index - Índice del ítem a eliminar
-   */
+    setDataItemInvoice(prev => [...prev, dataItem]);
+  };
+
   const deleteItemInvoice = (index) => {
-      setDataItemInvoice(prevItems => {
-        const newItems = [...prevItems];
-        newItems.splice(index, 1);
-        return newItems;
-      });
+
+    setDataItemInvoice(prev => {
+      const newItems = [...prev];
+      newItems.splice(index, 1);
+      return newItems;
+    });
   };
 
   /**
-   * Navega a la página anterior
+   * =========================
+   * GUARDAR TODO
+   * =========================
    */
-  const backPage = ()=>{
-      navigate(-1)
-    }
 
-  /**
-   * Guarda todos los datos: comprobante e ítems de gasto
-   * Realiza las operaciones en la base de datos
-   */
-  const saveAllItems = async ()=>{
-    try{
-      // Guardar comprobante fiscal si está habilitado
-      if(addInvoiceIsTrue){
-        // Solo pasar idProyecto si existe
-        const invoiceData = isProjectContext 
-          ? {...dataInvoice, id_proyecto: idProyecto}
-          : dataInvoice
-        await saveTaxDocumentDB(invoiceData)
+  const saveAllItems = async () => {
+
+    try {
+
+      setSaving(true);
+
+      // Guardar comprobante
+      if (hasInvoice && Object.keys(dataInvoice).length > 0) {
+
+        const invoiceData = isProjectContext
+          ? { ...dataInvoice, id_proyecto: idProyecto }
+          : dataInvoice;
+
+        await saveTaxDocumentDB(invoiceData);
       }
 
-      // Preparar items con o sin proyecto
+      // Guardar items
       const itemsToSave = dataItemInvoice.map(item => {
-        return isProjectContext 
-          ? {...item, id_proyecto: idProyecto}
-          : item // Sin campo id_proyecto
-      })
 
+        return isProjectContext
+          ? { ...item, id_proyecto: idProyecto }
+          : item;
+      });
 
-      // Guardar bloque de gastos
-      await saveBolckExpenditureDB(itemsToSave)
-      navigate(-1)
-    }catch (error){
-      console.log("Se capturó el error lanzado. Mensaje:", error.message);
+      await saveBolckExpenditureDB(itemsToSave);
+
+      navigate(-1);
+
+    } catch (error) {
+
+      console.error(error);
+
+    } finally {
+
+      setSaving(false);
     }
-  }
+  };
 
-  return(
-    <Container fluid className="px-5">
-      {/* HEADER CON BOTÓN REGRESAR Y SWITCH */}
-      <Form className="fs-5 mb-3 d-flex mb-2 gap-3 align-items-center">
-        <Button variant="secondary" onClick={backPage}>
-          <i class="bi bi-arrow-left"></i> Regresar
+  /**
+   * =========================
+   * TOTAL
+   * =========================
+   */
+
+  const totalAmount = dataItemInvoice.reduce(
+    (sum, item) => sum + parseFloat(item.monto_total || 0),
+    0
+  );
+
+  return (
+    <Container fluid className="py-4 px-4">
+
+      {/* ===================================================== */}
+      {/* HEADER */}
+      {/* ===================================================== */}
+
+      <div className="d-flex justify-content-between align-items-center mb-4">
+
+        <div>
+          <h3 className="fw-bold mb-1">
+            Registro de Gastos
+          </h3>
+
+          <p className="text-muted mb-0">
+            Registra comprobantes e ítems del proyecto
+          </p>
+        </div>
+
+        <Button
+          variant="outline-secondary"
+          onClick={() => navigate(-1)}
+        >
+          ← Regresar
         </Button>
-        <Form.Check
-          type="switch"
-          label="Añadir Comprobante de Pago"
-          onChange={addInvoiceDoc}
-        />
-      </Form>
+
+      </div>
+
+      {/* ===================================================== */}
+      {/* STEPPER */}
+      {/* ===================================================== */}
+
+      <Card className="border-0 shadow-sm rounded-4 mb-4">
+        <Card.Body>
+
+          <div className="d-flex justify-content-between align-items-center">
+
+            <div className="text-center flex-fill">
+              <div className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                currentStep === "type"
+                  ? "bg-primary text-white"
+                  : "bg-light"
+              }`}
+              style={{ width: 45, height: 45 }}
+              >
+                1
+              </div>
+
+              <small>
+                Tipo de Registro
+              </small>
+            </div>
+
+            <div className="flex-fill border-top"></div>
+
+            <div className="text-center flex-fill">
+              <div className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                currentStep === "invoice"
+                  ? "bg-primary text-white"
+                  : Object.keys(dataInvoice).length > 0
+                  ? "bg-success text-white"
+                  : "bg-light"
+              }`}
+              style={{ width: 45, height: 45 }}
+              >
+                2
+              </div>
+
+              <small>
+                Documento
+              </small>
+            </div>
+
+            <div className="flex-fill border-top"></div>
+
+            <div className="text-center flex-fill">
+              <div className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                currentStep === "items"
+                  ? "bg-primary text-white"
+                  : dataItemInvoice.length > 0
+                  ? "bg-success text-white"
+                  : "bg-light"
+              }`}
+              style={{ width: 45, height: 45 }}
+              >
+                3
+              </div>
+
+              <small>
+                Gastos
+              </small>
+            </div>
+
+          </div>
+
+        </Card.Body>
+      </Card>
+
+      {/* ===================================================== */}
+      {/* CONTENIDO */}
+      {/* ===================================================== */}
 
       <Row>
-        {/* COLUMNA IZQUIERDA: FORMULARIOS */}
-        <Col md={6}>
-          {
-            addInvoiceIsTrue ? 
-              hideInvoice ?
-                // Mostrar formulario de gastos con datos del comprobante
-                <NewExpenditureItem 
-                  title={"Registrar Gastos"} 
-                  isProjectContext={isProjectContext} // Nuevo prop
-                  idProyecto={idProyecto} // Puede ser undefined
+
+        {/* ===================================================== */}
+        {/* IZQUIERDA */}
+        {/* ===================================================== */}
+
+        <Col lg={7}>
+
+          {/* PASO 1 */}
+          {currentStep === "type" && (
+
+            <Card className="border-0 shadow-sm rounded-4">
+
+              <Card.Body className="p-4">
+
+                <h4 className="fw-bold mb-3">
+                  ¿El gasto tiene comprobante?
+                </h4>
+
+                <p className="text-muted mb-4">
+                  Selecciona cómo deseas registrar este gasto.
+                </p>
+
+                <div className="d-flex gap-3">
+
+                  <Button
+                    size="lg"
+                    variant="primary"
+                    className="flex-fill py-3"
+                    onClick={() => handleSelectInvoiceOption(true)}
+                  >
+                    Sí, registrar comprobante
+                  </Button>
+
+                  <Button
+                    size="lg"
+                    variant="outline-secondary"
+                    className="flex-fill py-3"
+                    onClick={() => handleSelectInvoiceOption(false)}
+                  >
+                    No tiene comprobante
+                  </Button>
+
+                </div>
+
+              </Card.Body>
+
+            </Card>
+          )}
+
+          {/* PASO 2 */}
+          {currentStep === "invoice" && (
+
+            <Card className="border-0 shadow-sm rounded-4">
+
+              <Card.Body>
+
+                <div className="mb-4">
+
+                  <h4 className="fw-bold">
+                    Registrar Documento
+                  </h4>
+
+                  <p className="text-muted mb-0">
+                    Completa la información del comprobante tributario.
+                  </p>
+
+                </div>
+
+                <NewInvoice
+                  hideInvoiceForm={handleInvoiceSaved}
+                  isProjectContext={isProjectContext}
+                  idProyecto={idProyecto}
+                />
+
+              </Card.Body>
+
+            </Card>
+          )}
+
+          {/* PASO 3 */}
+          {currentStep === "items" && (
+
+            <Card className="border-0 shadow-sm rounded-4">
+
+              <Card.Body>
+
+                <div className="mb-4">
+
+                  <h4 className="fw-bold">
+                    Registrar Gastos
+                  </h4>
+
+                  <p className="text-muted mb-0">
+                    Agrega los ítems relacionados al gasto.
+                  </p>
+
+                </div>
+
+                <NewExpenditureItem
+                  title=""
+                  isProjectContext={isProjectContext}
+                  idProyecto={idProyecto}
                   defaultData={{
-                    serie: dataInvoice.serie_comprobante, 
-                    nro: dataInvoice.nro_comprobante, 
-                    fecha: dataInvoice.fecha_emision
-                  }} 
+                    serie: dataInvoice?.serie_comprobante || "",
+                    nro: dataInvoice?.nro_comprobante || "",
+                    fecha: dataInvoice?.fecha_emision || ""
+                  }}
                   addItemInvoice={addItemInvoice}
-                /> :
-                // Mostrar formulario de comprobante
-                <NewInvoice 
-                  hideInvoiceForm={hideInvoiceForm}
-                  isProjectContext={isProjectContext} // Nuevo prop
-                  idProyecto={idProyecto} // Para el comprobante si es necesario
-                /> :
-              // Mostrar formulario de gastos sin comprobante
-              <NewExpenditureItem 
-                title={"Registrar Gastos"}
-                isProjectContext={isProjectContext} // Nuevo prop 
-                idProyecto={idProyecto}
-                addItemInvoice={addItemInvoice}
-              />
-          }
+                />
+
+              </Card.Body>
+
+            </Card>
+          )}
+
         </Col>
 
-        {/* COLUMNA DERECHA: RESUMEN Y TABLA */}
-        <Col md={6}>
-          <Card className="rounded-4 shadow-sm">
-            <Card.Body>
-              {/* SECCIÓN DATOS DEL COMPROBANTE */}
-              {addInvoiceIsTrue && Object.keys(dataInvoice).length !== 0 ? 
-                <>
-                  <h6 className="text-secondary">Datos del Comprobante</h6>
-                  <Row className="mb-3">
-                    <Col md={3}>
-                      <strong>Ruc:</strong> {dataInvoice.ruc || "-"}
-                    </Col>
-                    <Col md={9}>
-                      <strong>Proveedor:</strong> {dataInvoice.razon_social || "-"}
-                    </Col>
-                    <Col md={3}>
-                      <strong>Serie:</strong> {(dataInvoice.serie_comprobante).toUpperCase() || "-"}
-                    </Col>
-                    <Col md={3}>
-                      <strong>Número:</strong> {dataInvoice.nro_comprobante || "-"}
-                    </Col>                  
-                    <Col md={3}>
-                      <strong>Fecha:</strong> {dataInvoice.fecha_emision || "-"}
-                    </Col>
-                    <Col md={3}>
-                      <strong>Monto:</strong> {dataInvoice.monto || "-"}
-                    </Col>
-                  </Row>
-                  <hr />
-                </> : 
-                <></>
-              }
+        {/* ===================================================== */}
+        {/* PANEL DERECHO */}
+        {/* ===================================================== */}
 
-              {/* TABLA DE ÍTEMS REGISTRADOS */}
-              <h6 className="text-secondary mb-3">Ítems registrados</h6>
-              <Table hover responsive>
-                <thead className="table-light">
-                  <tr>
-                    <th className="text-center">Cantidad</th>
-                    <th className="text-center text-nowrap">U. Med.</th>
-                    <th className="text-center">Descripción</th>
-                    <th className="text-center">Moneda</th>
-                    <th className="text-center">Total</th>
-                    <th className="text-center"></th>
-                  </tr>
-                </thead>
+        <Col lg={5}>
 
-                <tbody>
+          <div className="sticky-top" style={{ top: 20 }}>
+
+            <Card className="border-0 shadow-sm rounded-4">
+
+              <Card.Body>
+
+                {/* HEADER */}
+                <div className="mb-4">
+
+                  <h4 className="fw-bold mb-1">
+                    Resumen del Registro
+                  </h4>
+
+                  <p className="text-muted mb-0">
+                    Estado actual del proceso
+                  </p>
+
+                </div>
+
+                {/* ESTADO */}
+                <div className="mb-4">
+
+                  <Alert variant="light" className="border">
+
+                    {dataItemInvoice.length === 0 ? (
+                      <>
+                        ⚠ Aún no hay gastos registrados
+                      </>
+                    ) : (
+                      <>
+                        ✅ Registro listo para guardar
+                      </>
+                    )}
+
+                  </Alert>
+
+                </div>
+
+                {/* FACTURA */}
+                {hasInvoice && Object.keys(dataInvoice).length > 0 && (
+
+                  <div className="mb-4">
+
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+
+                      <h6 className="fw-bold mb-0">
+                        Documento
+                      </h6>
+
+                      <Badge bg="success">
+                        Registrado
+                      </Badge>
+
+                    </div>
+
+                    <div className="small">
+
+                      <p className="mb-2">
+                        <strong>Proveedor:</strong><br />
+                        {dataInvoice.razon_social}
+                      </p>
+
+                      <p className="mb-2">
+                        <strong>Comprobante:</strong><br />
+                        {dataInvoice.serie_comprobante} - {dataInvoice.nro_comprobante}
+                      </p>
+
+                      <p className="mb-0">
+                        <strong>Fecha:</strong><br />
+                        {dataInvoice.fecha_emision}
+                      </p>
+
+                      <p className="mb-0">
+                        <strong>Monto Facturado:</strong><br />
+                        <strong>S/.</strong> {Number(dataInvoice.monto).toFixed(2)}
+                      </p>
+
+                    </div>
+
+                  </div>
+                )}
+
+                {/* ITEMS */}
+                <div className="mb-4">
+
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+
+                    <h6 className="fw-bold mb-0">
+                      Ítems Registrados
+                    </h6>
+
+                    <Badge bg="primary">
+                      {dataItemInvoice.length}
+                    </Badge>
+
+                  </div>
+
                   {dataItemInvoice.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="text-center text-muted">
-                        No hay ítems agregados
-                      </td>
-                    </tr>
-                  ) : (
-                    dataItemInvoice.map((item, index) => {
-                      return (
-                      <tr key={index}>
-                        <td className="text-center" style={{width:"10%"}}>{item.cantidad}</td>
-                        <td className="text-center" style={{width:"10%"}}>{item.unidad_medida}</td>
-                        <td style={{width:"50%"}}>{item.descripcion}</td>
-                        <td className="text-center" style={{width:"10%"}}>{item.moneda}</td>
-                        <td className="text-center" style={{width:"20%"}}>
-                          {(item.monto_total).toFixed(2)}
-                        </td>
-                        <td>
-                          <Button variant="danger" onClick={()=>deleteItemInvoice(index)}>
-                            <i class="bi bi-trash3-fill"></i>
-                          </Button>
-                        </td>
-                      </tr>
-                      )
-                    })
-                  )}
-                </tbody>
-              </Table>
 
-              {/* SECCIÓN TOTAL Y BOTÓN GUARDAR */}
-              <div className="text-end">
-                <h5>
-                  Total:{" "}
-                  <strong className="text-success">
-                    {" "}
-                    {dataItemInvoice.length !== 0 ? 
-                      dataItemInvoice
-                        .reduce((sum, it) => sum + parseFloat(it.monto_total), 0)
-                        .toFixed(2) : "0.00"
-                    }
-                  </strong>
-                </h5>
-              </div>
-              <Button onClick={saveAllItems} variant="primary" className="w-100 mt-3">
-                <i className="bi bi-floppy2-fill"></i> Guardar Items
-              </Button>
-            </Card.Body>
-          </Card>
+                    <p className="text-muted small">
+                      No hay ítems agregados
+                    </p>
+
+                  ) : (
+
+                    <div
+                      style={{
+                        maxHeight: 250,
+                        overflow: "auto"
+                      }}
+                    >
+
+                      <Table size="sm" hover>
+
+                        <tbody>
+
+                          {dataItemInvoice.map((item, index) => (
+
+                            <tr key={index}>
+
+                              <td>
+                                <div className="fw-semibold">
+                                  {item.descripcion}
+                                </div>
+
+                                <small className="text-muted">
+                                  {item.cantidad} {item.unidad_medida}
+                                </small>
+                              </td>
+
+                              <td className="text-end text-nowrap">
+                                {formatCurrency(item.monto_total)}
+                              </td>
+
+                              <td width={40}>
+
+                                <Button
+                                  size="sm"
+                                  variant="light"
+                                  onClick={() => deleteItemInvoice(index)}
+                                >
+                                  ×
+                                </Button>
+
+                              </td>
+
+                            </tr>
+
+                          ))}
+
+                        </tbody>
+
+                      </Table>
+
+                    </div>
+
+                  )}
+
+                </div>
+
+                {/* TOTAL */}
+                <Card className="bg-light border-0">
+
+                  <Card.Body>
+
+                    <small className="text-muted">
+                      Total acumulado
+                    </small>
+
+                    <h2 className="fw-bold text-success mb-0">
+                      {formatCurrency(totalAmount)}
+                    </h2>
+
+                  </Card.Body>
+
+                </Card>
+
+                {/* BOTÓN */}
+                <Button
+                  className="w-100 mt-4 py-3"
+                  size="lg"
+                  disabled={dataItemInvoice.length === 0 || saving}
+                  onClick={saveAllItems}
+                >
+
+                  {saving
+                    ? "Guardando..."
+                    : "Guardar Registro"
+                  }
+
+                </Button>
+
+              </Card.Body>
+
+            </Card>
+
+          </div>
+
         </Col>
+
       </Row>
+
     </Container>
-  )
+  );
 }

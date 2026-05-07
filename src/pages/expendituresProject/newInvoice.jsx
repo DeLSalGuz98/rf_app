@@ -1,205 +1,646 @@
-/**
- * Componente para registrar nuevos documentos tributarios (facturas, notas de crédito, etc.)
- * @component
- * @param {Function} hideInvoiceForm - Función callback para enviar datos al componente padre
- */
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Row, Col, Button } from "react-bootstrap";
-import { useEffect } from "react";
+
+import {
+  Row,
+  Col,
+  Button,
+  Card,
+  Form,
+  Spinner,
+  Badge,
+  InputGroup,
+} from "react-bootstrap";
+
 import { obtenerRazonSocialPorRUC } from "../../utils/rsPorRuc";
 import { listStateTaxDocument } from "../../utils/listStateTaxDocument";
-import { InputField, SelectField } from "../../components/inputComponent";
-import FormComponent from "../../components/formComponent";
 
-/**
- * Esquema de validación para documentos tributarios usando Zod
- * Define las reglas de validación para todos los campos del formulario
- */
+/* =========================================================
+   VALIDACIÓN
+========================================================= */
+
 const docTributarioSchema = z.object({
-  tipo_doc: z.string().min(1, "El tipo de documento es requerido"),
-  fecha_emision: z.string().min(1, "La fecha de emisión es requerida"),
-  fecha_vencimiento: z.string().min(1, "La fecha de vencimiento es requerida"),
-  serie_comprobante: z.string().min(1, "La serie es requerida"),
-  nro_comprobante: z.string().min(1, "El número es requerido"),
-  ruc: z.string().min(11, "El RUC debe tener 11 dígitos"),
-  razon_social: z.string().min(2, "La razón social es requerida"),
-  monto: z.coerce.number().positive("El monto debe ser mayor a 0"),
-  moneda: z.enum(["PEN", "USD"], { message: "Seleccione una moneda válida" }),
+  tipo_doc: z.string().min(1, "Seleccione un tipo"),
+  fecha_emision: z.string().min(1, "Ingrese la fecha"),
+  fecha_vencimiento: z.string().min(1, "Ingrese la fecha"),
+  serie_comprobante: z.string().min(1, "Ingrese la serie"),
+  nro_comprobante: z.string().min(1, "Ingrese el número"),
+
+  ruc: z
+    .string()
+    .min(11, "El RUC debe tener 11 dígitos")
+    .max(11, "El RUC debe tener 11 dígitos"),
+
+  razon_social: z.string().min(2, "Ingrese la razón social"),
+
+  monto: z.coerce
+    .number()
+    .positive("El monto debe ser mayor a 0"),
+
+  moneda: z.enum(["PEN", "USD"]),
+
   tipo_cambio: z.coerce.number().optional(),
-  mes_declarado: z.string().min(1, "El mes declarado es requerido"),
-  estado_comprobante: z.enum([
-    "pendiente", "devengado", "girado", "con retencion", 
-    "pagado", "atrasado", "anulado", "archivado"
-  ])
+
+  mes_declarado: z.string().min(1, "Seleccione el mes"),
+
+  estado_comprobante: z.string().min(1, "Seleccione el estado"),
 });
 
-export function NewInvoice({ hideInvoiceForm, isProjectContext, idProyecto }) {
-  /**
-   * Valores iniciales del formulario
-   */
-  const initData = {
-    tipo_doc: "factura recibida",
-    fecha_emision: "",
-    fecha_vencimiento: "",
-    moneda: "PEN"
-  }
+/* =========================================================
+   COMPONENTE
+========================================================= */
 
-  /**
-   * Configuración del formulario con React Hook Form y validación Zod
-   */
+export function NewInvoice({
+  hideInvoiceForm,
+  isProjectContext,
+  idProyecto,
+}) {
+  const [loadingRuc, setLoadingRuc] = useState(false);
+  const [rucFound, setRucFound] = useState(null);
+
   const methods = useForm({
     resolver: zodResolver(docTributarioSchema),
-    defaultValues: initData,
-  })
 
-  // Destructuración de métodos y estados del formulario
-  const { reset, watch, setValue } = methods;
-  
-  // Observar cambios en campos específicos para efectos reactivos
-  const emitDate = watch("fecha_emision");
-  const typeCoin = watch("moneda");
+    defaultValues: {
+      tipo_doc: "factura recibida",
+      fecha_emision: "",
+      fecha_vencimiento: "",
+      serie_comprobante: "",
+      nro_comprobante: "",
+      ruc: "",
+      razon_social: "",
+      monto: "",
+      moneda: "PEN",
+      tipo_cambio: "",
+      mes_declarado: "",
+      estado_comprobante: "pendiente",
+    },
+  });
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    setValue,
+    reset,
+    formState: { errors },
+  } = methods;
+
+  /* =========================================================
+     WATCHERS
+  ========================================================= */
+
+  const fechaEmision = watch("fecha_emision");
+  const moneda = watch("moneda");
   const ruc = watch("ruc");
 
-  /**
-   * Efecto para obtener automáticamente la razón social cuando el RUC tiene 11 dígitos
-   */
+  /*const tipoDoc = watch("tipo_doc");
+  const serie = watch("serie_comprobante");
+  const numero = watch("nro_comprobante");
+  const razonSocial = watch("razon_social");
+  const monto = watch("monto");*/
+  const estado = watch("estado_comprobante");
+
+  /* =========================================================
+     EFECTOS
+  ========================================================= */
+
   useEffect(() => {
-    getRsByRuc(ruc);
+    setValue("fecha_vencimiento", fechaEmision);
+  }, [fechaEmision, setValue]);
+
+  useEffect(() => {
+    if (ruc?.length === 11) {
+      getRsByRuc(ruc);
+    } else {
+      setRucFound(null);
+    }
   }, [ruc]);
 
-  /**
-   * Efecto para sincronizar fecha de vencimiento con fecha de emisión
-   * Cuando cambia la fecha de emisión, se actualiza automáticamente la fecha de vencimiento
-   */
-  useEffect(() => {
-    setValue("fecha_vencimiento", emitDate);
-  }, [emitDate, setValue]);
+  /* =========================================================
+     OBTENER RAZÓN SOCIAL
+  ========================================================= */
 
-  /**
-   * Obtiene la razón social automáticamente desde un servicio externo
-   * @param {string} ruc - Número de RUC (11 dígitos)
-   */
-  const getRsByRuc = async (ruc = "") => {
-    if (ruc.length < 11) {
-      return;
-    } else {
-      const res = await obtenerRazonSocialPorRUC(ruc);
-      setValue("razon_social", res);
+  const getRsByRuc = async (value) => {
+    try {
+      setLoadingRuc(true);
+      setRucFound(null);
+
+      const rs = await obtenerRazonSocialPorRUC(value);
+
+      if (rs) {
+        setValue("razon_social", rs);
+        setRucFound(true);
+      } else {
+        setRucFound(false);
+      }
+    } catch (error) {
+      console.error(error);
+      setRucFound(false);
+    } finally {
+      setLoadingRuc(false);
     }
-  }
-
-  /**
-   * Maneja el envío del formulario
-   * @param {Object} data - Datos validados del formulario
-   */
-  const onSubmit = async (data) => {
-    //Preparar datos con o sin proyecto
-    const finalData = isProjectContext 
-      ? {...data, id_proyecto: idProyecto}
-      : data
-    
-    hideInvoiceForm(finalData)
-    reset(initData); // Reinicia el formulario a valores iniciales
   };
 
+  /* =========================================================
+     SUBMIT
+  ========================================================= */
+
+  const onSubmit = (data) => {
+    const finalData = isProjectContext
+      ? { ...data, id_proyecto: idProyecto }
+      : data;
+
+    hideInvoiceForm(finalData);
+
+    reset({
+      tipo_doc: "factura recibida",
+      fecha_emision: "",
+      fecha_vencimiento: "",
+      serie_comprobante: "",
+      nro_comprobante: "",
+      ruc: "",
+      razon_social: "",
+      monto: "",
+      moneda: "PEN",
+      tipo_cambio: "",
+      mes_declarado: "",
+      estado_comprobante: "pendiente",
+    });
+
+    setRucFound(null);
+  };
+
+  /* =========================================================
+     HELPERS
+  ========================================================= */
+
+  /*const formatCurrency = (value) => {
+    if (!value) return "S/. 0.00";
+
+    return new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency: moneda === "USD" ? "USD" : "PEN",
+    }).format(value);
+  };*/
+
+  const getBadgeVariant = () => {
+    switch (estado) {
+      case "pagado":
+        return "success";
+
+      case "pendiente":
+        return "warning";
+
+      case "atrasado":
+        return "danger";
+
+      case "anulado":
+        return "dark";
+
+      default:
+        return "secondary";
+    }
+  };
+
+  /* =========================================================
+     UI
+  ========================================================= */
+
   return (
-    <>
-      <FormComponent 
-        moreClasses="" 
-        methods={methods} 
-        onSubmit={onSubmit} 
-        title={isProjectContext 
-          ? "Registrar Documento Tributario - Proyecto" 
-          : "Registrar Documento Tributario"
-        }
-      >
-        <Row>
-          {/* TIPO DE DOCUMENTO */}
-          <Col md={4}>
-            <SelectField
-              name="tipo_doc"
-              label="Tipo de Documento"
-              options={[
-                { value: "factura emitida", label: "Factura Emitida" },
-                { value: "factura recibida", label: "Factura Recibida" },
-                { value: "nc emitido", label: "Nota de Credito Emitido" },
-                { value: "nc recibido", label: "Nota de Credito Recibido" },
-                { value: "retencion recibido", label: "Comprobante de Retencion Recibido" },
-                { value: "r.h. recibido", label: "R.H. Recibido" },
-              ]}
-            />
-          </Col>
+    <Form onSubmit={handleSubmit(onSubmit)}>
 
-          {/* FECHAS DE EMISIÓN Y VENCIMIENTO */}
-          <Col md={4}>
-            <InputField label="Fecha de Emisión" name="fecha_emision" type="date" />
-          </Col>
-          <Col md={4}>
-            <InputField label="Fecha de Vencimiento" name="fecha_vencimiento" type="date" />
-          </Col>
+      {/* =====================================================
+          HEADER
+      ====================================================== */}
 
-          {/* SERIE Y NÚMERO DEL COMPROBANTE */}
-          <Col md={2}>
-            <InputField label="Serie" name="serie_comprobante" />
-          </Col>
-          <Col md={2}>
-            <InputField label="Número" name="nro_comprobante" />
-          </Col>
+      <Card className="border-0 shadow-sm rounded-4 mb-4">
+        <Card.Body className="d-flex justify-content-between align-items-center">
 
-          {/* DATOS DEL PROVEEDOR */}
-          <Col md={3}>
-            <InputField label="RUC" name="ruc" />
-          </Col>
-          <Col md={5}>
-            <InputField label="Razón Social" name="razon_social" />
-          </Col>
+          <div>
+            <h4 className="fw-bold mb-1">
+              Nuevo comprobante
+            </h4>
+
+            <small className="text-muted">
+              {isProjectContext
+                ? "Registro asociado a proyecto"
+                : "Registro tributario"}
+            </small>
+          </div>
+
+          <Badge bg={getBadgeVariant()} className="px-3 py-2">
+            {estado?.toUpperCase()}
+          </Badge>
+
+        </Card.Body>
+      </Card>
+
+      <Row>
+
+        {/* =====================================================
+            FORMULARIO
+        ====================================================== */}
+
+        <Col lg={12}>
+
+          {/* INFORMACIÓN COMPROBANTE */}
+
+          <Card className="border-0 shadow-sm rounded-4 mb-4">
+            <Card.Body>
+
+              <h5 className="fw-bold mb-4">
+                Información del comprobante
+              </h5>
+
+              <Row>
+
+                <Col md={12} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Tipo de documento</Form.Label>
+
+                    <Form.Select {...register("tipo_doc")}>
+                      <option value="factura emitida">
+                        Factura Emitida
+                      </option>
+
+                      <option value="factura recibida">
+                        Factura Recibida
+                      </option>
+
+                      <option value="nc emitido">
+                        Nota Crédito Emitido
+                      </option>
+
+                      <option value="nc recibido">
+                        Nota Crédito Recibido
+                      </option>
+
+                      <option value="retencion recibido">
+                        Retención Recibido
+                      </option>
+
+                      <option value="r.h. recibido">
+                        Recibo por Honorarios
+                      </option>
+                    </Form.Select>
+
+                    <small className="text-danger">
+                      {errors.tipo_doc?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+                <Col md={6} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Serie</Form.Label>
+
+                    <Form.Control
+                      {...register("serie_comprobante")}
+                      placeholder="F001"
+                    />
+
+                    <small className="text-danger">
+                      {errors.serie_comprobante?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+                <Col md={6} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Número</Form.Label>
+
+                    <Form.Control
+                      {...register("nro_comprobante")}
+                      placeholder="000123"
+                    />
+
+                    <small className="text-danger">
+                      {errors.nro_comprobante?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+              </Row>
+
+            </Card.Body>
+          </Card>
+
+          {/* FECHAS */}
+
+          <Card className="border-0 shadow-sm rounded-4 mb-4">
+            <Card.Body>
+
+              <h5 className="fw-bold mb-4">
+                Fechas y declaración
+              </h5>
+
+              <Row>
+
+                <Col md={4} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Fecha emisión</Form.Label>
+
+                    <Form.Control
+                      type="date"
+                      {...register("fecha_emision")}
+                    />
+
+                    <small className="text-danger">
+                      {errors.fecha_emision?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+                <Col md={4} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Fecha vencimiento</Form.Label>
+
+                    <Form.Control
+                      type="date"
+                      {...register("fecha_vencimiento")}
+                    />
+
+                    <small className="text-danger">
+                      {errors.fecha_vencimiento?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+                <Col md={4} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Mes declarado</Form.Label>
+
+                    <Form.Control
+                      type="month"
+                      {...register("mes_declarado")}
+                    />
+
+                    <small className="text-danger">
+                      {errors.mes_declarado?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+              </Row>
+
+            </Card.Body>
+          </Card>
+
+          {/* PROVEEDOR */}
+
+          <Card className="border-0 shadow-sm rounded-4 mb-4">
+            <Card.Body>
+
+              <h5 className="fw-bold mb-4">
+                Datos del proveedor
+              </h5>
+
+              <Row>
+
+                <Col md={4} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>RUC</Form.Label>
+
+                    <Form.Control
+                      {...register("ruc")}
+                      placeholder="20123456789"
+                    />
+
+                    <small className="text-danger">
+                      {errors.ruc?.message}
+                    </small>
+
+                    <div className="mt-1">
+
+                      {loadingRuc && (
+                        <small className="text-primary">
+                          <Spinner size="sm" className="me-1" />
+                          Consultando RUC...
+                        </small>
+                      )}
+
+                      {!loadingRuc && rucFound === true && (
+                        <small className="text-success">
+                          ✓ RUC encontrado
+                        </small>
+                      )}
+
+                      {!loadingRuc && rucFound === false && (
+                        <small className="text-danger">
+                          ✕ No se encontró el RUC
+                        </small>
+                      )}
+
+                    </div>
+
+                  </Form.Group>
+                </Col>
+
+                <Col md={8} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Razón social</Form.Label>
+
+                    <Form.Control
+                      {...register("razon_social")}
+                    />
+
+                    <small className="text-danger">
+                      {errors.razon_social?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+              </Row>
+
+            </Card.Body>
+          </Card>
 
           {/* INFORMACIÓN MONETARIA */}
-          <Col md={typeCoin === "USD" ? 4 : 6}>
-            <InputField label="Monto" name="monto" type="number" step="0.0001" />
-          </Col>
-          <Col md={typeCoin === "USD" ? 4 : 6}>
-            <SelectField
-              name="moneda"
-              label="Moneda"
-              options={[
-                { value: "PEN", label: "Soles (PEN)" },
-                { value: "USD", label: "Dólares (USD)" }
-              ]}
-            />
-          </Col>
 
-          {/* TIPO DE CAMBIO (SOLO PARA DÓLARES) */}
-          {typeCoin === "USD" ? (
-            <Col md={4}>
-              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.0001" />
-            </Col>
-          ) : <></>}
+          <Card className="border-0 shadow-sm rounded-4 mb-4">
+            <Card.Body>
 
-          {/* INFORMACIÓN ADICIONAL */}
-          <Col md={6}>
-            <InputField 
-              label={"Mes Declarado"}
-              name={"mes_declarado"}
-              type="month"
-            />
-          </Col>
-          <Col md={6}>
-            <SelectField
-              name="estado_comprobante"
-              label="Estado del Comprobante"
-              options={listStateTaxDocument}
-            />
-          </Col>
-        </Row>
+              <h5 className="fw-bold mb-4">
+                Información monetaria
+              </h5>
 
-        {/* BOTÓN DE ENVÍO */}
-        <Button type="submit" variant="primary" className="w-100 mt-2 fs-5">
-          <i className="bi bi-floppy2-fill"></i> Guardar Factura
-        </Button>
-      </FormComponent>
-    </>
-  )
+              <Row>
+
+                <Col md={moneda === "USD" ? 4 : 6} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Monto</Form.Label>
+
+                    <InputGroup>
+                      <InputGroup.Text>
+                        {moneda === "USD" ? "$" : "S/"}
+                      </InputGroup.Text>
+
+                      <Form.Control
+                        type="number"
+                        step="0.0001"
+                        {...register("monto")}
+                      />
+                    </InputGroup>
+
+                    <small className="text-danger">
+                      {errors.monto?.message}
+                    </small>
+                  </Form.Group>
+                </Col>
+
+                <Col md={moneda === "USD" ? 4 : 6} className="mb-3">
+                  <Form.Group>
+                    <Form.Label>Moneda</Form.Label>
+
+                    <Form.Select {...register("moneda")}>
+                      <option value="PEN">
+                        Soles (PEN)
+                      </option>
+
+                      <option value="USD">
+                        Dólares (USD)
+                      </option>
+                    </Form.Select>
+                  </Form.Group>
+                </Col>
+
+                {moneda === "USD" && (
+                  <Col md={4} className="mb-3">
+                    <Form.Group>
+                      <Form.Label>Tipo de cambio</Form.Label>
+
+                      <Form.Control
+                        type="number"
+                        step="0.0001"
+                        {...register("tipo_cambio")}
+                      />
+                    </Form.Group>
+                  </Col>
+                )}
+
+              </Row>
+
+            </Card.Body>
+          </Card>
+
+          {/* ESTADO */}
+
+          <Card className="border-0 shadow-sm rounded-4 mb-4">
+            <Card.Body>
+
+              <h5 className="fw-bold mb-4">
+                Estado tributario
+              </h5>
+
+              <Form.Select {...register("estado_comprobante")}>
+
+                {listStateTaxDocument.map((e) => (
+                  <option key={e.value} value={e.value}>
+                    {e.label}
+                  </option>
+                ))}
+
+              </Form.Select>
+
+            </Card.Body>
+          </Card>
+
+          {/* BOTÓN */}
+
+          <Button
+            type="submit"
+            size="lg"
+            className="w-100 rounded-3 fw-semibold"
+          >
+            <i className="bi bi-arrow-right-circle me-2"></i>
+            Continuar y registrar gastos
+          </Button>
+
+        </Col>
+
+        {/* =====================================================
+            RESUMEN LATERAL
+        ====================================================== */}
+
+        {/* <Col lg={4}>
+
+          <Card className="border-0 shadow-sm rounded-4 position-sticky top-0">
+            <Card.Body>
+
+              <h5 className="fw-bold mb-4">
+                Vista previa
+              </h5>
+
+              <div className="mb-4">
+
+                <small className="text-muted d-block">
+                  Documento
+                </small>
+
+                <strong className="text-uppercase">
+                  {tipoDoc || "-"}
+                </strong>
+
+              </div>
+
+              <div className="mb-4">
+
+                <small className="text-muted d-block">
+                  Comprobante
+                </small>
+
+                <strong>
+                  {serie || "-"} - {numero || "-"}
+                </strong>
+
+              </div>
+
+              <div className="mb-4">
+
+                <small className="text-muted d-block">
+                  Proveedor
+                </small>
+
+                <strong>
+                  {razonSocial || "-"}
+                </strong>
+
+              </div>
+
+              <div className="mb-4">
+
+                <small className="text-muted d-block">
+                  Monto
+                </small>
+
+                <h4 className="fw-bold text-success">
+                  {formatCurrency(monto)}
+                </h4>
+
+              </div>
+
+              <div>
+
+                <small className="text-muted d-block mb-2">
+                  Estado
+                </small>
+
+                <Badge bg={getBadgeVariant()}>
+                  {estado || "-"}
+                </Badge>
+
+              </div>
+
+            </Card.Body>
+          </Card>
+
+        </Col> */}
+
+      </Row>
+
+    </Form>
+  );
 }
