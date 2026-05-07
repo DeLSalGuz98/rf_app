@@ -96,11 +96,6 @@ export function NewInvoice({
   const moneda = watch("moneda");
   const ruc = watch("ruc");
 
-  /*const tipoDoc = watch("tipo_doc");
-  const serie = watch("serie_comprobante");
-  const numero = watch("nro_comprobante");
-  const razonSocial = watch("razon_social");
-  const monto = watch("monto");*/
   const estado = watch("estado_comprobante");
 
   /* =========================================================
@@ -560,84 +555,6 @@ export function NewInvoice({
           </Button>
 
         </Col>
-
-        {/* =====================================================
-            RESUMEN LATERAL
-        ====================================================== */}
-
-        {/* <Col lg={4}>
-
-          <Card className="border-0 shadow-sm rounded-4 position-sticky top-0">
-            <Card.Body>
-
-              <h5 className="fw-bold mb-4">
-                Vista previa
-              </h5>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Documento
-                </small>
-
-                <strong className="text-uppercase">
-                  {tipoDoc || "-"}
-                </strong>
-
-              </div>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Comprobante
-                </small>
-
-                <strong>
-                  {serie || "-"} - {numero || "-"}
-                </strong>
-
-              </div>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Proveedor
-                </small>
-
-                <strong>
-                  {razonSocial || "-"}
-                </strong>
-
-              </div>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Monto
-                </small>
-
-                <h4 className="fw-bold text-success">
-                  {formatCurrency(monto)}
-                </h4>
-
-              </div>
-
-              <div>
-
-                <small className="text-muted d-block mb-2">
-                  Estado
-                </small>
-
-                <Badge bg={getBadgeVariant()}>
-                  {estado || "-"}
-                </Badge>
-
-              </div>
-
-            </Card.Body>
-          </Card>
-
-        </Col> */}
 
       </Row>
 
