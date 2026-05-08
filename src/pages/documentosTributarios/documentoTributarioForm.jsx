@@ -52,19 +52,9 @@ const docTributarioSchema = z.object({
    COMPONENTE
 ========================================================= */
 
-export function NewInvoice({
-  hideInvoiceForm,
-  isProjectContext,
-  idProyecto,
-}) {
-  const [loadingRuc, setLoadingRuc] = useState(false);
-  const [rucFound, setRucFound] = useState(null);
-
-  const methods = useForm({
-    resolver: zodResolver(docTributarioSchema),
-
-    defaultValues: {
-      tipo_doc: "factura recibida",
+export function NewInvoiceForm({ hideInvoiceForm,  isProjectContext,  idProyecto, 
+  defaultInvoiceDataValue ={
+      tipo_doc: "",
       fecha_emision: "",
       fecha_vencimiento: "",
       serie_comprobante: "",
@@ -75,8 +65,17 @@ export function NewInvoice({
       moneda: "PEN",
       tipo_cambio: "",
       mes_declarado: "",
-      estado_comprobante: "pendiente",
-    },
+      estado_comprobante: "archivado",
+    }
+
+}) {
+  const [loadingRuc, setLoadingRuc] = useState(false);
+  const [rucFound, setRucFound] = useState(null);
+
+  const methods = useForm({
+    resolver: zodResolver(docTributarioSchema),
+
+    defaultValues: defaultInvoiceDataValue,
   });
 
   const {
@@ -95,12 +94,6 @@ export function NewInvoice({
   const fechaEmision = watch("fecha_emision");
   const moneda = watch("moneda");
   const ruc = watch("ruc");
-
-  /*const tipoDoc = watch("tipo_doc");
-  const serie = watch("serie_comprobante");
-  const numero = watch("nro_comprobante");
-  const razonSocial = watch("razon_social");
-  const monto = watch("monto");*/
   const estado = watch("estado_comprobante");
 
   /* =========================================================
@@ -155,20 +148,7 @@ export function NewInvoice({
 
     hideInvoiceForm(finalData);
 
-    reset({
-      tipo_doc: "factura recibida",
-      fecha_emision: "",
-      fecha_vencimiento: "",
-      serie_comprobante: "",
-      nro_comprobante: "",
-      ruc: "",
-      razon_social: "",
-      monto: "",
-      moneda: "PEN",
-      tipo_cambio: "",
-      mes_declarado: "",
-      estado_comprobante: "pendiente",
-    });
+    reset(defaultInvoiceDataValue);
 
     setRucFound(null);
   };
@@ -176,16 +156,6 @@ export function NewInvoice({
   /* =========================================================
      HELPERS
   ========================================================= */
-
-  /*const formatCurrency = (value) => {
-    if (!value) return "S/. 0.00";
-
-    return new Intl.NumberFormat("es-PE", {
-      style: "currency",
-      currency: moneda === "USD" ? "USD" : "PEN",
-    }).format(value);
-  };*/
-
   const getBadgeVariant = () => {
     switch (estado) {
       case "pagado":
@@ -216,7 +186,7 @@ export function NewInvoice({
           HEADER
       ====================================================== */}
 
-      <Card className="border-0 shadow-sm rounded-4 mb-4">
+      <Card className="border rounded-4 mb-4">
         <Card.Body className="d-flex justify-content-between align-items-center">
 
           <div>
@@ -248,7 +218,7 @@ export function NewInvoice({
 
           {/* INFORMACIÓN COMPROBANTE */}
 
-          <Card className="border-0 shadow-sm rounded-4 mb-4">
+          <Card className="border rounded-4 mb-4">
             <Card.Body>
 
               <h5 className="fw-bold mb-4">
@@ -330,7 +300,7 @@ export function NewInvoice({
 
           {/* FECHAS */}
 
-          <Card className="border-0 shadow-sm rounded-4 mb-4">
+          <Card className="border rounded-4 mb-4">
             <Card.Body>
 
               <h5 className="fw-bold mb-4">
@@ -391,7 +361,7 @@ export function NewInvoice({
 
           {/* PROVEEDOR */}
 
-          <Card className="border-0 shadow-sm rounded-4 mb-4">
+          <Card className="border rounded-4 mb-4">
             <Card.Body>
 
               <h5 className="fw-bold mb-4">
@@ -460,7 +430,7 @@ export function NewInvoice({
 
           {/* INFORMACIÓN MONETARIA */}
 
-          <Card className="border-0 shadow-sm rounded-4 mb-4">
+          <Card className="border rounded-4 mb-4">
             <Card.Body>
 
               <h5 className="fw-bold mb-4">
@@ -528,7 +498,7 @@ export function NewInvoice({
 
           {/* ESTADO */}
 
-          <Card className="border-0 shadow-sm rounded-4 mb-4">
+          <Card className="border rounded-4 mb-4">
             <Card.Body>
 
               <h5 className="fw-bold mb-4">
@@ -560,84 +530,6 @@ export function NewInvoice({
           </Button>
 
         </Col>
-
-        {/* =====================================================
-            RESUMEN LATERAL
-        ====================================================== */}
-
-        {/* <Col lg={4}>
-
-          <Card className="border-0 shadow-sm rounded-4 position-sticky top-0">
-            <Card.Body>
-
-              <h5 className="fw-bold mb-4">
-                Vista previa
-              </h5>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Documento
-                </small>
-
-                <strong className="text-uppercase">
-                  {tipoDoc || "-"}
-                </strong>
-
-              </div>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Comprobante
-                </small>
-
-                <strong>
-                  {serie || "-"} - {numero || "-"}
-                </strong>
-
-              </div>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Proveedor
-                </small>
-
-                <strong>
-                  {razonSocial || "-"}
-                </strong>
-
-              </div>
-
-              <div className="mb-4">
-
-                <small className="text-muted d-block">
-                  Monto
-                </small>
-
-                <h4 className="fw-bold text-success">
-                  {formatCurrency(monto)}
-                </h4>
-
-              </div>
-
-              <div>
-
-                <small className="text-muted d-block mb-2">
-                  Estado
-                </small>
-
-                <Badge bg={getBadgeVariant()}>
-                  {estado || "-"}
-                </Badge>
-
-              </div>
-
-            </Card.Body>
-          </Card>
-
-        </Col> */}
 
       </Row>
 
