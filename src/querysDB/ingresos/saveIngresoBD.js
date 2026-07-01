@@ -5,6 +5,8 @@ import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 export async function saveIngresoDB(incomeData = {}, idProject="") {
   const res = await GetUserNameAndNameCompany()
 
+  console.log(incomeData)
+
   const {data, error} = await supabase.from("ingresos").insert({
     ...incomeData,
     id_empresa:res.idEmpresa,

@@ -1,42 +1,44 @@
 import { useState } from "react";
 import {
+  Button,
+  Card,
+  Col,
   Container,
   Row,
-  Col,
-  Card,
-  Form,
-  Button,
   Badge,
+  Alert,
+  Form
 } from "react-bootstrap";
 import { useForm } from "react-hook-form";
-import {
-  useNavigate,
-  useParams,
-} from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
+import { toast } from "react-toastify";
 
-//Componentes
+// COMPONENTES
 import { NewInvoiceForm } from "../documentosTributarios/documentoTributarioForm";
+
+// QUERIES
 import { saveTaxDocumentDB } from "../../querysDB/taxDocument/saveTaxDocument";
 import { saveIngresoDB } from "../../querysDB/ingresos/saveIngresoBD";
 
 export function NuevoIngresoPage() {
-  const navigate = useNavigate();
   const { idProyecto } = useParams();
+  const navigate = useNavigate();
 
-  // =====================================================
-  // ESTADOS
-  // =====================================================
-
-  const [step, setStep] = useState(1);
-  const [hasInvoice, setHasInvoice] = useState(false);
-  const [incomeData, setIncomeData] = useState(null);
-  const [invoiceData, setInvoiceData] = useState(null);
+  /**
+   * =====================================================
+   * ESTADOS PRINCIPALES (Estructura idéntica a Gastos)
+   * =====================================================
+   */
+  const [currentStep, setCurrentStep] = useState("type"); // "type" | "invoice" | "items"
+  const [hasInvoice, setHasInvoice] = useState(null);
+  const [dataInvoice, setDataInvoice] = useState({});
   const [saving, setSaving] = useState(false);
 
-  // =====================================================
-  // FORMULARIO INGRESO
-  // =====================================================
-
+  /**
+   * =====================================================
+   * FORMULARIO INGRESO (Paso 3)
+   * =====================================================
+   */
   const {
     register,
     handleSubmit,
@@ -49,381 +51,383 @@ export function NuevoIngresoPage() {
       moneda: "PEN",
       tipo_cambio: "",
       monto_total: "",
-      fecha: new Date()
-        .toISOString()
-        .split("T")[0],
+      fecha: new Date().toISOString().split("T")[0],
       estado: "pendiente",
     },
   });
 
-  // =====================================================
-  // WATCHERS
-  // =====================================================
+  // Watchers para el panel derecho en tiempo real
+  const currentMoneda = watch("moneda");
+  const currentDescripcion = watch("descripcion");
+  const currentMonto = watch("monto_total");
+  const currentTipoIngreso = watch("tipo_ingreso");
 
-  const moneda = watch("moneda");
+  const isProjectContext = !!idProyecto;
 
-  // =====================================================
-  // SUBMIT INGRESO
-  // =====================================================
+  const formatCurrency = (value, currencyType = "PEN") =>
+    new Intl.NumberFormat("es-PE", {
+      style: "currency",
+      currency: currencyType,
+    }).format(value || 0);
 
-  const onSubmitIncome = (data) => {
-    setIncomeData(data);
-    // ===============================================
-    // SI TIENE FACTURA
-    // ===============================================
+  /**
+   * =====================================================
+   * FLUJO DEL STEPPER
+   * =====================================================
+   */
 
-    if (hasInvoice) {
-      setStep(2);
-      return;
+  // PASO 1: Selección de Tipo de Registro
+  const handleSelectInvoiceOption = (value) => {
+    setHasInvoice(value);
+    if (value) {
+      setCurrentStep("invoice");
+    } else {
+      setCurrentStep("items");
     }
-    // ===============================================
-    // SI NO TIENE FACTURA
-    // ===============================================
-
-    saveAll(data, null);
   };
 
-  // =====================================================
-  // SUBMIT FACTURA
-  // =====================================================
-
-  const onSubmitInvoice = (data) => {
-    setInvoiceData(data);
-    saveAll(incomeData, data);
+  // PASO 2: Documento guardado en estado local temporal
+  const handleInvoiceSaved = (data) => {
+    setDataInvoice(data);
+    setCurrentStep("items");
   };
 
-  // =====================================================
-  // GUARDAR TODO
-  // =====================================================
-
-  const saveAll = async (income, invoice) => {
+  /**
+   * =====================================================
+   * GUARDAR TODO (Procesamiento Final)
+   * =====================================================
+   */
+  const onSubmitAll = async (incomeFormData) => {
     try {
       setSaving(true);
       let idComprobante = null;
-      // ===============================================
-      // GUARDAR COMPROBANTE
-      // ===============================================
 
-      if (invoice) {
-        const savedInvoice = await saveTaxDocumentDB(invoice, idProyecto);
+      // 1. Guardar Comprobante en la DB si existe
+      if (hasInvoice && Object.keys(dataInvoice).length > 0) {
+        const savedInvoice = await saveTaxDocumentDB(dataInvoice, idProyecto);
         idComprobante = savedInvoice.id;
       }
 
-      // ===============================================
-      // PAYLOAD INGRESO
-      // ===============================================
-
+      // 2. Construir payload limpio del ingreso asociado al comprobante
       const payloadIncome = {
-        ...income,
+        ...incomeFormData,
         id_comprobante: idComprobante,
-        tipo_cambio: income.tipo_cambio===""?0:income.tipo_cambio
+        tipo_cambio: isNaN(incomeFormData.tipo_cambio) || incomeFormData.tipo_cambio === "" ? 0 : incomeFormData.tipo_cambio
       };
-      // ===============================================
-      // GUARDAR INGRESO
-      // ===============================================
-      await saveIngresoDB(payloadIncome, idProyecto)
 
+      // 3. Guardar Ingreso en la DB
+      await saveIngresoDB(payloadIncome, idProyecto);
+
+      toast.success("Ingreso financiero registrado con éxito");
       navigate(-1);
     } catch (error) {
       console.error(error);
+      toast.error("Ocurrió un error al guardar el registro.");
     } finally {
       setSaving(false);
-
     }
   };
 
-  // =====================================================
-  // UI
-  // =====================================================
-
   return (
-
     <Container fluid className="py-4 px-4">
-
-      {/* ================================================= */}
       {/* HEADER */}
-      {/* ================================================= */}
-
       <div className="d-flex justify-content-between align-items-center mb-4">
         <div>
-          <h3 className="fw-bold mb-1">
-            Registrar ingreso
-          </h3>
-          <small className="text-muted">
-            Registro financiero del proyecto
-          </small>
+          <h3 className="fw-bold mb-1">Registro de Ingresos</h3>
+          <p className="text-muted mb-0">Registra comprobantes de pago e ingresos del proyecto</p>
         </div>
-        <Button
-          variant="outline-secondary"
-          onClick={() => navigate(-1)}
-        >
+        <Button variant="outline-secondary" onClick={() => navigate(-1)}>
           ← Regresar
         </Button>
       </div>
 
+      {/* STEPPER */}
+      <Card className="border-0 shadow-sm rounded-4 mb-4">
+        <Card.Body>
+          <div className="d-flex justify-content-between align-items-center">
+            {/* Paso 1 */}
+            <div className="text-center flex-fill">
+              <div
+                className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                  currentStep === "type" ? "bg-primary text-white" : "bg-light"
+                }`}
+                style={{ width: 45, height: 45 }}
+              >
+                1
+              </div>
+              <small>Tipo de Registro</small>
+            </div>
+
+            <div className="flex-fill border-top"></div>
+
+            {/* Paso 2 */}
+            <div className="text-center flex-fill">
+              <div
+                className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                  currentStep === "invoice"
+                    ? "bg-primary text-white"
+                    : Object.keys(dataInvoice).length > 0
+                    ? "bg-success text-white"
+                    : "bg-light"
+                }`}
+                style={{ width: 45, height: 45 }}
+              >
+                2
+              </div>
+              <small>Documento</small>
+            </div>
+
+            <div className="flex-fill border-top"></div>
+
+            {/* Paso 3 */}
+            <div className="text-center flex-fill">
+              <div
+                className={`rounded-circle mx-auto mb-2 d-flex align-items-center justify-content-center ${
+                  currentStep === "items" ? "bg-primary text-white" : "bg-light"
+                }`}
+                style={{ width: 45, height: 45 }}
+              >
+                3
+              </div>
+              <small>Datos de Ingreso</small>
+            </div>
+          </div>
+        </Card.Body>
+      </Card>
+
+      {/* CONTENIDO PRINCIPAL */}
       <Row>
+        {/* COLUMNA IZQUIERDA: FORMULARIOS DINÁMICOS */}
+        <Col lg={7}>
+          {/* PASO 1: Selector de tipo */}
+          {currentStep === "type" && (
+            <Card className="border-0 shadow-sm rounded-4">
+              <Card.Body className="p-4">
+                <h4 className="fw-bold mb-3">¿El ingreso tiene comprobante?</h4>
+                <p className="text-muted mb-4">Selecciona cómo deseas registrar este flujo monetario.</p>
+                <div className="d-flex gap-3">
+                  <Button
+                    size="lg"
+                    variant="primary"
+                    className="flex-fill py-3"
+                    onClick={() => handleSelectInvoiceOption(true)}
+                  >
+                    Sí tiene comprobante
+                  </Button>
+                  <Button
+                    size="lg"
+                    variant="outline-secondary"
+                    className="flex-fill py-3"
+                    onClick={() => handleSelectInvoiceOption(false)}
+                  >
+                    Sin comprobante tributario
+                  </Button>
+                </div>
+              </Card.Body>
+            </Card>
+          )}
 
-        {/* ================================================= */}
-        {/* FORMULARIOS */}
-        {/* ================================================= */}
+          {/* PASO 2: Formulario del Comprobante */}
+          {currentStep === "invoice" && (
+            <Card className="border-0 shadow-sm rounded-4">
+              <Card.Body>
+                <div className="mb-4">
+                  <h4 className="fw-bold">Registrar Documento Emitido</h4>
+                  <p className="text-muted mb-0">Completa la información tributaria de la factura o boleta.</p>
+                </div>
+                <NewInvoiceForm
+                  hideInvoiceForm={handleInvoiceSaved}
+                  isProjectContext={isProjectContext}
+                  idProyecto={idProyecto}
+                  defaultInvoiceDataValue={{
+                    tipo_doc: "factura emitida",
+                    fecha_emision: "",
+                    fecha_vencimiento: "",
+                    serie_comprobante: "",
+                    nro_comprobante: "",
+                    ruc: "",
+                    razon_social: "",
+                    monto: "",
+                    moneda: "PEN",
+                    tipo_cambio: "",
+                    mes_declarado: new Date().toISOString().slice(0, 7),
+                    estado_comprobante: "pendiente",
+                  }}
+                />
+              </Card.Body>
+            </Card>
+          )}
 
-        <Col lg={8}>
-
-          {/* ================================================= */}
-          {/* PASO 1 */}
-          {/* ================================================= */}
-
-          {step === 1 && (
-            <Card className="border rounded-4">
+          {/* PASO 3: Formulario Detallado del Ingreso */}
+          {currentStep === "items" && (
+            <Card className="border-0 shadow-sm rounded-4">
               <Card.Body className="p-4">
                 <div className="mb-4">
-                  <Badge bg="success" className="mb-2">
-                    PASO 1
-                  </Badge>
-                  <h5 className="fw-semibold mb-0">
-                    Información del ingreso
-                  </h5>
+                  <h4 className="fw-bold">Información Financiera</h4>
+                  <p className="text-muted mb-0">Completa los detalles del ingreso para guardarlo en el proyecto.</p>
                 </div>
-                <Form onSubmit={handleSubmit(onSubmitIncome)}>
+
+                <Form onSubmit={handleSubmit(onSubmitAll)}>
                   <Row>
-                    {/* TIPO INGRESO */}
                     <Col md={6} className="mb-3">
-                      <Form.Label>
-                        Tipo de ingreso
-                      </Form.Label>
+                      <Form.Label>Tipo de ingreso</Form.Label>
                       <Form.Select {...register("tipo_ingreso")}>
-                        <option value="adelanto">
-                          Adelanto
-                        </option>
-                        <option value="pago parcial">
-                          Pago parcial
-                        </option>
-                        <option value="pago final">
-                          Pago final
-                        </option>
-                        <option value="garantia">
-                          Garantía
-                        </option>
+                        <option value="adelanto">Adelanto</option>
+                        <option value="pago parcial">Pago parcial</option>
+                        <option value="pago final">Pago final</option>
+                        <option value="garantia">Garantía</option>
+                        <option value="devolucion">Devolución</option>
                       </Form.Select>
                     </Col>
 
-                    {/* ESTADO */}
                     <Col md={6} className="mb-3">
-                      <Form.Label>
-                        Estado
-                      </Form.Label>
+                      <Form.Label>Estado</Form.Label>
                       <Form.Select {...register("estado")}>
-                        <option value="pendiente">
-                          Pendiente
-                        </option>
-                        <option value="confirmado">
-                          Confirmado
-                        </option>
-                        <option value="anulado">
-                          Anulado
-                        </option>
+                        <option value="pendiente">Pendiente</option>
+                        <option value="confirmado">Confirmado</option>
+                        <option value="anulado">Anulado</option>
                       </Form.Select>
                     </Col>
 
-                    {/* DESCRIPCIÓN */}
                     <Col md={12} className="mb-3">
-                      <Form.Label>
-                        Descripción
-                      </Form.Label>
+                      <Form.Label>Descripción</Form.Label>
                       <Form.Control
-                        {...register("descripcion", {
-                          required: true,
-                        })}
+                        {...register("descripcion", { required: "La descripción es requerida" })}
+                        placeholder="Ej. Liquidación de hito 1 o entrega de materiales"
                       />
                       {errors.descripcion && (
-                        <small className="text-danger">
-                          La descripción es requerida
-                        </small>
+                        <small className="text-danger">{errors.descripcion.message}</small>
                       )}
                     </Col>
 
-                    {/* MONTO */}
                     <Col md={4} className="mb-3">
-                      <Form.Label>
-                        Monto
-                      </Form.Label>
+                      <Form.Label>Monto</Form.Label>
                       <Form.Control
                         type="number"
                         step="0.0001"
-                        {...register("monto_total", {
-                          required: true,
+                        {...register("monto_total", { 
+                          required: "El monto es requerido",
+                          valueAsNumber: true 
                         })}
                       />
+                      {errors.monto_total && (
+                        <small className="text-danger">{errors.monto_total.message}</small>
+                      )}
                     </Col>
 
-                    {/* MONEDA */}
                     <Col md={4} className="mb-3">
-                      <Form.Label>
-                        Moneda
-                      </Form.Label>
+                      <Form.Label>Moneda</Form.Label>
                       <Form.Select {...register("moneda")}>
-                        <option value="PEN">
-                          PEN
-                        </option>
-                        <option value="USD">
-                          USD
-                        </option>
+                        <option value="PEN">PEN</option>
+                        <option value="USD">USD</option>
                       </Form.Select>
                     </Col>
 
-                    {/* TIPO CAMBIO */}
-                    {moneda === "USD" && (
+                    {currentMoneda === "USD" && (
                       <Col md={4} className="mb-3">
-                        <Form.Label>
-                          Tipo cambio
-                        </Form.Label>
+                        <Form.Label>Tipo cambio</Form.Label>
                         <Form.Control
                           type="number"
                           step="0.0001"
-                          {...register("tipo_cambio")}
+                          {...register("tipo_cambio", { valueAsNumber: true })}
                         />
                       </Col>
                     )}
 
-                    {/* FECHA */}
                     <Col md={4} className="mb-3">
-                      <Form.Label>
-                        Fecha
-                      </Form.Label>
-                      <Form.Control
-                        type="date"
-                        {...register("fecha")}
-                      />
+                      <Form.Label>Fecha</Form.Label>
+                      <Form.Control type="date" {...register("fecha")} />
                     </Col>
                   </Row>
 
-                  {/* SWITCH */}
-                  <Card className="bg-light border-0 rounded-4 mt-3">
-                    <Card.Body>
-                      <Form.Check
-                        type="switch"
-                        label="Este ingreso tiene comprobante"
-                        checked={hasInvoice}
-                        onChange={(e) =>
-                          setHasInvoice(e.target.checked)
-                        }
-                      />
-                    </Card.Body>
-                  </Card>
-
-                  {/* BOTÓN */}
                   <Button
                     type="submit"
                     size="lg"
-                    className="w-100 mt-4"
+                    className="w-100 mt-4 py-3"
                     disabled={saving}
                   >
-                    {hasInvoice
-                      ? "Continuar →"
-                      : "Guardar ingreso"}
+                    {saving ? "Guardando Registro..." : "Finalizar y Guardar Ingreso"}
                   </Button>
                 </Form>
               </Card.Body>
             </Card>
           )}
-
-          {/* ================================================= */}
-          {/* PASO 2 */}
-          {/* ================================================= */}
-
-          {step === 2 && (
-            <NewInvoiceForm
-              hideInvoiceForm={onSubmitInvoice}
-              isProjectContext={true}
-              idProyecto={idProyecto}
-              defaultInvoiceDataValue={{
-                tipo_doc: "factura emitida",
-                fecha_emision: incomeData?.fecha,
-                fecha_vencimiento: incomeData?.fecha,
-                serie_comprobante: "",
-                nro_comprobante: "",
-                ruc: "",
-                razon_social: "",
-                monto: incomeData?.monto_total,
-                moneda: incomeData?.moneda,
-                tipo_cambio: incomeData?.tipo_cambio,
-                mes_declarado: new Date()
-                  .toISOString()
-                  .slice(0, 7),
-                estado_comprobante: "pendiente",
-              }}
-            />
-          )}
         </Col>
 
-        {/* ================================================= */}
-        {/* RESUMEN */}
-        {/* ================================================= */}
+        {/* COLUMNA DERECHA: PANEL DE RESUMEN FIJO */}
+        <Col lg={5}>
+          <div className="sticky-top" style={{ top: 20 }}>
+            <Card className="border-0 shadow-sm rounded-4">
+              <Card.Body>
+                <div className="mb-4">
+                  <h4 className="fw-bold mb-1">Resumen del Registro</h4>
+                  <p className="text-muted mb-0">Estado actual del proceso</p>
+                </div>
 
-        <Col lg={4}>
-          <Card className="border rounded-4 sticky-top">
-            <Card.Body className="p-4">
-              <h5 className="fw-semibold mb-4">
-                Resumen
-              </h5>
-              {incomeData ? (
-                <>
-                  <div className="mb-3">
-                    <small className="text-muted">
-                      Tipo ingreso
-                    </small>
-                    <div className="fw-semibold">
-                      {incomeData.tipo_ingreso}
+                {/* Alerta de Estado */}
+                <div className="mb-4">
+                  <Alert variant="light" className="border mb-0">
+                    {currentStep !== "items" ? (
+                      <>⚠ Configurando datos iniciales del flujo</>
+                    ) : (
+                      <>✅ Formulario final listo para guardar</>
+                    )}
+                  </Alert>
+                </div>
+
+                {/* Datos del Comprobante Registrado en Paso 2 */}
+                {hasInvoice && Object.keys(dataInvoice).length > 0 && (
+                  <div className="mb-4">
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                      <h6 className="fw-bold mb-0">Documento Asociado</h6>
+                      <Badge bg="success">Registrado Local</Badge>
+                    </div>
+                    <div className="small bg-light p-3 rounded-3 border">
+                      <p className="mb-2">
+                        <strong>Cliente / Razón Social:</strong><br />
+                        {dataInvoice.razon_social || "No especificado"}
+                      </p>
+                      <p className="mb-2">
+                        <strong>Comprobante:</strong><br />
+                        {dataInvoice.serie_comprobante} - {dataInvoice.nro_comprobante}
+                      </p>
+                      <p className="mb-0">
+                        <strong>Monto Facturado:</strong><br />
+                        {formatCurrency(dataInvoice.monto, dataInvoice.moneda)}
+                      </p>
                     </div>
                   </div>
-                  <div className="mb-3">
-                    <small className="text-muted">
-                      Descripción
-                    </small>
-                    <div className="fw-semibold">
-                      {incomeData.descripcion}
+                )}
+
+                {/* Datos de la transacción de Ingreso en tiempo real (Paso 3) */}
+                <div className="mb-4">
+                  <h6 className="fw-bold mb-3">Detalle Financiero</h6>
+                  {currentDescripcion || currentMonto ? (
+                    <div className="small">
+                      <p className="mb-2">
+                        <strong>Categoría:</strong> <span className="text-capitalize">{currentTipoIngreso}</span>
+                      </p>
+                      <p className="mb-0">
+                        <strong>Descripción:</strong> {currentDescripcion}
+                      </p>
                     </div>
-                  </div>
-                  <div className="mb-3">
-                    <small className="text-muted">
-                      Monto
-                    </small>
-                    <div className="fw-bold fs-3 text-success">
-                      {incomeData.moneda}
-                      {" "}
-                      {incomeData.monto_total}
-                    </div>
-                  </div>
-                  {invoiceData && (
-                    <>
-                      <hr />
-                      <div className="mb-3">
-                        <small className="text-muted">
-                          Comprobante
-                        </small>
-                        <div className="fw-semibold">
-                          {invoiceData.tipo_doc}
-                        </div>
-                      </div>
-                      <div className="mb-3">
-                        <small className="text-muted">
-                          Razón social
-                        </small>
-                        <div className="fw-semibold">
-                          {invoiceData.razon_social}
-                        </div>
-                      </div>
-                    </>
+                  ) : (
+                    <p className="text-muted small">No hay detalles del ingreso todavía.</p>
                   )}
-                </>
-              ) : (
-                <p className="text-muted">
-                  Complete el formulario para visualizar
-                  el resumen.
-                </p>
-              )}
-            </Card.Body>
-          </Card>
+                </div>
+
+                {/* Total Caja Acumulado */}
+                <Card className="bg-light border-0">
+                  <Card.Body>
+                    <small className="text-muted">Total a ingresar en caja</small>
+                    <h2 className="fw-bold text-success mb-0">
+                      {formatCurrency(currentMonto, currentMoneda)}
+                    </h2>
+                  </Card.Body>
+                </Card>
+              </Card.Body>
+            </Card>
+          </div>
         </Col>
       </Row>
     </Container>

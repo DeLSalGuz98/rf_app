@@ -13,7 +13,6 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 // COMPONENTES
-import { NewInvoice } from "./newInvoice";
 import { NewExpenditureItem } from "./newItemExpense";
 
 // QUERIES
@@ -344,7 +343,7 @@ export function NewExpensePage() {
                     moneda: "PEN",
                     tipo_cambio: "",
                     mes_declarado: "",
-                    estado_comprobante: "pendiente",
+                    estado_comprobante: "archivado",
                   }}
                 />
 

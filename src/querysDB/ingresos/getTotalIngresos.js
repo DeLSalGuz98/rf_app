@@ -1,7 +1,7 @@
 import { supabase } from "../../services/supabaseClient";
 
-export async function getTotalExpenditureProject(idProyecto) {
-  const {data, error} = await supabase.from("gastos").select("monto_total","tipo_cambio","moneda").eq("id_proyecto",idProyecto)
+export async function getTotalIncomesProject(idProyecto) {
+  const {data, error} = await supabase.from("ingresos").select("monto_total","tipo_cambio","moneda").eq("id_proyecto",idProyecto)
   if(error){
     console.error(error)
     return null
