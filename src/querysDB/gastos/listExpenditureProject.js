@@ -3,7 +3,7 @@ import { supabase } from "../../services/supabaseClient";
 import { frmtFecha } from "../../utils/formatDate";
 
 export async function getListExpenditureProject(idProyecto) {
-  const {data, error} = await supabase.from("gastos").select("*").eq("id_proyecto", idProyecto).order("fecha", { ascending: true })
+  const {data, error} = await supabase.from("gastos").select("*").eq("id_proyecto", idProyecto).order("fecha", { ascending: false })
   if(error){
     console.error(error)
     toast.error("Error al obtener los datos")

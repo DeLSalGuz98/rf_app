@@ -1,13 +1,3 @@
-/**
- * NUEVO FLUJO DE REGISTRO DE GASTOS
- * --------------------------------
- * OBJETIVO:
- * - Convertir el registro en un flujo guiado
- * - Mejorar UX sin romper la lógica existente
- * - Mantener RHF + Zod + Queries actuales
- * - Separar visualmente el proceso
- */
-
 import { useState } from "react";
 import {
   Button,
@@ -23,12 +13,12 @@ import {
 import { useNavigate, useParams } from "react-router-dom";
 
 // COMPONENTES
-import { NewInvoice } from "./newInvoice";
 import { NewExpenditureItem } from "./newItemExpense";
 
 // QUERIES
 import { saveTaxDocumentDB } from "../../querysDB/taxDocument/saveTaxDocument";
 import { saveBolckExpenditureDB } from "../../querysDB/gastos/saveExpenditure";
+import { NewInvoiceForm } from "../documentosTributarios/documentoTributarioForm";
 
 export function NewExpensePage() {
 
@@ -337,11 +327,24 @@ export function NewExpensePage() {
                   </p>
 
                 </div>
-
-                <NewInvoice
+                <NewInvoiceForm
                   hideInvoiceForm={handleInvoiceSaved}
                   isProjectContext={isProjectContext}
                   idProyecto={idProyecto}
+                  defaultInvoiceDataValue={{
+                    tipo_doc: "factura recibida",
+                    fecha_emision: "",
+                    fecha_vencimiento: "",
+                    serie_comprobante: "",
+                    nro_comprobante: "",
+                    ruc: "",
+                    razon_social: "",
+                    monto: "",
+                    moneda: "PEN",
+                    tipo_cambio: "",
+                    mes_declarado: "",
+                    estado_comprobante: "archivado",
+                  }}
                 />
 
               </Card.Body>
