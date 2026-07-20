@@ -1,19 +1,20 @@
 // TableIngresos.jsx
 
 import { useEffect, useState } from "react";
-import { Table, Spinner, Badge } from "react-bootstrap";
+import { Table, Spinner, Badge, Button } from "react-bootstrap";
 import { Link } from "react-router-dom";
 
 import { getListIngresosProyectoDB } from "../../../querysDB/ingresos/getListIngresosProyecto";
 import { SetCapitalLetter } from "../../../utils/setCapitalLetterString";
 import { convertirMoneda } from "../../../utils/convertirMoneda";
-
-const formatCurrency = (value) => {
-  return new Intl.NumberFormat("es-PE", {
-    style: "currency",
-    currency: "PEN",
-  }).format(value || 0);
-};
+import { formatMoneda } from "../../../utils/formatoMoneda";
+import { deleteIncomeProjectDB } from "../../../querysDB/ingresos/deleteIncome";
+// const formatCurrency = (value) => {
+//   return new Intl.NumberFormat("es-PE", {
+//     style: "currency",
+//     currency: "PEN",
+//   }).format(value || 0);
+// };
 
 export function TableIngresos({ idProject }) {
   const [list, setList] = useState([]);
@@ -43,6 +44,18 @@ export function TableIngresos({ idProject }) {
       setLoading(false);
     }
   };
+  const handleDelete = async (idIncome) => {
+      const confirmDelete = window.confirm("¿Eliminar este Item?");
+      if (!confirmDelete) return;
+  
+      try {
+        await deleteIncomeProjectDB(idIncome);
+        await fetchData();
+      } catch (error) {
+        console.error(error);
+        alert("Error al eliminar");
+      }
+    };
 
   // ==============================
   // UI
@@ -55,9 +68,10 @@ export function TableIngresos({ idProject }) {
             <th>Fecha</th>
             <th>Tipo</th>
             <th>Descripción</th>
-            <th>Monto</th>
+            <th>Monto Recibido</th>
             <th>Estado</th>
             <th>Comprobante</th>
+            <th>Monto Comprobante</th>
             <th>Acciones</th>
           </tr>
         </thead>
@@ -94,7 +108,7 @@ export function TableIngresos({ idProject }) {
                   </td>
 
                   <td className="text-success fw-bold">
-                    {formatCurrency(e.monto_total)}
+                    {formatMoneda(e.monto_total)}
                   </td>
 
                   <td>
@@ -113,21 +127,30 @@ export function TableIngresos({ idProject }) {
 
                   <td>
                     <Badge
-                      bg={hasComprobante ? "secondary" : "warning"}
+                      bg={hasComprobante ? "secondary" : ""}
                     >
-                      {hasComprobante
-                        ? "Con comprobante"
-                        : "Sin comprobante"}
+                      {SetCapitalLetter(e.documentos_tributarios.serie_comprobante +"-"+ e.documentos_tributarios.nro_comprobante)}
                     </Badge>
                   </td>
 
-                  <td>
+                  <td className="text-success fw-bold">
+                    {formatMoneda(e.documentos_tributarios.monto)}
+                  </td>
+
+                  <td className="d-flex gap-1 justify-content-center">
                     <Link
                       className="btn btn-primary btn-sm"
                       to={`/rf/proyecto/${idProject}/ingreso/${e.id}`}
                     >
                       <i className="bi bi-eye-fill"></i>
                     </Link>
+                    <Button
+                      variant="danger"
+                      size="sm"
+                      onClick={() => handleDelete(e.id)}
+                    >
+                      <i className="bi bi-trash-fill"></i>
+                    </Button>
                   </td>
                 </tr>
               );

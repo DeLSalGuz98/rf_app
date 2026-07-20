@@ -21,7 +21,7 @@ import { getListToGraphProjectDB } from "../../querysDB/gastos/getListToGraphPro
 import { getTotalExpenditureProject } from "../../querysDB/gastos/getTotalExpenditureProject";
 import { updateStateProjectDB } from "../../querysDB/projects/updateStateProject";
 import { getListExpenditureProject } from "../../querysDB/gastos/listExpenditureProject";
-import { getTotalIncomesProject } from "../../querysDB/ingresos/getTotalIngresos";
+// import { getTotalIncomesProject } from "../../querysDB/ingresos/getTotalIngresos";
 
 // Utils y Componentes
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
@@ -37,7 +37,7 @@ export function ProjectPage() {
   const [proyecto, setProyecto] = useState(null);
   const [loading, setLoading] = useState(true);
   const [listGraphProject, setListGraphProject] = useState([]);
-  const [totalIngresos, setTotalIngresos] = useState(0);
+  // const [totalIngresos, setTotalIngresos] = useState(0);
   const [stateProjectValue, setStateProjectValue] = useState("");
   const [showModal, setShowModal] = useState(false);
 
@@ -50,13 +50,13 @@ export function ProjectPage() {
         const [
           dataProyecto,
           rawExpenditure,
-          rawIncomes,
+          // rawIncomes,
           graphData,
           expenditureList
         ] = await Promise.all([
           getInfoProject(idProyecto),
           getTotalExpenditureProject(idProyecto),
-          getTotalIncomesProject(idProyecto),
+          // getTotalIncomesProject(idProyecto),
           getListToGraphProjectDB(idProyecto),
           getListExpenditureProject(idProyecto)
         ]);
@@ -75,7 +75,7 @@ export function ProjectPage() {
         });
 
         const totalExpenditureNum = Number(rawExpenditure) || 0;
-        const totalIncomesNum = Number(rawIncomes) || 0;
+        // const totalIncomesNum = Number(rawIncomes) || 0;
         const porcentaje = dataProyecto.monto_ofertado ? (totalExpenditureNum * 100) / dataProyecto.monto_ofertado : 0;
 
         // Inyectar datos financieros calculados directamente en el objeto de estado del proyecto
@@ -88,7 +88,7 @@ export function ProjectPage() {
           noFacturado: noFacturado.toFixed(2)
         });
 
-        setTotalIngresos(totalIncomesNum);
+        // setTotalIngresos(totalIncomesNum);
         setListGraphProject(graphData);
         setStateProjectValue(dataProyecto.estado);
       } catch (error) {
@@ -125,15 +125,15 @@ export function ProjectPage() {
   }
 
   // Cálculos Financieros derivados del estado estable
-  const totalGastado = proyecto.total_expenditure || 0;
-  const presupuesto = proyecto.monto_ofertado || 0;
-  const porcentajeEjecutado = presupuesto ? (totalGastado / presupuesto) * 100 : 0;
-  const margen = totalIngresos - totalGastado;
+  // const totalGastado = proyecto.total_expenditure || 0;
+  // const presupuesto = proyecto.monto_ofertado || 0;
+  // const porcentajeEjecutado = presupuesto ? (totalGastado / presupuesto) * 100 : 0;
+  // const margen = totalIngresos - totalGastado;
 
   // Alertas dinámicas
-  const insights = [];
-  if (porcentajeEjecutado >= 90) insights.push("⚠️ El proyecto ha consumido más del 90% del presupuesto.");
-  if (margen < 0) insights.push("🔴 El proyecto actualmente tiene margen negativo.");
+  // const insights = [];
+  // if (porcentajeEjecutado >= 90) insights.push("⚠️ El proyecto ha consumido más del 90% del presupuesto.");
+  // if (margen < 0) insights.push("🔴 El proyecto actualmente tiene margen negativo.");
 
   return (
     <div className="container-fluid">
@@ -165,14 +165,14 @@ export function ProjectPage() {
                 </div>
               </div>
               <p className="text-muted fs-5 mb-3">{SetCapitalLetter(proyecto.descripcion_proyecto)}</p>
-              <div>
+              {/* <div>
                 <small className="text-muted">EJECUCIÓN PRESUPUESTAL</small>
                 <ProgressBar now={100 - proyecto.porcentaje} className="mt-1" style={{ height: 12 }} />
                 <div className="d-flex justify-content-between mt-1">
                   <small className="text-muted">Disponible: {(100 - proyecto.porcentaje).toFixed(2)}%</small>
                   <small className="text-muted">Gastado: {proyecto.porcentaje.toFixed(2)}%</small>
                 </div>
-              </div>
+              </div> */}
             </Col>
 
             <Col lg={4}>
@@ -198,7 +198,7 @@ export function ProjectPage() {
         <Col lg={3}>
           <DataProyectComponent proyecto={proyecto} />
           {/* Renderizado de Insights dinámicos si existen */}
-          {insights.length > 0 && (
+          {/* {insights.length > 0 && (
             <Card className="border-0 shadow-sm rounded-4 mt-3 bg-light">
               <Card.Body>
                 <h6 className="fw-bold mb-2">Alertas del Proyecto</h6>
@@ -207,12 +207,14 @@ export function ProjectPage() {
                 ))}
               </Card.Body>
             </Card>
-          )}
+          )} */}
         </Col>
         
         <Col lg={9}>
           <VistasResumenFinancieroProyecto 
             presupuestoTotal={proyecto.monto_ofertado}
+            idProyecto={idProyecto}
+            totalGastos={proyecto.total_expenditure}
           />
           <Row className="mt-4">
             <Col lg={12}>

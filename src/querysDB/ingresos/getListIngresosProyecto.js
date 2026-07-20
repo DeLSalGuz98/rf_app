@@ -3,7 +3,20 @@ import { supabase } from "../../services/supabaseClient";
 import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
 export async function getListIngresosProyectoDB(idProyecto) {
-  const {data, error} = await supabase.from("ingresos").select("*").eq("id_proyecto", idProyecto).order("fecha", { ascending: false })
+  const {data, error} = await supabase
+  .from("ingresos")
+  .select(`
+    *,
+    documentos_tributarios(
+      serie_comprobante,
+      nro_comprobante,
+      moneda,
+      tipo_cambio,
+      monto
+    )
+    `)
+  .eq("id_proyecto", idProyecto)
+  .order("fecha", { ascending: false })
 
   if(error){
     console.error(error)
