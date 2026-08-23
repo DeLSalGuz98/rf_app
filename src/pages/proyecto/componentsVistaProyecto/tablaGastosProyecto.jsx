@@ -33,6 +33,7 @@ export function TableGastos({ idProject }) {
 
       const res = await getListExpenditureProject(idProject);
       const cleanData = convertirMoneda(res)
+      // console.log(cleanData)
 
       setList(cleanData || []);
     } catch (error) {
