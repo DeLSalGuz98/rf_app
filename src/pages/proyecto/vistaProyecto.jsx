@@ -124,17 +124,6 @@ export function ProjectPage() {
     return <p className="text-center text-muted mt-5">No se encontró el proyecto.</p>;
   }
 
-  // Cálculos Financieros derivados del estado estable
-  // const totalGastado = proyecto.total_expenditure || 0;
-  // const presupuesto = proyecto.monto_ofertado || 0;
-  // const porcentajeEjecutado = presupuesto ? (totalGastado / presupuesto) * 100 : 0;
-  // const margen = totalIngresos - totalGastado;
-
-  // Alertas dinámicas
-  // const insights = [];
-  // if (porcentajeEjecutado >= 90) insights.push("⚠️ El proyecto ha consumido más del 90% del presupuesto.");
-  // if (margen < 0) insights.push("🔴 El proyecto actualmente tiene margen negativo.");
-
   return (
     <div className="container-fluid">
       {/* HERO HEADER */}
@@ -144,10 +133,19 @@ export function ProjectPage() {
             <Col lg={8}>
               <div className="d-flex align-items-center gap-3 mb-3">
                 <div>
-                  <h2 className="fw-bold mb-1 text-uppercase">{proyecto.nombre_proyecto}</h2>
+                  {/* Título más grande (display-6) y destacado */}
+                  <h1 className="fw-bold mb-2 text-uppercase text-primary display-6">
+                    {proyecto.nombre_proyecto}
+                  </h1>
+
+                  {/* Badges más grandes (fs-6) con mejor relleno (padding) */}
                   <div className="d-flex gap-2 align-items-center flex-wrap">
-                    <Badge bg="dark">{SetCapitalLetter(proyecto.tipo)}</Badge>
+                    <Badge bg="dark" className="fs-6 px-3 py-2 text-uppercase">
+                      {SetCapitalLetter(proyecto.tipo)}
+                    </Badge>
+
                     <Badge
+                      className="fs-6 px-3 py-2 text-uppercase shadow-sm"
                       bg={
                         proyecto.estado === "finalizado"
                           ? "success"
@@ -158,21 +156,19 @@ export function ProjectPage() {
                     >
                       {proyecto.estado}
                     </Badge>
+
                     {proyecto.exp_siaf && (
-                      <Badge bg="light" text="dark">Exp. SIAF: {proyecto.exp_siaf}</Badge>
+                      <Badge bg="light" text="dark" className="fs-6 border px-3 py-2 shadow-sm">
+                        Exp. SIAF: <strong>{proyecto.exp_siaf}</strong>
+                      </Badge>
                     )}
                   </div>
                 </div>
               </div>
-              <p className="text-muted fs-5 mb-3">{SetCapitalLetter(proyecto.descripcion_proyecto)}</p>
-              {/* <div>
-                <small className="text-muted">EJECUCIÓN PRESUPUESTAL</small>
-                <ProgressBar now={100 - proyecto.porcentaje} className="mt-1" style={{ height: 12 }} />
-                <div className="d-flex justify-content-between mt-1">
-                  <small className="text-muted">Disponible: {(100 - proyecto.porcentaje).toFixed(2)}%</small>
-                  <small className="text-muted">Gastado: {proyecto.porcentaje.toFixed(2)}%</small>
-                </div>
-              </div> */}
+              {/* Descripción más grande (fs-4) y legible */}
+              <p className="text-secondary fs-4 mb-3 fw-normal">
+                {SetCapitalLetter(proyecto.descripcion_proyecto)}
+              </p>
             </Col>
 
             <Col lg={4}>
@@ -197,17 +193,6 @@ export function ProjectPage() {
       <Row>
         <Col lg={3}>
           <DataProyectComponent proyecto={proyecto} />
-          {/* Renderizado de Insights dinámicos si existen */}
-          {/* {insights.length > 0 && (
-            <Card className="border-0 shadow-sm rounded-4 mt-3 bg-light">
-              <Card.Body>
-                <h6 className="fw-bold mb-2">Alertas del Proyecto</h6>
-                {insights.map((insight, idx) => (
-                  <p key={idx} className="small mb-1 text-secondary">{insight}</p>
-                ))}
-              </Card.Body>
-            </Card>
-          )} */}
         </Col>
         
         <Col lg={9}>
@@ -258,8 +243,10 @@ export function ProjectPage() {
         <Modal.Body>
           <Form.Select onChange={(e) => setStateProjectValue(e.target.value)} value={stateProjectValue}>
             <option value="pendiente">Pendiente</option>
-            <option value="paralizado">Paralizado</option>
+            <option value="entregado">Entregado</option>
+            <option value="pagado">Pagado</option>
             <option value="finalizado">Finalizado</option>
+            <option value="paralizado">Paralizado</option>
           </Form.Select>
         </Modal.Body>
         <Modal.Footer>

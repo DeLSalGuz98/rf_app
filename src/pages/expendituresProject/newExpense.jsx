@@ -54,10 +54,10 @@ export function NewExpensePage() {
 
   const isProjectContext = !!idProyecto;
 
-  const formatCurrency = (value) =>
+  const formatCurrency = (value, simbol="PEN") =>
     new Intl.NumberFormat("es-PE", {
       style: "currency",
-      currency: "PEN",
+      currency: simbol,
     }).format(value || 0);
 
   /**
@@ -467,10 +467,10 @@ export function NewExpensePage() {
                         <strong>Fecha:</strong><br />
                         {dataInvoice.fecha_emision}
                       </p>
-
                       <p className="mb-0">
                         <strong>Monto Facturado:</strong><br />
-                        <strong>S/.</strong> {Number(dataInvoice.monto).toFixed(2)}
+                        <strong>{formatCurrency(Number(dataInvoice.monto).toFixed(2), dataInvoice.moneda==="USD"?"USD":"PEN")}</strong>
+                        {/* <strong>{dataInvoice.moneda === "USD"?"$":"S/."}</strong> {Number(dataInvoice.monto).toFixed(2)} */}
                       </p>
 
                     </div>
@@ -527,7 +527,7 @@ export function NewExpensePage() {
                               </td>
 
                               <td className="text-end text-nowrap">
-                                {formatCurrency(item.monto_total)}
+                                {formatCurrency(item.monto_total, item.moneda==="USD"?"USD":"PEN")}
                               </td>
 
                               <td width={40}>
@@ -566,7 +566,7 @@ export function NewExpensePage() {
                     </small>
 
                     <h2 className="fw-bold text-success mb-0">
-                      {formatCurrency(totalAmount)}
+                      {formatCurrency(totalAmount, dataInvoice.moneda==="USD"?"USD":"PEN")}
                     </h2>
 
                   </Card.Body>
