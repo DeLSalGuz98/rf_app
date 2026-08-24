@@ -134,8 +134,20 @@ export function ProjectPage() {
               <div className="d-flex align-items-center gap-3 mb-3">
                 <div>
                   {/* Título más grande (display-6) y destacado */}
-                  <h1 className="fw-bold mb-2 text-uppercase text-primary display-6">
-                    {proyecto.nombre_proyecto}
+                  <h1 className="fw-bold mb-2 text-uppercase text-primary display-6 d-flex align-items-center flex-wrap gap-2">
+                    <span>{proyecto.nombre_proyecto}</span>
+                    {
+                      !proyecto.exp_siaf?<></>:
+                      <a
+                        href="https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary text-opacity-75 text-opacity-100-hover fs-4 align-self-center ms-1"
+                        title="Consultar Expediente en MEF"
+                      >
+                        <i className="bi bi-box-arrow-up-right"></i>
+                      </a>
+                    }
                   </h1>
 
                   {/* Badges más grandes (fs-6) con mejor relleno (padding) */}
