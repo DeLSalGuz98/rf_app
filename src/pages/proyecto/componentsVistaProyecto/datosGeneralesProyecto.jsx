@@ -3,7 +3,6 @@ import { Row, Col, Card, Badge } from "react-bootstrap";
 const formatDate = (date) => {
   if (!date) return "-"
   const newDate = new Date(date).toLocaleDateString("es-PE", {timeZone: "UTC"})
-  console.log(newDate)
   return newDate
 }
 
