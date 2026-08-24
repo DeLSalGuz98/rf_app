@@ -1,9 +1,11 @@
 import { Row, Col, Card, Badge } from "react-bootstrap";
 
 const formatDate = (date) => {
-  if (!date) return "-";
-  return new Date(date).toLocaleDateString("es-PE");
-};
+  if (!date) return "-"
+  const newDate = new Date(date).toLocaleDateString("es-PE", {timeZone: "UTC"})
+  console.log(newDate)
+  return newDate
+}
 
 export function DataProyectComponent({ proyecto }) {
   if (!proyecto) return null;
