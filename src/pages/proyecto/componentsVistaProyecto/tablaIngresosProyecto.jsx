@@ -98,7 +98,14 @@ export function TableIngresos({ idProject }) {
                   <td>{e.fecha}</td>
 
                   <td>
-                    <Badge bg="success">
+                    <Badge bg={
+                        e.tipo_ingreso === "devolucion"
+                          ? "warning"
+                          : e.tipo_ingreso === "nc emitida"
+                          ? "warning"
+                          : "success"
+                      }
+                    >
                       {SetCapitalLetter(e.tipo_ingreso)}
                     </Badge>
                   </td>
@@ -107,8 +114,11 @@ export function TableIngresos({ idProject }) {
                     {SetCapitalLetter(e.descripcion)}
                   </td>
 
-                  <td className="text-success fw-bold">
-                    {formatMoneda(e.monto_total)}
+                  <td className={
+                    e.tipo_ingreso==="nc emitida"?
+                    "text-danger fw-bold":"text-success fw-bold"
+                  }>
+                    {e.tipo_ingreso==="nc emitida"?formatMoneda(-e.monto_total):formatMoneda(e.monto_total)}
                   </td>
 
                   <td>
