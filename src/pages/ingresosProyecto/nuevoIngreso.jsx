@@ -277,6 +277,7 @@ export function NuevoIngresoPage() {
                         <option value="pago final">Pago final</option>
                         <option value="garantia">Garantía</option>
                         <option value="devolucion">Devolución</option>
+                        <option value="nc emitida">NC emitida</option>
                       </Form.Select>
                     </Col>
 

@@ -24,20 +24,32 @@ export function VistasResumenFinancieroProyecto({
     const fetchFinancialData = async () => {
       setLoading(true);
       try {
+
+
         const res = await getInfoFinancieraProyectoDB(idProyecto);
         const retencionData = await getRetencionInfoProyectoDB(idProyecto)
 
         if (!res || !isMounted) return;
 
         // Uso de .reduce() para sumar correctamente los adelantos
-        const totalAdelanto = res.reduce((acc, item) => {
-          if (item?.tipo_ingreso !== "devolucion") {
-            return acc + (item?.documentos_tributarios?.monto || 0);
+        const totalAdelanto = res.ingresos.reduce((acc, item) => {
+          const tipo = item?.tipo_ingreso;
+          const monto = item?.monto_total || 0;
+
+          // 1. Si está anulado o es una devolución, ignora este registro
+          if (tipo === "devolucion") {
+            return acc;
           }
-          return acc;
+
+          // 2. Si es una nota de crédito emitida, resta el monto
+          if (tipo === "nc emitida") {
+            return acc - monto;
+          }
+          // 3. Para cualquier otro tipo de ingreso válido, suma el monto
+          return acc + monto;
         }, 0);
 
-        const totalIngresoDevoluciones = res.reduce((acc, item) => {
+        const totalIngresoDevoluciones = res.ingresos.reduce((acc, item) => {
           if (item?.tipo_ingreso === "devolucion") {
             return acc + (item?.documentos_tributarios?.monto || 0);
           }
@@ -45,7 +57,7 @@ export function VistasResumenFinancieroProyecto({
         }, 0);
 
         // Uso de .reduce() con encadenamiento opcional (?.) para detraccciones
-        const totalDetraccion = res.reduce((acc, item) => {
+        const totalDetraccion = res.ingresos.reduce((acc, item) => {
           const montoDetraccion = item?.documentos_tributarios?.factura?.[0]?.monto_detraccion || 0;
           return acc + montoDetraccion;
         }, 0);

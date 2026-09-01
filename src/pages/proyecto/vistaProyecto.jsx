@@ -50,13 +50,11 @@ export function ProjectPage() {
         const [
           dataProyecto,
           rawExpenditure,
-          // rawIncomes,
           graphData,
           expenditureList
         ] = await Promise.all([
           getInfoProject(idProyecto),
           getTotalExpenditureProject(idProyecto),
-          // getTotalIncomesProject(idProyecto),
           getListToGraphProjectDB(idProyecto),
           getListExpenditureProject(idProyecto)
         ]);
