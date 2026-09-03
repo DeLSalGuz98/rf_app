@@ -65,7 +65,7 @@ export function NuevoProyecto() {
     const fecha = new Date(fechaInicio);
     const dias = Number(plazoDias) || 0;
 
-    fecha.setDate(fecha.getDate() + dias);
+    fecha.setDate(fecha.getDate() + (dias+1));
 
     const anio = fecha.getFullYear();
     const mes = String(fecha.getMonth() + 1).padStart(2, "0");
