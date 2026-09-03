@@ -1,0 +1,15 @@
+/* Desactiva la acción de la rueda del ratón en campos tipo number */
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+/* Evita que el scroll cambie el valor cuando el input está enfocado */
+input[type="number"]:focus {
+  pointer-events: auto;
+}

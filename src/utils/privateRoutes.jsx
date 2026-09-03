@@ -6,7 +6,6 @@ import { NewExpensePage } from "../pages/expendituresProject/newExpense";
 import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
 import { NewExpenditureProject } from "../pages/newExpenditureProject";
-import { NewTaxDocument } from "../pages/newTaxDocument";
 import { ProjectReport } from "../pages/projectReport";
 import { ReportTaxDocument } from "../pages/reportTaxDocument";
 import { NewWorker } from "../pages/workers/newWorker";
@@ -17,6 +16,7 @@ import { NuevoProyecto } from "../pages/proyecto/nuevoProyecto";
 import { AllProjects } from "../pages/proyecto/listaProyectos";
 import { ProjectPage } from "../pages/proyecto/vistaProyecto";
 import { NuevoIngresoPage } from "../pages/ingresosProyecto/nuevoIngreso";
+import { NewTaxDocument } from "../pages/documentosTributarios/newTaxDocument";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
@@ -25,6 +25,7 @@ export const privateRoutes = [
   { path: "proyecto/:idProyecto", element: <ProjectPage /> },
   { path: "registrar-gastos-proyecto/:idProyecto", element: <NewExpensePage/>},
   { path: "registrar-ingresos-proyecto/:idProyecto", element: <NuevoIngresoPage/>},
+  { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
@@ -32,7 +33,6 @@ export const privateRoutes = [
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
   { path: "registrar-gastos", element: <NewExpensePage/> /*<NewExpenditure />*/ },
-  { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
   { path: "lista-documentos-tributarios", element: <ListTaxDocumetPage /> },
   { path: "reporte-mensual", element: <ReportTaxDocument /> },
   { path: "registrar-trabajador", element: <NewWorker /> },
