@@ -1,16 +1,15 @@
-import { useEffect, useState } from "react"
-import { Table, Form, Row, Col, Spinner } from "react-bootstrap"
+import { useEffect, useState, useMemo } from "react"
+import { Table, Form, Row, Col, Spinner, Badge } from "react-bootstrap"
 import { Link } from "react-router-dom"
 
 // Funciones
 import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany"
-import { GetAllListProjects } from "../../querysDB/projects/getAllProjects"
+import { GetAllListProjects } from "../../querysDB/projects/getAllProjects" // Ajustar para traer todos los proyectos o pasar estado = null / 'todos'
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString"
 
 export function ProyectosPendientes() {
-  const [listProjects, setListProjects] = useState([])
+  const [allProjects, setAllProjects] = useState([])
   const [estadoSeleccionado, setEstadoSeleccionado] = useState("pendiente")
-  // Estado para controlar la animación de carga
   const [loading, setLoading] = useState(false)
 
   const estadosDisponibles = [
@@ -22,24 +21,34 @@ export function ProyectosPendientes() {
   ]
 
   useEffect(() => {
-    getAllProjects()
-  }, [estadoSeleccionado])
+    fetchAllProjects()
+  }, [])
 
-  const getAllProjects = async () => {
-    setLoading(true) // 1. Activa el spinner antes de llamar a la DB
+  const fetchAllProjects = async () => {
+    setLoading(true)
     try {
-      const resOne = await GetUserNameAndNameCompany()
-      const resTwo = await GetAllListProjects(
-        estadoSeleccionado,
-        resOne.idEmpresa
-      )
-      setListProjects(resTwo || [])
+      const res = await GetAllListProjects()
+      setAllProjects(res || [])
     } catch (error) {
       console.error("Error al obtener los proyectos:", error)
     } finally {
-      setLoading(false) // 2. Desactiva el spinner cuando termina de cargar
+      setLoading(false)
     }
   }
+
+  // 1. Calcula el conteo global por cada estado de forma reactiva
+  const contadoresGlobales = useMemo(() => {
+    return estadosDisponibles.reduce((acc, estado) => {
+      acc[estado] = allProjects.filter((p) => p.estado?.toLowerCase() === estado).length
+      return acc
+    }, {})
+  }, [allProjects])
+
+  // 2. Filtra la lista según el estado seleccionado en el dropdown
+  const proyectosFiltrados = useMemo(() => {
+    if (estadoSeleccionado === "todos") return allProjects
+    return allProjects.filter((p) => p.estado?.toLowerCase() === estadoSeleccionado)
+  }, [allProjects, estadoSeleccionado])
 
   return (
     <>
@@ -50,26 +59,29 @@ export function ProyectosPendientes() {
             Proyectos: <span className="text-primary">{estadoSeleccionado}s</span>
           </p>
         </Col>
-        <Col md={6} className="d-flex justify-content-md-end mt-2 mt-md-0">
-          <Form.Group className="d-flex align-items-center gap-2">
-            <Form.Label className="mb-0 fw-semibold text-nowrap">
-              Filtrar por estado:
-            </Form.Label>
-            <Form.Select
-              value={estadoSeleccionado}
-              onChange={(e) => setEstadoSeleccionado(e.target.value)}
-              className="w-auto fw-semibold"
-              disabled={loading} // Opcional: deshabilita el select mientras carga
-            >
-              {estadosDisponibles.map((estado) => (
-                <option key={estado} value={estado}>
-                  {SetCapitalLetter(estado)}
-                </option>
-              ))}
-            </Form.Select>
-          </Form.Group>
-        </Col>
       </Row>
+      {/* Resumen Global de Estados */}
+      <div className="d-flex flex-wrap align-items-center gap-2 p-3 mb-4 bg-light border rounded shadow-sm">
+        <span className="fw-bold text-secondary me-2">
+          <i className="bi bi-bar-chart-fill me-1"></i> Resumen Global:
+        </span>
+        {estadosDisponibles.map((estado) => {
+          const total = contadoresGlobales[estado] || 0
+          const esActivo = estadoSeleccionado === estado
+
+          return (
+            <Badge
+              key={estado}
+              bg={esActivo ? "primary" : "secondary"}
+              className="px-3 py-2 fs-6 fw-normal cursor-pointer"
+              style={{ cursor: "pointer" }}
+              onClick={() => setEstadoSeleccionado(estado)}
+            >
+              {SetCapitalLetter(estado)}: <strong>{total}</strong>
+            </Badge>
+          )
+        })}
+      </div>
 
       {/* Tabla de Proyectos */}
       <Table hover className="align-middle text-center border position-relative">
@@ -86,7 +98,6 @@ export function ProyectosPendientes() {
         </thead>
         <tbody>
           {loading ? (
-            /* Mostrar Spinner mientras carga */
             <tr>
               <td colSpan="7" className="py-5">
                 <Spinner animation="border" variant="primary" role="status" />
@@ -95,9 +106,8 @@ export function ProyectosPendientes() {
                 </p>
               </td>
             </tr>
-          ) : listProjects.length > 0 ? (
-            /* Mostrar lista de proyectos */
-            listProjects.map((e) => (
+          ) : proyectosFiltrados.length > 0 ? (
+            proyectosFiltrados.map((e) => (
               <tr key={e.id}>
                 <td className="text-nowrap fw-semibold">{e.nombre_proyecto}</td>
                 <td>{SetCapitalLetter(e.descripcion_proyecto)}</td>
@@ -120,7 +130,6 @@ export function ProyectosPendientes() {
               </tr>
             ))
           ) : (
-            /* Mensaje cuando no hay registros */
             <tr>
               <td colSpan="7" className="text-muted py-4">
                 No hay proyectos registrados con el estado "
