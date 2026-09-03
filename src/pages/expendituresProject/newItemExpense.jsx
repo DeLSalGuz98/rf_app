@@ -75,6 +75,16 @@ export function NewExpenditureItem({
     setValue("monto_total", Number(resultadoFinal.toFixed(4)));
   }, [cantidad, precio, incluyeIgv, setValue]);
 
+  useEffect(() => {
+    const handleWheel = () => {
+      if (document.activeElement?.type === "number") {
+        document.activeElement.blur();
+      }
+    };
+    window.addEventListener("wheel", handleWheel, { passive: true });
+    return () => window.removeEventListener("wheel", handleWheel);
+  }, []);
+
   const onSubmit = (data) => {
     const precioConIgv = data.incluye_igv 
       ? Number((data.precio_unitario * 1.18).toFixed(4))

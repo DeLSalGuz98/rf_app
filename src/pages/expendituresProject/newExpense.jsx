@@ -19,6 +19,7 @@ import { NewExpenditureItem } from "./newItemExpense";
 import { saveTaxDocumentDB } from "../../querysDB/taxDocument/saveTaxDocument";
 import { saveBolckExpenditureDB } from "../../querysDB/gastos/saveExpenditure";
 import { NewInvoiceForm } from "../documentosTributarios/documentoTributarioForm";
+import { useEffect } from "react";
 
 export function NewExpensePage() {
 
@@ -156,6 +157,16 @@ export function NewExpensePage() {
     (sum, item) => sum + parseFloat(item.monto_total || 0),
     0
   );
+
+  useEffect(() => {
+      const handleWheel = () => {
+        if (document.activeElement?.type === "number") {
+          document.activeElement.blur();
+        }
+      };
+      window.addEventListener("wheel", handleWheel, { passive: true });
+      return () => window.removeEventListener("wheel", handleWheel);
+    }, []);
 
   return (
     <Container fluid className="py-4 px-4">
