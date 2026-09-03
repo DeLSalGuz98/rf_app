@@ -86,7 +86,7 @@ export function VistasResumenFinancieroProyecto({
   }, [idProyecto]);
 
   const montoPendientePago = useMemo(() => {
-    return (presupuestoTotal || 0) - montoAdelanto;
+    return (presupuestoTotal || 0) - (montoAdelanto+montoDetraccion);
   }, [presupuestoTotal, montoAdelanto]);
 
   const porcentajeEjecutado = ((totalGastos - montoIngresoDevoluciones) *100 / presupuestoTotal)
