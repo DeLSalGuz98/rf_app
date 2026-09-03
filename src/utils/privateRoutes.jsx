@@ -17,6 +17,7 @@ import { AllProjects } from "../pages/proyecto/listaProyectos";
 import { ProjectPage } from "../pages/proyecto/vistaProyecto";
 import { NuevoIngresoPage } from "../pages/ingresosProyecto/nuevoIngreso";
 import { NewTaxDocument } from "../pages/documentosTributarios/newTaxDocument";
+import { EditarDataIngreso } from "../pages/ingresosProyecto/editarIngreso";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
@@ -26,6 +27,7 @@ export const privateRoutes = [
   { path: "registrar-gastos-proyecto/:idProyecto", element: <NewExpensePage/>},
   { path: "registrar-ingresos-proyecto/:idProyecto", element: <NuevoIngresoPage/>},
   { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
+  { path: "proyecto/:idProyecto/ingreso/:id", element: <EditarDataIngreso/> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },

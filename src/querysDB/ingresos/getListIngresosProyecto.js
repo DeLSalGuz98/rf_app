@@ -1,6 +1,5 @@
 import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
-import { GetUserNameAndNameCompany } from "../../utils/getUserAndCompany";
 
 export async function getListIngresosProyectoDB(idProyecto) {
   const {data, error} = await supabase
