@@ -1,5 +1,17 @@
-import { Button, Col, Container, Form, InputGroup, Row, Spinner, Table } from "react-bootstrap";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { 
+  Button, 
+  Col, 
+  Container, 
+  Form, 
+  InputGroup, 
+  Row, 
+  Spinner, 
+  Table, 
+  Badge, 
+  Card,
+  Modal 
+} from "react-bootstrap";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
 
@@ -9,9 +21,10 @@ import { GetAllListProjects } from "../../querysDB/projects/getAllProjects";
 import { deleteProjectDB } from "../../querysDB/projects/deleteProject";
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
 
-const headTable = ["Proyecto","Tipo","Descripción","Fecha Final","Días Restantes","Monto Ofertado","Acciones"];
+const HEAD_TABLE = ["Proyecto", "Tipo", "Descripción", "Fecha Final", "Días Restantes", "Monto Ofertado", "Acciones"];
 
 function diasRestantes(fechaFin) {
+  if (!fechaFin) return 0;
   const hoy = new Date();
   const fin = new Date(fechaFin);
   const diferencia = fin - hoy;
@@ -23,27 +36,26 @@ function formatCurrency(value) {
   return new Intl.NumberFormat("es-PE", {
     style: "currency",
     currency: "PEN",
-  }).format(value);
+  }).format(value ?? 0);
 }
 
 export function AllProjects() {
   const [listProjects, setListProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [stateProjectValue, setStateProjectValue] = useState("pendiente");
+  const [searchTerm, setSearchTerm] = useState("");
+
+  // Estado para modal de confirmación
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [deleting, setDeleting] = useState(false);
 
   const fetchProjects = async (estado) => {
     try {
       setLoading(true);
-
       const { idEmpresa } = await GetUserNameAndNameCompany();
       const data = await GetAllListProjects(estado, idEmpresa);
-
-      if (data.length === 0) {
-        toast.warning("La lista está vacía");
-      }
-
-      setListProjects(data);
-
+      setListProjects(data || []);
     } catch (error) {
       console.error(error);
       toast.error("Error al obtener proyectos");
@@ -60,136 +72,226 @@ export function AllProjects() {
     setStateProjectValue(e.target.value);
   };
 
-  const deleteProject = async (id) => {
-    if (!window.confirm("Se eliminará el proyecto definitivamente")) return;
+  const handleOpenDeleteModal = (id) => {
+    setSelectedProjectId(id);
+    setShowDeleteModal(true);
+  };
 
+  const confirmDeleteProject = async () => {
+    if (!selectedProjectId) return;
     try {
-      await deleteProjectDB(id);
-      toast.success("Proyecto eliminado");
+      setDeleting(true);
+      await deleteProjectDB(selectedProjectId);
+      toast.success("Proyecto eliminado correctamente");
+      setShowDeleteModal(false);
       fetchProjects(stateProjectValue);
     } catch (error) {
       console.error(error);
-      toast.error("Error al eliminar");
+      toast.error("Error al eliminar el proyecto");
+    } finally {
+      setDeleting(false);
+      setSelectedProjectId(null);
     }
   };
 
-  const totalProjects = listProjects.length;
+  // Filtro en tiempo real por término de búsqueda
+  const filteredProjects = useMemo(() => {
+    return listProjects.filter(
+      (p) =>
+        p.nombre_proyecto?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        p.descripcion_proyecto?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }, [listProjects, searchTerm]);
+
+  // Métricas rápidas
+  const totalProjects = filteredProjects.length;
   const riskProjects = listProjects.filter(
     (p) => diasRestantes(p.fecha_fin) <= 3 && p.estado === "pendiente"
   ).length;
 
   return (
-    <Container>
+    <Container className="py-4">
+      {/* Cabecera y Métricas */}
+      <Card className="border-0 shadow-sm mb-4">
+        <Card.Body className="p-3">
+          <Row className="align-items-center g-3">
+            <Col md={5}>
+              <h4 className="mb-1 fw-bold text-dark">Proyectos</h4>
+              <div className="d-flex gap-2 align-items-center">
+                <Badge bg="primary" className="fw-normal">
+                  Total: {totalProjects}
+                </Badge>
+                {stateProjectValue === "pendiente" && riskProjects > 0 && (
+                  <Badge bg="danger" className="fw-normal">
+                    <i className="bi bi-exclamation-circle me-1"></i>
+                    En riesgo: {riskProjects}
+                  </Badge>
+                )}
+              </div>
+            </Col>
 
-      {/* Cabecera */}
-      <Row className="mb-3">
-        <Col>
-          <h4 className="mb-0">Proyectos</h4>
-          <small className="text-muted">
-            Total: {totalProjects} | En riesgo: {riskProjects}
-          </small>
-        </Col>
-      </Row>
+            {/* Buscador y Filtro de Estado */}
+            <Col md={4}>
+              <Form.Control
+                type="search"
+                placeholder="🔍 Buscar por nombre o descripción..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </Col>
 
-      {/* Filtro */}
-      <Row className="mb-2">
-        <Col md="3">
-          <InputGroup className="mb-3">
-            <InputGroup.Text>Estado</InputGroup.Text>
-            <Form.Select onChange={updateStateProject} value={stateProjectValue}>
-              <option value="pendiente">Pendiente</option>
-              <option value="paralizado">Paralizado</option>
-              <option value="finalizado">Finalizado</option>
-            </Form.Select>
-          </InputGroup>
-        </Col>
-      </Row>
+            <Col md={3}>
+              <InputGroup>
+                <InputGroup.Text className="bg-light text-secondary border-end-0">
+                  <i className="bi bi-funnel"></i>
+                </InputGroup.Text>
+                <Form.Select
+                  className="border-start-0"
+                  onChange={updateStateProject}
+                  value={stateProjectValue}
+                >
+                  <option value="pendiente">Pendiente</option>
+                  <option value="entregado">Entregado</option>
+                  <option value="finalizado">Finalizado</option>
+                  <option value="pagado">Pagado</option>
+                  <option value="paralizado">Paralizado</option>
+                </Form.Select>
+              </InputGroup>
+            </Col>
+          </Row>
+        </Card.Body>
+      </Card>
 
-      {/* Tabla nativa */}
-      <Table striped bordered hover responsive>
-        <thead className="table-ligth">
-          <tr>
-            {headTable.map((e) => <th key={e}>{e}</th>)}
-          </tr>
-        </thead>
+      {/* Tabla Principal */}
+      <Card className="border-0 shadow-sm">
+        <Card.Body className="p-0">
+          <Table responsive hover className="mb-0 align-middle">
+            <thead className="table-light">
+              <tr>
+                {HEAD_TABLE.map((e) => (
+                  <th key={e} className="text-secondary small fw-bold py-3">
+                    {e}
+                  </th>
+                ))}
+              </tr>
+            </thead>
 
-        <tbody>
-          {loading ? (
-            <tr>
-              <td colSpan={7}>
-                <div className="d-flex flex-column align-items-center py-3">
-                  <Spinner />
-                  <small className="text-muted mt-2">Cargando proyectos...</small>
-                </div>
-              </td>
-            </tr>
-          ) : listProjects.length === 0 ? (
-            <tr>
-              <td colSpan={7} className="text-center py-4">
-                <div className="text-muted">
-                  <i className="bi bi-folder-x" style={{ fontSize: "2rem" }}></i>
-                  <p className="mt-2">No hay proyectos en este estado</p>
-                </div>
-              </td>
-            </tr>
-          ) : (
-            listProjects.map((e) => {
-              const dias = diasRestantes(e.fecha_fin);
-
-              return (
-                <tr key={e.id}>
-                  <td>{e.nombre_proyecto}</td>
-
-                  <td>
-                    <span className="badge bg-secondary">
-                      {SetCapitalLetter(e.tipo)}
-                    </span>
-                  </td>
-
-                  <td className="text-start">
-                    {SetCapitalLetter(e.descripcion_proyecto)}
-                  </td>
-
-                  <td className="text-nowrap">{e.fecha_fin}</td>
-
-                  <td>
-                    <span className={
-                      dias <= 3 && e.estado === "pendiente"
-                        ? "badge bg-danger"
-                        : dias <= 7
-                        ? "badge bg-warning text-dark"
-                        : "badge bg-success"
-                    }>
-                      {dias} días
-                    </span>
-                  </td>
-
-                  <td>{formatCurrency(e.monto_ofertado)}</td>
-
-                  <td>
-                    <div className="d-flex gap-2">
-                      <Link
-                        className="btn btn-outline-primary btn-sm"
-                        to={`/rf/proyecto/${e.id}`}
-                      >
-                        Ver
-                      </Link>
-
-                      <Button
-                        variant="outline-danger"
-                        size="sm"
-                        onClick={() => deleteProject(e.id)}
-                      >
-                        Eliminar
-                      </Button>
+            <tbody>
+              {loading ? (
+                <tr>
+                  <td colSpan={7}>
+                    <div className="d-flex flex-column align-items-center py-5">
+                      <Spinner animation="border" variant="primary" size="sm" />
+                      <small className="text-muted mt-2">Cargando proyectos...</small>
                     </div>
                   </td>
                 </tr>
-              );
-            })
-          )}
-        </tbody>
-      </Table>
+              ) : filteredProjects.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-5">
+                    <div className="text-muted">
+                      <i className="bi bi-folder-x fs-1 d-block mb-2 text-secondary"></i>
+                      <p className="mb-0 fw-medium">No hay proyectos para mostrar</p>
+                      <small>Intenta cambiar el estado seleccionado o ajusta la búsqueda.</small>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredProjects.map((e) => {
+                  const dias = diasRestantes(e.fecha_fin);
+
+                  return (
+                    <tr key={e.id}>
+                      <td className="fw-semibold text-dark">{e.nombre_proyecto}</td>
+
+                      <td>
+                        <Badge bg="secondary" className="fw-normal">
+                          {SetCapitalLetter(e.tipo)}
+                        </Badge>
+                      </td>
+
+                      <td className="text-start text-muted small" style={{ maxWidth: "250px" }}>
+                        <div className="text-truncate">
+                          {SetCapitalLetter(e.descripcion_proyecto)}
+                        </div>
+                      </td>
+
+                      <td className="text-nowrap small">{e.fecha_fin}</td>
+
+                      {/* Lógica de estado dinámico para Badges de Fecha */}
+                      <td>
+                        {e.estado === "finalizado" ? (
+                          <Badge bg="light" className="text-secondary border">
+                            Completado
+                          </Badge>
+                        ) : e.estado === "paralizado" ? (
+                          <Badge bg="secondary">Detenido ({dias} d)</Badge>
+                        ) : (
+                          <Badge
+                            bg={
+                              dias <= 3
+                                ? "danger"
+                                : dias <= 7
+                                ? "warning"
+                                : "success"
+                            }
+                            className={dias <= 7 && dias > 3 ? "text-dark" : ""}
+                          >
+                            {dias} días
+                          </Badge>
+                        )}
+                      </td>
+
+                      <td className="fw-semibold text-dark">
+                        {formatCurrency(e.monto_ofertado)}
+                      </td>
+
+                      <td>
+                        <div className="d-flex gap-1">
+                          <Link
+                            className="btn btn-sm btn-outline-primary"
+                            to={`/rf/proyecto/${e.id}`}
+                            title="Ver detalle del proyecto"
+                          >
+                            <i className="bi bi-eye-fill"></i>
+                          </Link>
+
+                          <Button
+                            variant="outline-danger"
+                            size="sm"
+                            onClick={() => handleOpenDeleteModal(e.id)}
+                            title="Eliminar proyecto"
+                          >
+                            <i className="bi bi-trash-fill"></i>
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </Table>
+        </Card.Body>
+      </Card>
+
+      {/* Modal Confirmación de Borrado */}
+      <Modal show={showDeleteModal} onHide={() => setShowDeleteModal(false)} centered size="sm">
+        <Modal.Header closeButton className="border-0 pb-0">
+          <Modal.Title className="fs-6 fw-bold">Confirmar Eliminación</Modal.Title>
+        </Modal.Header>
+        <Modal.Body className="text-muted small py-3">
+          ¿Estás seguro de eliminar este proyecto definitivamente? Esta acción no se puede deshacer.
+        </Modal.Body>
+        <Modal.Footer className="border-0 pt-0">
+          <Button variant="light" size="sm" onClick={() => setShowDeleteModal(false)}>
+            Cancelar
+          </Button>
+          <Button variant="danger" size="sm" onClick={confirmDeleteProject} disabled={deleting}>
+            {deleting ? <Spinner animation="border" size="sm" /> : "Eliminar"}
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </Container>
   );
 }
