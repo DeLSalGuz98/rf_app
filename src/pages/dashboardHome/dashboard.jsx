@@ -5,6 +5,7 @@ import { MonthlySummary } from "./dashResumenMes";
 import { GraphYearIncomeAndExpenses } from "../../components/graphMainDash";
 import { ProyectosPendientes } from "./dashProyectosPendientes";
 import { PersonalActivo } from "./dashPersonalActivo";
+import { FacturasPendientes } from "./dashFacturasPendientes";
 
 export function DasboardHomePage(){
   return<>
@@ -23,6 +24,7 @@ export function DasboardHomePage(){
       {/*vista proyectos pendientes o en proceso*/}
       <Col className="p-2 overflow-scroll" lg="9">
         <ProyectosPendientes></ProyectosPendientes>
+        <FacturasPendientes></FacturasPendientes>
       </Col>
       {/*vista Personal activo*/}
       <Col className="pt-2" lg="3">

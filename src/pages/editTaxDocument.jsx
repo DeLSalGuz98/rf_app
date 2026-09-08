@@ -45,7 +45,6 @@ export function EditTaxDocument(){
   },[])
   const getTaxDocumentData = async()=>{
     const res = await getTaxDocumentDataDB(idTaxDocument)
-    console.log(res)
     setInitialData(res)
     reset(res)
   }
