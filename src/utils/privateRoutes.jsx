@@ -28,9 +28,9 @@ export const privateRoutes = [
   { path: "registrar-ingresos-proyecto/:idProyecto", element: <NuevoIngresoPage/>},
   { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
   { path: "proyecto/:idProyecto/ingreso/:id", element: <EditarDataIngreso/> },
+  { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
-  { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },

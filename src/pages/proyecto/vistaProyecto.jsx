@@ -126,79 +126,149 @@ export function ProjectPage() {
     <div className="container-fluid">
       {/* HERO HEADER */}
       <Card className="border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-        <Card.Body className="p-4">
-          <Row className="align-items-center">
-            <Col lg={8}>
-              <div className="d-flex align-items-center gap-3 mb-3">
-                <div>
-                  {/* Título más grande (display-6) y destacado */}
-                  <h1 className="fw-bold mb-2 text-uppercase text-primary display-6 d-flex align-items-center flex-wrap gap-2">
-                    <span>{proyecto.nombre_proyecto}</span>
-                    {
-                      !proyecto.exp_siaf?<></>:
-                      <a
-                        href="https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-primary text-opacity-75 text-opacity-100-hover fs-4 align-self-center ms-1"
-                        title="Consultar Expediente en MEF"
-                      >
-                        <i className="bi bi-box-arrow-up-right"></i>
-                      </a>
-                    }
-                  </h1>
+  <Card.Body className="p-4">
+    <Row className="align-items-start g-4">
+      {/* Columna Izquierda: Información del Proyecto */}
+      <Col lg={7} xl={8}>
+        <div className="d-flex align-items-center gap-3 mb-3">
+          <div>
+            {/* Título + Enlace SIAF */}
+            <h1 className="fw-bold mb-2 text-uppercase text-primary display-6 d-flex align-items-center flex-wrap gap-2">
+              <span>{proyecto.nombre_proyecto}</span>
+              {proyecto.exp_siaf && (
+                <a
+                  href="https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary text-opacity-75 fs-4 align-self-center ms-1 text-decoration-none"
+                  title="Consultar Expediente en MEF"
+                >
+                  <i className="bi bi-box-arrow-up-right"></i>
+                </a>
+              )}
+            </h1>
 
-                  {/* Badges más grandes (fs-6) con mejor relleno (padding) */}
-                  <div className="d-flex gap-2 align-items-center flex-wrap">
-                    <Badge bg="dark" className="fs-6 px-3 py-2 text-uppercase">
-                      {SetCapitalLetter(proyecto.tipo)}
-                    </Badge>
+            {/* Badges Informativos */}
+            <div className="d-flex gap-2 align-items-center flex-wrap">
+              {proyecto.tipo && (
+                <Badge bg="dark" className="fs-6 px-3 py-2 text-uppercase fw-semibold">
+                  {SetCapitalLetter(proyecto.tipo)}
+                </Badge>
+              )}
 
-                    <Badge
-                      className="fs-6 px-3 py-2 text-uppercase shadow-sm"
-                      bg={
-                        proyecto.estado === "finalizado"
-                          ? "success"
-                          : proyecto.estado === "pendiente"
-                          ? "warning"
-                          : "secondary"
-                      }
-                    >
-                      {proyecto.estado}
-                    </Badge>
+              {proyecto.estado && (
+                <Badge
+                  className="fs-6 px-3 py-2 text-uppercase shadow-sm fw-semibold"
+                  bg={
+                    proyecto.estado === "finalizado" || proyecto.estado === "pagado"
+                      ? "success"
+                      : proyecto.estado === "pendiente" || proyecto.estado === "en proceso"
+                      ? "warning"
+                      : "secondary"
+                  }
+                >
+                  {proyecto.estado}
+                </Badge>
+              )}
 
-                    {proyecto.exp_siaf && (
-                      <Badge bg="light" text="dark" className="fs-6 border px-3 py-2 shadow-sm">
-                        Exp. SIAF: <strong>{proyecto.exp_siaf}</strong>
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </div>
-              {/* Descripción más grande (fs-4) y legible */}
-              <p className="text-secondary fs-4 mb-3 fw-normal">
-                {SetCapitalLetter(proyecto.descripcion_proyecto)}
-              </p>
+              {proyecto.exp_siaf && (
+                <Badge bg="light" text="dark" className="fs-6 border px-3 py-2 shadow-sm fw-normal">
+                  Exp. SIAF: <strong className="font-monospace">{proyecto.exp_siaf}</strong>
+                </Badge>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* Descripción del Proyecto */}
+        {proyecto.descripcion_proyecto && (
+          <p className="text-secondary fs-5 mb-0 fw-normal lh-sm">
+            {SetCapitalLetter(proyecto.descripcion_proyecto)}
+          </p>
+        )}
+      </Col>
+
+      {/* Columna Derecha: Panel de Acciones */}
+      <Col lg={5} xl={4}>
+        <Stack gap={2}>
+          {/* Botones Principales Rápidos: Ingreso y Gasto */}
+          <Row className="g-2">
+            <Col xs={6}>
+              <Button
+                as={Link}
+                to={`/rf/registrar-ingresos-proyecto/${idProyecto}`}
+                size="md"
+                variant="success"
+                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
+              >
+                <i className="bi bi-plus-circle-fill fs-6"></i>
+                <span>Ingreso</span>
+              </Button>
             </Col>
-
-            <Col lg={4}>
-              <Stack gap={2}>
-                <Stack direction="horizontal" gap={2}>
-                  <Button as={Link} to={`/rf/registrar-ingresos-proyecto/${idProyecto}`} size="lg" variant="success" className="w-50">
-                    <i className="bi bi-cash me-2"></i>Ingreso
-                  </Button>
-                  <Button as={Link} to={`/rf/registrar-gastos-proyecto/${idProyecto}`} size="lg" variant="danger" className="w-50">
-                    <i className="bi bi-cash me-2"></i>Gasto
-                  </Button>
-                </Stack>
-                <Button as={Link} to={`/rf/registrar-documentos/${idProyecto}`} variant="outline-primary">Documentos</Button>
-                <Button as={Link} to={`/rf/reporte-proyecto/${idProyecto}`} variant="outline-dark">Reporte financiero</Button>
-                <Button variant="outline-warning" onClick={() => setShowModal(true)}>Cambiar estado</Button>
-              </Stack>
+            <Col xs={6}>
+              <Button
+                as={Link}
+                to={`/rf/registrar-gastos-proyecto/${idProyecto}`}
+                size="md"
+                variant="danger"
+                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
+              >
+                <i className="bi bi-dash-circle-fill fs-6"></i>
+                <span>Gasto</span>
+              </Button>
             </Col>
           </Row>
-        </Card.Body>
-      </Card>
+
+          {/* Botones Secundarios y Edición */}
+          <Button
+            as={Link}
+            to={`/rf/registrar-documentos/${idProyecto}`}
+            variant="outline-primary"
+            className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+          >
+            <i className="bi bi-file-earmark-text fs-6"></i>
+            <span>Documentos Tributarios</span>
+          </Button>
+
+          <Button
+            as={Link}
+            to={`/rf/reporte-proyecto/${idProyecto}`}
+            variant="outline-dark"
+            className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+          >
+            <i className="bi bi-bar-chart-line fs-6"></i>
+            <span>Reporte Financiero</span>
+          </Button>
+
+          <Row className="g-2">
+            <Col xs={6}>
+              <Button
+                variant="outline-warning"
+                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium text-dark"
+                onClick={() => setShowModal(true)}
+              >
+                <i className="bi bi-arrow-repeat fs-6"></i>
+                <span>Estado</span>
+              </Button>
+            </Col>
+            <Col xs={6}>
+              <Button
+                as={Link}
+                to={`/rf/proyecto/${idProyecto}/editar-datos`}
+                state={proyecto}
+                variant="outline-secondary"
+                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+              >
+                <i className="bi bi-pencil-square fs-6"></i>
+                <span>Editar</span>
+              </Button>
+            </Col>
+          </Row>
+        </Stack>
+      </Col>
+    </Row>
+  </Card.Body>
+</Card>
 
       <Row>
         <Col lg={3}>
