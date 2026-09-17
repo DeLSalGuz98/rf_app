@@ -29,11 +29,11 @@ export const privateRoutes = [
   { path: "registrar-documentos-tributarios", element: <NewTaxDocument /> },
   { path: "proyecto/:idProyecto/ingreso/:id", element: <EditarDataIngreso/> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
+  { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
-  { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
   { path: "registrar-gastos", element: <NewExpensePage/> /*<NewExpenditure />*/ },
   { path: "lista-documentos-tributarios", element: <ListTaxDocumetPage /> },
   { path: "reporte-mensual", element: <ReportTaxDocument /> },
