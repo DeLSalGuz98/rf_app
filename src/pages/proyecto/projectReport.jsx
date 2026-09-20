@@ -2,14 +2,14 @@ import React, { useEffect, useState, useMemo, useCallback } from "react";
 import { Container, Row, Col, Table, Card, Button, Badge } from "react-bootstrap";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { usePrintReport } from "../hooks/printReportHook";
-import { getReportProjectDataDB } from "../querysDB/projects/getReportProjectData";
-import { getListIngresosProyectoDB } from "../querysDB/ingresos/getListIngresosProyecto";
-import { getInfoFinancieraProyectoDB } from "../querysDB/projects/getInfoFnanciera";
+import { usePrintReport } from "../../hooks/printReportHook";
+import { getReportProjectDataDB } from "../../querysDB/projects/getReportProjectData";
+import { getListIngresosProyectoDB } from "../../querysDB/ingresos/getListIngresosProyecto";
+import { getInfoFinancieraProyectoDB } from "../../querysDB/projects/getInfoFnanciera";
 
-import { SetCapitalLetter } from "../utils/setCapitalLetterString";
-import { exportToExcel } from "../utils/exportToExcel";
-import { convertirMoneda } from "../utils/convertirMoneda";
+import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
+import { exportToExcel } from "../../utils/exportToExcel";
+import { convertirMoneda } from "../../utils/convertirMoneda";
 
 // ==========================================
 // FUNCIONES AUXILIARES (UTILIDADES)

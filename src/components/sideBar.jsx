@@ -55,6 +55,7 @@ export const Sidebar = ({isMobile = false }) => {
       section: "FINANZAS",
       items: [
         { name: "Gastos", path: "/rf/registrar-gastos", icon: "bi-cash-stack" },
+        { name: "Cuentas por cobrar", path: "/rf/cuentas-por-cobrar", icon: "bi-cash-stack" }
       ],
     },
     {

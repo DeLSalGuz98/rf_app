@@ -1,16 +1,16 @@
 import { DashPricesPage } from "../pages/consultarPrecios/dashPrices";
 import { EditExpenditureProyect } from "../pages/editExpenditureProject";
-import { EditProjectData } from "../pages/editProjectData";
 import { EditTaxDocument } from "../pages/editTaxDocument";
 import { NewExpensePage } from "../pages/expendituresProject/newExpense";
 import { ListTaxDocumetPage } from "../pages/listTaxDocument";
 import { NewDocumentProject } from "../pages/newDocumentProject";
 import { NewExpenditureProject } from "../pages/newExpenditureProject";
-import { ProjectReport } from "../pages/projectReport";
 import { ReportTaxDocument } from "../pages/reportTaxDocument";
 import { NewWorker } from "../pages/workers/newWorker";
 
 //NUEVAS RUTAS
+import { EditProjectData } from "../pages/editProjectData";
+import { ProjectReport } from "../pages/proyecto/projectReport";
 import { DasboardHomePage } from "../pages/dashboardHome/dashboard";
 import { NuevoProyecto } from "../pages/proyecto/nuevoProyecto";
 import { AllProjects } from "../pages/proyecto/listaProyectos";
@@ -18,6 +18,7 @@ import { ProjectPage } from "../pages/proyecto/vistaProyecto";
 import { NuevoIngresoPage } from "../pages/ingresosProyecto/nuevoIngreso";
 import { NewTaxDocument } from "../pages/documentosTributarios/newTaxDocument";
 import { EditarDataIngreso } from "../pages/ingresosProyecto/editarIngreso";
+import { CuentasPorCobrar } from "../pages/CuentasPorCobrar/cuentasPorCobrar";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
@@ -30,6 +31,7 @@ export const privateRoutes = [
   { path: "proyecto/:idProyecto/ingreso/:id", element: <EditarDataIngreso/> },
   { path: "proyecto/:idProyecto/editar-datos", element: <EditProjectData /> },
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
+  { path: "cuentas-por-cobrar", element: <CuentasPorCobrar/> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
