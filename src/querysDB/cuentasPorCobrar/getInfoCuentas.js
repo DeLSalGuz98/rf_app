@@ -26,7 +26,8 @@ export async function getCuentasPorCobrarDataDB() {
       ),
       ingresos (
         id,
-        monto_total
+        monto_total,
+        estado
       )
     `)
     .eq("tipo_doc", "factura emitida")
@@ -46,8 +47,8 @@ export async function getCuentasPorCobrarDataDB() {
   const resultado = data.map((doc) => {
     // Suma de ingresos cobrados para ESTA factura en particular
     const cobradoFactura = doc.ingresos
-      ? doc.ingresos.reduce((acc, ing) => acc + Number(ing.monto_total || 0), 0)
-      : 0;
+      ? doc.ingresos?.estado === "confirmado"?doc.ingresos.reduce((acc, ing) => acc + Number(ing.monto_total || 0), 0)
+      :0 : 0;
 
     const montoOriginalFactura = Number(doc.monto || 0);
     const saldoFactura = Number(Math.max(0, montoOriginalFactura - cobradoFactura).toFixed(2));
@@ -80,6 +81,7 @@ export async function getCuentasPorCobrarDataDB() {
       fechaVencimiento: doc.fecha_vencimiento,
       diasAtraso: diasAtraso,
       estadoComprobante: doc.estado_comprobante,
+      estadoIngreso: doc.ingresos?.estado,
       estado: estadoFactura,
 
       // Información del Proyecto (si existe)

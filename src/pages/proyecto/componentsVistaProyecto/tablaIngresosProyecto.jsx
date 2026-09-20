@@ -141,7 +141,7 @@ export function TableIngresos({ idProject }) {
                     >
                       {SetCapitalLetter(e.documentos_tributarios.serie_comprobante +"-"+ e.documentos_tributarios.nro_comprobante)}
                     </Badge>
-                  </td>
+                  </td> 
 
                   <td className="text-success fw-bold">
                     {formatMoneda(e.documentos_tributarios.monto)}

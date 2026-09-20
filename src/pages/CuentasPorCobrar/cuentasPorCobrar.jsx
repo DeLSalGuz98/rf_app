@@ -147,12 +147,6 @@ export function CuentasPorCobrar() {
             Gestión de saldos pendientes, vencimientos y registro de cobros.
           </p>
         </Col>
-        <Col md={4} className="text-md-end mt-3 mt-md-0">
-          <Button variant="outline-secondary" className="shadow-sm">
-            <i className="bi bi-download me-2"></i>
-            Exportar
-          </Button>
-        </Col>
       </Row>
 
       {/* Cards de Resumen Rápido (KPIs Dinámicos) */}
