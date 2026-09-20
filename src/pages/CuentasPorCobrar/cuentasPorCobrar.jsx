@@ -31,7 +31,6 @@ export function CuentasPorCobrar() {
     try {
       setLoading(true);
       const res = await getCuentasPorCobrarDataDB();
-      console.log(res);
 
       if (Array.isArray(res)) {
         setProyectosData(res);

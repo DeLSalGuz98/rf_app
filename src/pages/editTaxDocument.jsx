@@ -1,14 +1,12 @@
+import { useEffect, useState, useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Row, Col, Container } from "react-bootstrap";
-import FormComponent from "../components/formComponent";
-import { BtnSubmitForm, InputField, SelectField } from "../components/inputComponent";
-import { useEffect } from "react";
+import { Container, Row, Col, Form, Button, Spinner } from "react-bootstrap";
+
 import { obtenerRazonSocialPorRUC } from "../utils/rsPorRuc";
-import { useNavigate, useParams } from "react-router-dom";
 import { getTaxDocumentDataDB } from "../querysDB/taxDocument/getTaxDocumentData";
-import { useState } from "react";
 import { updateTaxDocDataDB } from "../querysDB/taxDocument/updateTaxDocumentData";
 import { listStateTaxDocument } from "../utils/listStateTaxDocument";
 
@@ -18,146 +16,383 @@ const docTributarioSchema = z.object({
   fecha_vencimiento: z.string().min(1, "La fecha de vencimiento es requerida"),
   serie_comprobante: z.string().min(1, "La serie es requerida"),
   nro_comprobante: z.string().min(1, "El número es requerido"),
-  ruc: z.string().min(11, "El RUC debe tener 11 dígitos"),
+  ruc: z.string().length(11, "El RUC debe tener exactamente 11 dígitos"),
   razon_social: z.string().min(2, "La razón social es requerida"),
   monto: z.coerce.number().positive("El monto debe ser mayor a 0"),
   moneda: z.enum(["PEN", "USD"], { message: "Seleccione una moneda válida" }),
-  tipo_cambio: z.coerce.number().optional(),
+  tipo_cambio: z.coerce.number().optional().nullable(),
   mes_declarado: z.string().min(1, "El mes declarado es requerido"),
-  estado_comprobante: z.enum(["pendiente","devengado", "girado", "con retencion", "pagado", "atrasado", "anulado", "archivado"])
+  estado_comprobante: z.enum([
+    "pendiente",
+    "devengado",
+    "girado",
+    "con retencion",
+    "pagado",
+    "atrasado",
+    "anulado",
+    "archivado"
+  ])
 });
 
+export function EditTaxDocument() {
+  const { idTaxDocument } = useParams();
+  const navigate = useNavigate();
+  
+  const [initialData, setInitialData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchingRuc, setSearchingRuc] = useState(false);
 
-export function EditTaxDocument(){
-  const {idTaxDocument} = useParams()
-  const navigation = useNavigate()
-  const [initialData, setInitialData] = useState({})
-  const methods = useForm({
-    resolver: zodResolver(docTributarioSchema),
-    defaultValues: initialData
-  })
-  const {reset, watch, setValue} = methods
-  const ruc = watch("ruc")
-  const moneda = watch("moneda")
+  const lastConsultedRuc = useRef("");
 
-  useEffect(()=>{
-    getTaxDocumentData()
-  },[])
-  const getTaxDocumentData = async()=>{
-    const res = await getTaxDocumentDataDB(idTaxDocument)
-    setInitialData(res)
-    reset(res)
-  }
+  const {
+    register,
+    handleSubmit,
+    reset,
+    watch,
+    setValue,
+    setError,
+    clearErrors,
+    formState: { errors }
+  } = useForm({
+    resolver: zodResolver(docTributarioSchema)
+  });
 
-  useEffect(()=>{
-    getRsByRuc(ruc)
-  },[ruc])
+  const ruc = watch("ruc");
+  const moneda = watch("moneda");
 
+  // 1. Cargar datos iniciales
+  useEffect(() => {
+    let isMounted = true;
+    const fetchDocumentData = async () => {
+      try {
+        setLoading(true);
+        const data = await getTaxDocumentDataDB(idTaxDocument);
+        if (isMounted && data) {
+          setInitialData(data);
+          reset(data);
+          lastConsultedRuc.current = data.ruc || "";
+        }
+      } catch (error) {
+        console.error("Error al obtener el documento tributario:", error);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
 
-  const getRsByRuc = async (ruc="")=>{
-    if(ruc.length<11){
-      return
-    }else{
-      const res = await obtenerRazonSocialPorRUC(ruc)
-      setValue("razon_social", res)
+    if (idTaxDocument) {
+      fetchDocumentData();
     }
-  }
-  // ✅ Función para detectar qué campos cambiaron
-    const getUpdatedFields = (newData, originalData) => {
-      const updated = {};
-      for (const key in newData) {
-        if (newData[key] !== originalData[key]) {
-          updated[key] = newData[key];
+
+    return () => {
+      isMounted = false;
+    };
+  }, [idTaxDocument, reset]);
+
+  // 2. Búsqueda automática de Razón Social al cambiar el RUC (CORREGIDO)
+  useEffect(() => {
+    if (!initialData || !ruc) return;
+
+    // Si vuelve al RUC original del documento, restablece la razón social inicial
+    if (ruc === initialData.ruc) {
+      clearErrors("ruc");
+      setValue("razon_social", initialData.razon_social || "", { shouldValidate: true });
+      lastConsultedRuc.current = ruc;
+      return;
+    }
+
+    const autoFetchRazonSocial = async () => {
+      if (ruc.length === 11 && ruc !== lastConsultedRuc.current) {
+        try {
+          setSearchingRuc(true);
+          clearErrors("ruc");
+          lastConsultedRuc.current = ruc;
+
+          const razonSocial = await obtenerRazonSocialPorRUC(ruc);
+
+          if (razonSocial) {
+            setValue("razon_social", razonSocial, { shouldValidate: true });
+          } else {
+            // Si la API responde pero no encuentra la razón social
+            setValue("razon_social", "", { shouldValidate: true });
+            setError("ruc", {
+              type: "manual",
+              message: "El RUC ingresado no existe o no se encontraron datos."
+            });
+          }
+        } catch (error) {
+          console.error("Error al obtener la razón social por RUC:", error);
+          setValue("razon_social", "", { shouldValidate: true });
+          setError("ruc", {
+            type: "manual",
+            message: "Error al consultar el RUC. Verifique la conexión o el número."
+          });
+        } finally {
+          setSearchingRuc(false);
         }
       }
-      return updated;
     };
-    // 💾 Guardar gasto
-    const onSubmit = async (data) => {
-      const updatedFields = getUpdatedFields({...data, tipo_cambio: data.tipo_cambio===0?null:data.tipo_cambio}, initialData);
-      if (Object.keys(updatedFields).length === 0) {
-        alert("No se ha modificado ningún campo.");
-        return;
+
+    autoFetchRazonSocial();
+  }, [ruc, initialData, setValue, setError, clearErrors]);
+
+  const getUpdatedFields = (newData, originalData) => {
+    const updated = {};
+    for (const key in newData) {
+      if (newData[key] !== originalData[key]) {
+        updated[key] = newData[key];
       }
-      await updateTaxDocDataDB(updatedFields, idTaxDocument)
-      backPage()
-      
-    };
-    const backPage = ()=>{
-      navigation(-1)
     }
-  return(
-    <Container>
-      <FormComponent methods={methods} onSubmit={onSubmit} title="Editar Documento Tributario">
-        <Row>
+    return updated;
+  };
+
+  const onSubmit = async (data) => {
+    if (!initialData) return;
+
+    const payload = {
+      ...data,
+      tipo_cambio: data.moneda === "PEN" ? null : (data.tipo_cambio || null)
+    };
+
+    const updatedFields = getUpdatedFields(payload, initialData);
+
+    if (Object.keys(updatedFields).length === 0) {
+      alert("No se ha modificado ningún campo.");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      await updateTaxDocDataDB(updatedFields, idTaxDocument);
+      navigate(-1);
+    } catch (error) {
+      console.error("Error al actualizar el documento:", error);
+      alert("Ocurrió un error al guardar los cambios.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Container className="text-center my-5">
+        <Spinner animation="border" role="status">
+          <span className="visually-hidden">Cargando datos...</span>
+        </Spinner>
+      </Container>
+    );
+  }
+
+  return (
+    <Container className="py-4">
+      <h2 className="mb-4">Editar Documento Tributario</h2>
+      <Form onSubmit={handleSubmit(onSubmit)}>
+        <Row className="g-3">
+          
+          {/* Tipo de Documento */}
           <Col md={4}>
-            <SelectField
-              name="tipo_doc"
-              label="Tipo de Documento"
-              options={[
-                { value: "factura emitida", label: "Factura Emitida" },
-                { value: "factura recibida", label: "Factura Recibida" },
-                { value: "nc emitido", label: "Nota de Credito Emitido" },
-                { value: "nc recibido", label: "Nota de Credito Recibido" },
-                { value: "retencion recibido", label: "Comprobante de Retencion Recibido" },
-                { value: "r.h. recibido", label: "R.H. Recibido" },
-              ]}
-            />
+            <Form.Group controlId="tipo_doc">
+              <Form.Label>Tipo de Documento</Form.Label>
+              <Form.Select {...register("tipo_doc")} isInvalid={!!errors.tipo_doc}>
+                <option value="">Seleccione...</option>
+                <option value="factura emitida">Factura Emitida</option>
+                <option value="factura recibida">Factura Recibida</option>
+                <option value="nc emitido">Nota de Crédito Emitida</option>
+                <option value="nc recibido">Nota de Crédito Recibida</option>
+                <option value="retencion recibido">Comprobante de Retención Recibido</option>
+                <option value="r.h. recibido">R.H. Recibido</option>
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {errors.tipo_doc?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* Fecha de Emisión */}
           <Col md={4}>
-            <InputField label="Fecha de Emisión" name="fecha_emision" type="date" />
+            <Form.Group controlId="fecha_emision">
+              <Form.Label>Fecha de Emisión</Form.Label>
+              <Form.Control 
+                type="date" 
+                {...register("fecha_emision")} 
+                isInvalid={!!errors.fecha_emision} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.fecha_emision?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* Fecha de Vencimiento */}
           <Col md={4}>
-            <InputField label="Fecha de Vencimiento" name="fecha_vencimiento" type="date" />
+            <Form.Group controlId="fecha_vencimiento">
+              <Form.Label>Fecha de Vencimiento</Form.Label>
+              <Form.Control 
+                type="date" 
+                {...register("fecha_vencimiento")} 
+                isInvalid={!!errors.fecha_vencimiento} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.fecha_vencimiento?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* Serie */}
           <Col md={2}>
-            <InputField label="Serie" name="serie_comprobante" />
+            <Form.Group controlId="serie_comprobante">
+              <Form.Label>Serie</Form.Label>
+              <Form.Control 
+                type="text" 
+                {...register("serie_comprobante")} 
+                isInvalid={!!errors.serie_comprobante} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.serie_comprobante?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* Número */}
           <Col md={2}>
-            <InputField label="Número" name="nro_comprobante" />
+            <Form.Group controlId="nro_comprobante">
+              <Form.Label>Número</Form.Label>
+              <Form.Control 
+                type="text" 
+                {...register("nro_comprobante")} 
+                isInvalid={!!errors.nro_comprobante} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.nro_comprobante?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* RUC */}
           <Col md={3}>
-            <InputField label="RUC" name="ruc" />
+            <Form.Group controlId="ruc">
+              <Form.Label>
+                RUC {searchingRuc && <Spinner size="sm" animation="border" className="ms-1" />}
+              </Form.Label>
+              <Form.Control 
+                type="text" 
+                maxLength={11}
+                {...register("ruc")} 
+                isInvalid={!!errors.ruc} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.ruc?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* Razón Social */}
           <Col md={5}>
-            <InputField label="Razón Social" name="razon_social" />
+            <Form.Group controlId="razon_social">
+              <Form.Label>Razón Social</Form.Label>
+              <Form.Control 
+                type="text" 
+                {...register("razon_social")} 
+                isInvalid={!!errors.razon_social} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.razon_social?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
-          <Col md={moneda==="PEN"?6:4}>
-            <InputField label="Monto" name="monto" type="number" step="0.01" />
+
+          {/* Monto */}
+          <Col md={moneda === "PEN" ? 6 : 4}>
+            <Form.Group controlId="monto">
+              <Form.Label>Monto</Form.Label>
+              <Form.Control 
+                type="number" 
+                step="0.01" 
+                {...register("monto")} 
+                isInvalid={!!errors.monto} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.monto?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
-          <Col md={moneda==="PEN"?6:4}>
-            <SelectField
-              name="moneda"
-              label="Moneda"
-              options={[
-                { value: "PEN", label: "Soles (PEN)" },
-                { value: "USD", label: "Dólares (USD)" }
-              ]}
-            />
+
+          {/* Moneda */}
+          <Col md={moneda === "PEN" ? 6 : 4}>
+            <Form.Group controlId="moneda">
+              <Form.Label>Moneda</Form.Label>
+              <Form.Select {...register("moneda")} isInvalid={!!errors.moneda}>
+                <option value="PEN">Soles (PEN)</option>
+                <option value="USD">Dólares (USD)</option>
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {errors.moneda?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
-          {
-            moneda!=="PEN"?
+
+          {/* Tipo de Cambio */}
+          {moneda !== "PEN" && (
             <Col md={4}>
-              <InputField label="Tipo de Cambio" name="tipo_cambio" type="number" step="0.01" />
-            </Col>:<></>
-          }
+              <Form.Group controlId="tipo_cambio">
+                <Form.Label>Tipo de Cambio</Form.Label>
+                <Form.Control 
+                  type="number" 
+                  step="0.001" 
+                  {...register("tipo_cambio")} 
+                  isInvalid={!!errors.tipo_cambio} 
+                />
+                <Form.Control.Feedback type="invalid">
+                  {errors.tipo_cambio?.message}
+                </Form.Control.Feedback>
+              </Form.Group>
+            </Col>
+          )}
+
+          {/* Mes Declarado */}
           <Col md={6}>
-            <InputField 
-              label={"Mes Declarado"}
-              name={"mes_declarado"}
-              type="month"
-            ></InputField>
+            <Form.Group controlId="mes_declarado">
+              <Form.Label>Mes Declarado</Form.Label>
+              <Form.Control 
+                type="month" 
+                {...register("mes_declarado")} 
+                isInvalid={!!errors.mes_declarado} 
+              />
+              <Form.Control.Feedback type="invalid">
+                {errors.mes_declarado?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
+          {/* Estado del Comprobante */}
           <Col md={6}>
-            <SelectField
-              name="estado_comprobante"
-              label="Estado del Comprobante"
-              options={listStateTaxDocument}
-            />
+            <Form.Group controlId="estado_comprobante">
+              <Form.Label>Estado del Comprobante</Form.Label>
+              <Form.Select {...register("estado_comprobante")} isInvalid={!!errors.estado_comprobante}>
+                <option value="">Seleccione un estado...</option>
+                {listStateTaxDocument?.map((state) => (
+                  <option key={state.value} value={state.value}>
+                    {state.label}
+                  </option>
+                ))}
+              </Form.Select>
+              <Form.Control.Feedback type="invalid">
+                {errors.estado_comprobante?.message}
+              </Form.Control.Feedback>
+            </Form.Group>
           </Col>
+
         </Row>
-        <BtnSubmitForm />
-      </FormComponent>
+
+        <div className="d-flex justify-content-end gap-2 mt-4">
+          <Button variant="secondary" type="button" onClick={() => navigate(-1)}>
+            Cancelar
+          </Button>
+          <Button variant="primary" type="submit" disabled={isSubmitting}>
+            {isSubmitting ? <Spinner size="sm" animation="border" /> : "Guardar Cambios"}
+          </Button>
+        </div>
+      </Form>
     </Container>
-  )
+  );
 }
