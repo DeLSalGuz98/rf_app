@@ -33,12 +33,12 @@ export const privateRoutes = [
   { path: "reporte-proyecto/:idProyecto", element: <ProjectReport /> },
   { path: "cuentas-por-cobrar", element: <CuentasPorCobrar/> },
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
+  { path: "registrar-trabajador", element: <NewWorker /> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
   { path: "registrar-gastos", element: <NewExpensePage/> /*<NewExpenditure />*/ },
   { path: "lista-documentos-tributarios", element: <ListTaxDocumetPage /> },
   { path: "reporte-mensual", element: <ReportTaxDocument /> },
-  { path: "registrar-trabajador", element: <NewWorker /> },
   { path: "consultar-precios", element: <DashPricesPage /> },
 ];
