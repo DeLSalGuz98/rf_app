@@ -55,7 +55,7 @@ export const Sidebar = ({isMobile = false }) => {
       section: "FINANZAS",
       items: [
         { name: "Gastos", path: "/rf/registrar-gastos", icon: "bi-cash-stack" },
-        { name: "Cuentas por cobrar", path: "/rf/cuentas-por-cobrar", icon: "bi-cash-stack" }
+        { name: "Cuentas por cobrar", path: "/rf/cuentas-por-cobrar", icon: "bi bi-file-earmark-arrow-down" }
       ],
     },
     {
@@ -69,6 +69,7 @@ export const Sidebar = ({isMobile = false }) => {
       section: "TRABAJADORES",
       items: [
         { name: "Registrar", path: "/rf/registrar-trabajador", icon: "bi-person-plus" },
+        { name: "Lista Trabajadores", path: "/rf/lista-trabajadores-empresa", icon: "bi bi-person-lines-fill" },
       ],
     },
     {
@@ -77,7 +78,7 @@ export const Sidebar = ({isMobile = false }) => {
         { name: "Precios", path: "/rf/consultar-precios", icon: "bi-tag" },
       ],
     },
-  ];
+  ];// lista-trabajadores-empresa
 
   return (
     <div
