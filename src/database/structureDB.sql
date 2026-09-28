@@ -31,7 +31,7 @@ create table public.empleado (
   fecha_nacimiento date not null,
   sexo text null,
   telf text null,
-  email text not null,
+  email text null,
   tipo_doc text null,
   nro_doc text not null,
   activo boolean not null default true,

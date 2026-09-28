@@ -12,7 +12,7 @@ import {
   Dropdown,
   Spinner,
 } from "react-bootstrap";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { getListWorkersDB } from "../../querysDB/workers/getListWorkers";
 
 export function ListWorker() {
@@ -295,8 +295,11 @@ export function ListWorker() {
                             </Dropdown.Toggle>
 
                             <Dropdown.Menu className="shadow-sm border-0">
-                              <Dropdown.Item className="d-flex align-items-center gap-2">
-                                <i className="bi bi-eye"></i> Ver Detalle
+                              <Dropdown.Item 
+                                as={Link}
+                                to={`/rf/vista-trabajador/${worker.id}`}
+                                className="d-flex align-items-center gap-2">
+                                  <i className="bi bi-eye"></i> Ver Detalle
                               </Dropdown.Item>
                               <Dropdown.Item className="d-flex align-items-center gap-2">
                                 <i className="bi bi-pencil"></i> Editar

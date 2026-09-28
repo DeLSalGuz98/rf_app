@@ -20,6 +20,7 @@ import { NewTaxDocument } from "../pages/documentosTributarios/newTaxDocument";
 import { EditarDataIngreso } from "../pages/ingresosProyecto/editarIngreso";
 import { CuentasPorCobrar } from "../pages/CuentasPorCobrar/cuentasPorCobrar";
 import { ListWorker } from "../pages/workers/listWorker";
+import { VistaWorker } from "../pages/workers/vistaWorker";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
@@ -36,6 +37,7 @@ export const privateRoutes = [
   { path: "editar-documento/:idTaxDocument", element: <EditTaxDocument /> },
   { path: "registrar-trabajador", element: <NewWorker /> },
   { path: "lista-trabajadores-empresa", element: <ListWorker/> },
+  { path: "vista-trabajador/:idWorker", element: <VistaWorker/> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },
