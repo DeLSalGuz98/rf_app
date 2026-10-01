@@ -240,6 +240,16 @@ export function ProjectPage() {
             <span>Reporte Financiero</span>
           </Button>
 
+          <Button
+            as={Link}
+            to={`/rf/proyecto/${idProyecto}/agregar-trabajador`}
+            variant="outline-dark"
+            className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+          >
+            <i className="bi bi-people fs-6"></i>
+            <span>Añadir Personal</span>
+          </Button>
+
           <Row className="g-2">
             <Col xs={6}>
               <Button
