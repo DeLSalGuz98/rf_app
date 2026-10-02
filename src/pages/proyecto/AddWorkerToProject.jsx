@@ -14,6 +14,7 @@ import {
 } from "react-bootstrap";
 import { getListWorkersDB } from "../../querysDB/workers/getListWorkers";
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
+import { saveWorkerToProyectDB } from "../../querysDB/projects/saveWorkerToProyect";
 
 export function AddWorkerToProjectPage() {
   const { idProject } = useParams(); // Obtiene id_proyecto de la URL (si aplica)
@@ -80,19 +81,17 @@ export function AddWorkerToProjectPage() {
   }, [listWorkers, selectedWorkerIds]);
 
   // Guardar asignación y generar JSON para la BD
-  const handleSaveAssignment = () => {
+  const handleSaveAssignment = async () => {
     const currentDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
     const payload = selectedWorkerIds.map((idEmpleado) => ({
       id_empleado: idEmpleado,
       id_proyecto: idProject || "ID_PROYECTO_EJEMPLO", // Toma idProject de los params
-      fecha: currentDate,
+      fecha_registro: currentDate,
     }));
 
-    console.log("JSON listo para la base de datos:", payload);
-
-    // TODO: Aquí invocarás tu función queryDB para guardar en la BD
-    // await saveWorkersProjectDB(payload);
+    await saveWorkerToProyectDB(payload)
+    navigate(-1)
   };
 
   const isAllFilteredSelected =
