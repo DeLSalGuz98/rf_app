@@ -30,6 +30,7 @@ import { DataProyectComponent } from "./componentsVistaProyecto/datosGeneralesPr
 import { TableGastos } from "./componentsVistaProyecto/tablaGastosProyecto";
 import { TableIngresos } from "./componentsVistaProyecto/tablaIngresosProyecto";
 import { VistasResumenFinancieroProyecto } from "./vistaResumenFinancieroProyecto";
+import { TableWorkersProject } from "./componentsVistaProyecto/tablaWorkers";
 
 export function ProjectPage() {
   const { idProyecto } = useParams();
@@ -301,6 +302,9 @@ export function ProjectPage() {
                     </Tab>
                     <Tab eventKey="ingresos" title="Ingresos">
                       <TableIngresos idProject={idProyecto} />
+                    </Tab>
+                    <Tab eventKey="trabajadores" title="Trabajadores">
+                      <TableWorkersProject idProject={idProyecto}/>
                     </Tab>
                   </Tabs>
                 </Card.Body>
