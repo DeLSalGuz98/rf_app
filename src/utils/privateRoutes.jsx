@@ -22,6 +22,7 @@ import { CuentasPorCobrar } from "../pages/CuentasPorCobrar/cuentasPorCobrar";
 import { ListWorker } from "../pages/workers/listWorker";
 import { VistaWorker } from "../pages/workers/vistaWorker";
 import { AddWorkerToProjectPage } from "../pages/proyecto/AddWorkerToProject";
+import { FormPagoWorker } from "../pages/workers/formPagoWorker";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
@@ -40,6 +41,7 @@ export const privateRoutes = [
   { path: "lista-trabajadores-empresa", element: <ListWorker/> },
   { path: "vista-trabajador/:idWorker", element: <VistaWorker/> },
   { path: "proyecto/:idProject/agregar-trabajador", element: <AddWorkerToProjectPage/> },
+  { path: "registar-pago-trabajador", element: <FormPagoWorker/> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },

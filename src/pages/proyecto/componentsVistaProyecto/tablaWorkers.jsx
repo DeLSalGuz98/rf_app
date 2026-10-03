@@ -100,7 +100,7 @@ export function TableWorkersProject({ idProject }) {
                           variant="outline-success"
                           size="sm"
                           className="d-flex align-items-center gap-1"
-                          onClick={() => navigate(`/rf/registrar-gastos?empleadoId=${emp.id}&proyectoId=${idProject}`)}
+                          onClick={() => navigate(`/rf/registar-pago-trabajador`)}
                           title="Registrar pago a este trabajador"
                         >
                           <i className="bi bi-cash"></i>
