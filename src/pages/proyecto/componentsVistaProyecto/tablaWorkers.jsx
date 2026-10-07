@@ -100,7 +100,12 @@ export function TableWorkersProject({ idProject }) {
                           variant="outline-success"
                           size="sm"
                           className="d-flex align-items-center gap-1"
-                          onClick={() => navigate(`/rf/registar-pago-trabajador`)}
+                          onClick={() => navigate(`/rf/registar-pago-trabajador`,{
+                            state: {
+                              id_empleado: item.id_empleado,
+                              id_proyecto: item.id_proyecto || null
+                            }
+                          })}
                           title="Registrar pago a este trabajador"
                         >
                           <i className="bi bi-cash"></i>
