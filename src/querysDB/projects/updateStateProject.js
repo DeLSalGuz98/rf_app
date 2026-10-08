@@ -2,11 +2,34 @@ import { toast } from "react-toastify";
 import { supabase } from "../../services/supabaseClient";
 
 export async function updateStateProjectDB(dataUpdate, idProyecto) {
-  const {error} = await supabase.from("proyectos").update(dataUpdate).eq("id", idProyecto)
-  if(error){
-    console.error(error)
-    toast.warning("Hubo un error, no se pudo actualizar")
-    return null
+  // 1. Validar usuario activo
+  const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    console.error("Error de autenticación:", authError);
+    toast.error("Debes iniciar sesión para realizar esta acción");
+    return null;
   }
-  toast.success("Estado del proyecto actualizado")
+
+  // 2. Ejecutar actualización
+  const { data, error } = await supabase
+    .from("proyectos")
+    .update(dataUpdate)
+    .eq("id", idProyecto)
+    .select();
+
+  if (error) {
+    console.error("Error al actualizar:", error);
+    toast.warning("Hubo un error, no se pudo actualizar");
+    return null;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("No se actualizó la fila. Verifica que el id_usuario del proyecto coincida con user.id:", user.id);
+    toast.warning("No tienes permiso para actualizar este proyecto");
+    return null;
+  }
+
+  toast.success("Estado del proyecto actualizado");
+  return data;
 }

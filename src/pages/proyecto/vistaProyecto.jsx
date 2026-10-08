@@ -104,7 +104,10 @@ export function ProjectPage() {
   // Manejo correcto del Guardar del modal sin depender del evento del botón
   const handleSaveState = async () => {
     try {
-      await updateStateProjectDB({ estado: stateProjectValue }, idProyecto);
+      const res = await updateStateProjectDB({ estado: stateProjectValue }, idProyecto);
+      if(!res){
+        return
+      }
       setProyecto((prev) => ({ ...prev, estado: stateProjectValue }));
       setShowModal(false);
     } catch (error) {
