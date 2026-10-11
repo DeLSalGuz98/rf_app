@@ -97,7 +97,6 @@ export function VistasResumenFinancieroProyecto({
    */
   const montoDetraccion = useMemo(() => {
     return ingresosData.reduce((acc, item) => {
-      console.log(item)
       const detraccion = item?.documentos_tributarios?.factura?.[0]?.monto_detraccion || 0;
       return acc + detraccion;
     }, 0);

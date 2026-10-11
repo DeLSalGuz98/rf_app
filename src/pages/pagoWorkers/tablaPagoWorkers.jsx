@@ -177,7 +177,8 @@ export function TablaPagoWorkers({ idProject}) {
                       <div className="btn-group btn-group-sm" role="group">
                         <Link
                           className="btn btn-primary btn-sm"
-                          to={`/rf/proyecto/editar-pago-empleado/${pago.id}`}
+                          to={`/rf/editar-pago-empleado/${pago.id}`}
+                          state={{nameWorker: pago.empleado_nombre_completo}}
                         >
                           <i className="bi bi-eye-fill"></i>
                         </Link>
