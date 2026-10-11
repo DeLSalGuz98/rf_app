@@ -103,7 +103,8 @@ export function TableWorkersProject({ idProject }) {
                           onClick={() => navigate(`/rf/registar-pago-trabajador`,{
                             state: {
                               id_empleado: item.id_empleado,
-                              id_proyecto: item.id_proyecto || null
+                              id_proyecto: item.id_proyecto || null,
+                              nombreEmpleado: fullName
                             }
                           })}
                           title="Registrar pago a este trabajador"

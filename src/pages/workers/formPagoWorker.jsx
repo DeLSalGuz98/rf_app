@@ -88,7 +88,7 @@ export function FormPagoWorker() {
     }
   });
 
-  const { id_empleado, id_proyecto } = location.state || {};
+  const { id_empleado, id_proyecto, nombreEmpleado } = location.state || {};
 
   // Observadores de estado en vivo
   const incluirComprobante = useWatch({ control, name: 'incluir_comprobante' });
@@ -165,7 +165,7 @@ export function FormPagoWorker() {
       <Card.Header className="bg-primary text-white py-3">
         <h5 className="mb-0 fw-bold">
           <i className="bi bi-cash-stack me-2"></i>
-          Registro de Pago a Personal
+          Registro de Pago a Personal : <span>{nombreEmpleado}</span>
         </h5>
       </Card.Header>
 

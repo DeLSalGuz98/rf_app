@@ -12,6 +12,8 @@ import {
   Spinner,
 } from "react-bootstrap";
 import { getWorkerDataDB } from "../../querysDB/workers/getWorkerData";
+import { TablaPagoWorkers } from "../pagoWorkers/tablaPagoWorkers";
+import { TablaPagoOneWorker } from "./listPagoWorker";
 
 export function VistaWorker() {
   const { idWorker } = useParams();
@@ -304,11 +306,8 @@ export function VistaWorker() {
                 </Tab>
 
                 {/* Tab opcional para futuros módulos */}
-                <Tab eventKey="documentos" title="Documentos">
-                  <div className="text-center py-4 text-muted">
-                    <i className="bi bi-folder2-open fs-2 d-block mb-2 opacity-50"></i>
-                    <p className="mb-0">Sección para adjuntar contratos, CV o certificados.</p>
-                  </div>
+                <Tab eventKey="documentos" title="Relacion de pagos">
+                  <TablaPagoOneWorker idWorker={worker.id}/>
                 </Tab>
               </Tabs>
             </Card.Body>

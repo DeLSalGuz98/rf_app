@@ -1,13 +1,13 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import { getListPagoEmpleadoDB } from "../../querysDB/workers/getListPagoWorkers";
 import { Link } from "react-router-dom";
-import { Button } from "react-bootstrap";
+import { Button, Form, Row, Col } from "react-bootstrap";
 import { deletePagoDataDB } from "../../querysDB/workers/deletePagoData";
 
 /**
  * Componente TablaPagoWorkers
  * Muestra el listado detallado de pagos realizados al personal de un proyecto, 
- * permitiendo filtrar por texto, tipo de pago, editar o eliminar registros.
+ * permitiendo filtrar por texto, tipo de pago, período, editar o eliminar registros.
  * 
  * @param {Object} props
  * @param {string|number} props.idProject - Identificador único del proyecto.
@@ -17,9 +17,10 @@ export function TablaPagoWorkers({ idProject }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para filtros de búsqueda
+  // Estados para filtros de búsqueda y filtrado por periodo
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoPagoFilter, setTipoPagoFilter] = useState("todos");
+  const [periodoFilter, setPeriodoFilter] = useState(""); // 👈 Nuevo estado para filtro por periodo (formato 'YYYY-MM')
 
   /**
    * Obtiene la lista actualizada de pagos desde la base de datos de forma segura.
@@ -45,21 +46,26 @@ export function TablaPagoWorkers({ idProject }) {
   }, [fetchPagos]);
 
   /**
-   * Filtrado reactivo en memoria basado en el término de búsqueda y el tipo de pago.
+   * Filtrado reactivo en memoria basado en el término de búsqueda, tipo de pago y período.
    */
   const filteredPagos = useMemo(() => {
     return pagos.filter((pago) => {
+      // 1. Filtro por texto libre (Nombre, N° de documento)
       const matchSearch =
         pago.empleado_nombre_completo?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        pago.empleado?.nro_doc?.includes(searchTerm) ||
-        pago.periodo?.includes(searchTerm);
+        pago.empleado?.nro_doc?.includes(searchTerm);
 
+      // 2. Filtro por tipo de pago
       const matchTipo =
         tipoPagoFilter === "todos" || pago.tipo_pago === tipoPagoFilter;
 
-      return matchSearch && matchTipo;
+      // 3. Filtro por período (ej. coincidencia exacta con 'YYYY-MM' o conteniendo el string)
+      const matchPeriodo =
+        !periodoFilter || pago.periodo === periodoFilter || pago.fecha_registro?.startsWith(periodoFilter);
+
+      return matchSearch && matchTipo && matchPeriodo;
     });
-  }, [pagos, searchTerm, tipoPagoFilter]);
+  }, [pagos, searchTerm, tipoPagoFilter, periodoFilter]);
 
   /**
    * Cálculo del total acumulado para los elementos filtrados actualmente.
@@ -94,7 +100,6 @@ export function TablaPagoWorkers({ idProject }) {
     try {
       const success = await deletePagoDataDB(idPago, idComprobante);
       if (success) {
-        // Recargamos la lista limpia de la base de datos
         fetchPagos();
       }
     } catch (err) {
@@ -125,22 +130,26 @@ export function TablaPagoWorkers({ idProject }) {
     <div className="card shadow-sm border mb-4">
       <div className="card-body p-3">
         
-        {/* Controles de Filtrado y Resumen Financiero */}
-        <div className="row g-2 align-items-center mb-3">
-          <div className="col-12 col-md-5">
-            <input
+        {/* Controles de Filtrado Optimizados */}
+        <Row className="g-2 align-items-center mb-3">
+          
+          {/* Buscador por Texto */}
+          <Col xs={12} md={4}>
+            <Form.Control
               type="text"
-              placeholder="Buscar por empleado, N° doc o período..."
+              placeholder="Buscar por empleado o N° doc..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="form-control form-control-sm"
+              size="sm"
             />
-          </div>
-          <div className="col-12 col-sm-6 col-md-4">
-            <select
+          </Col>
+
+          {/* Selector por Tipo de Pago */}
+          <Col xs={12} sm={6} md={3}>
+            <Form.Select
               value={tipoPagoFilter}
               onChange={(e) => setTipoPagoFilter(e.target.value)}
-              className="form-select form-select-sm"
+              size="sm"
             >
               <option value="todos">Todos los tipos de pago</option>
               <option value="pago_semanal">Pago Semanal</option>
@@ -148,15 +157,39 @@ export function TablaPagoWorkers({ idProject }) {
               <option value="adelanto">Adelanto</option>
               <option value="bono">Bono / Gratuidad</option>
               <option value="liquidacion">Liquidación / Final</option>
-            </select>
-          </div>
-          <div className="col-12 col-sm-6 col-md-3 text-sm-end">
-            <div className="bg-light border rounded px-2 py-1 d-inline-block text-start text-sm-end w-100">
-              <span className="text-muted small me-2">Total Filtrado:</span>
-              <span className="fw-bold text-dark">{formatCurrency(totalMonto)}</span>
+            </Form.Select>
+          </Col>
+
+          {/* 👈 NUEVO: Filtro por Periodo (Mes/Año) con opción de limpiar */}
+          <Col xs={12} sm={6} md={3}>
+            <div className="input-group input-group-sm">
+              <Form.Control
+                type="date"
+                value={periodoFilter}
+                onChange={(e) => setPeriodoFilter(e.target.value)}
+                title="Filtrar por periodo"
+              />
+              {periodoFilter && (
+                <Button 
+                  variant="outline-secondary" 
+                  onClick={() => setPeriodoFilter("")}
+                  title="Limpiar filtro de período"
+                >
+                  <i className="bi bi-x-lg"></i>
+                </Button>
+              )}
             </div>
-          </div>
-        </div>
+          </Col>
+
+          {/* Resumen del Total Filtrado */}
+          <Col xs={12} md={2} className="text-md-end">
+            <div className="bg-light border rounded px-2 py-1 d-inline-block text-start text-md-end w-100">
+              <span className="text-muted small me-1">Total:</span>
+              <span className="fw-bold text-dark small">{formatCurrency(totalMonto)}</span>
+            </div>
+          </Col>
+
+        </Row>
 
         {/* Tabla de Resultados Responsive */}
         <div className="table-responsive rounded border">
