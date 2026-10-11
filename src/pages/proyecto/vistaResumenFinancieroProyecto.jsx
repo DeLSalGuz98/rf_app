@@ -4,18 +4,27 @@ import { getInfoFinancieraProyectoDB } from "../../querysDB/projects/getInfoFnan
 import { formatMoneda } from "../../utils/formatoMoneda";
 import { getRetencionInfoProyectoDB } from "../../querysDB/projects/getRetencionInfo";
 
-
+/**
+ * Componente VistasResumenFinancieroProyecto
+ * Muestra las métricas financieras clave de un proyecto (Presupuesto, Costos, Facturación, 
+ * Ingresos Reales, Cuentas Pendientes, Detracciones, Retenciones y Utilidad Bruta).
+ * 
+ * @param {Object} props
+ * @param {number} props.presupuestoTotal - Monto total cotizado o presupuestado del proyecto.
+ * @param {string|number} props.idProyecto - Identificador único del proyecto.
+ * @param {number} props.totalGastos - Suma total de los costos/gastos operativos del proyecto.
+ */
 export function VistasResumenFinancieroProyecto({
   presupuestoTotal = 0,
   idProyecto,
   totalGastos = 0,
 }) {
-  const [montoAdelanto, setMontoAdelanto] = useState(0);
-  const [montoIngresoDevoluciones, setMontoIngresoDevoluciones] = useState(0);
-  const [montoDetraccion, setMontoDetraccion] = useState(0);
+  // Estados para almacenar las métricas financieras obtenidas del backend
+  const [ingresosData, setIngresosData] = useState([]);
+  const [retencionData, setRetencionData] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [montoRetencion, setMontoRetencion] = useState(0);
 
+  // Efecto para la carga asíncrona de la información financiera y de retenciones
   useEffect(() => {
     if (!idProyecto) return;
 
@@ -24,55 +33,18 @@ export function VistasResumenFinancieroProyecto({
     const fetchFinancialData = async () => {
       setLoading(true);
       try {
+        // Peticiones paralelas para optimizar tiempos de carga
+        const [infoFinanciera, retenciones] = await Promise.all([
+          getInfoFinancieraProyectoDB(idProyecto),
+          getRetencionInfoProyectoDB(idProyecto),
+        ]);
 
+        if (!isMounted) return;
 
-        const res = await getInfoFinancieraProyectoDB(idProyecto);
-        const retencionData = await getRetencionInfoProyectoDB(idProyecto)
-
-        if (!res || !isMounted) return;
-
-        // Uso de .reduce() para sumar correctamente los adelantos
-        const totalAdelanto = res.ingresos.reduce((acc, item) => {
-          const tipo = item?.tipo_ingreso;
-          const monto = item?.monto_total || 0;
-
-          // 1. Si está anulado o es una devolución, ignora este registro
-          if (tipo === "devolucion") {
-            return acc;
-          }
-
-          // 2. Si es una nota de crédito emitida, resta el monto
-          if (tipo === "nc emitida") {
-            return acc - monto;
-          }
-          // 3. Para cualquier otro tipo de ingreso válido, suma el monto
-          return acc + monto;
-        }, 0);
-
-        const totalIngresoDevoluciones = res.ingresos.reduce((acc, item) => {
-          if (item?.tipo_ingreso === "devolucion") {
-            return acc + (item?.documentos_tributarios?.monto || 0);
-          }
-          return acc;
-        }, 0);
-
-        // Uso de .reduce() con encadenamiento opcional (?.) para detraccciones
-        const totalDetraccion = res.ingresos.reduce((acc, item) => {
-          const montoDetraccion = item?.documentos_tributarios?.factura?.[0]?.monto_detraccion || 0;
-          return acc + montoDetraccion;
-        }, 0);
-
-        const totalRetencion = retencionData.reduce((acc, item) => {
-          const montoRetencion = item?.monto || 0;
-          return acc + montoRetencion;
-        }, 0);
-
-        setMontoAdelanto(totalAdelanto);
-        setMontoDetraccion(totalDetraccion);
-        setMontoRetencion(totalRetencion)
-        setMontoIngresoDevoluciones(totalIngresoDevoluciones)
+        setIngresosData(infoFinanciera?.ingresos || []);
+        setRetencionData(retenciones || []);
       } catch (error) {
-        console.error("Error al obtener la información financiera:", error);
+        console.error("Error al obtener la información financiera del proyecto:", error);
       } finally {
         if (isMounted) setLoading(false);
       }
@@ -81,90 +53,235 @@ export function VistasResumenFinancieroProyecto({
     fetchFinancialData();
 
     return () => {
-      isMounted = false; // Evita fugas de memoria si el componente se desmonta
+      isMounted = false; // Prevención de fugas de memoria en desmontaje
     };
   }, [idProyecto]);
 
-  const montoPendientePago = useMemo(() => {
-    return (presupuestoTotal || 0) - (montoAdelanto+montoDetraccion);
-  }, [presupuestoTotal, montoAdelanto]);
+  /**
+   * Cálculo del Monto Facturado Total (Suma de todas las facturas emitidas, excluyendo devoluciones/anulados)
+   */
+  const montoFacturado = useMemo(() => {
+    return ingresosData.reduce((acc, item) => {
+      if(!item.documentos_tributarios){
+        return
+      }
+      const tipo = item?.documentos_tributarios?.estado_comprobante;
+      const tipoDoc = item?.documentos_tributarios?.tipo_doc;
+      const monto = item?.documentos_tributarios?.monto || 0;
 
-  const porcentajeEjecutado = ((totalGastos - montoIngresoDevoluciones) *100 / presupuestoTotal)
+      if (tipo === "anulado") return acc;
+      if (tipoDoc === "nc emitido") return acc - monto; // Nota de crédito resta facturación
+
+      return acc + monto;
+    }, 0);
+  }, [ingresosData]);
+
+  /**
+   * Cálculo del Monto Pagado Real (Dinero ingresado efectivamente a las cuentas de la empresa)
+   */
+  const montoPagado = useMemo(() => {
+    return ingresosData.reduce((acc, item) => {
+      const estadoPago = item?.estado || "pagado"; 
+      const monto = item?.monto_total || 0;
+      const tipo = item?.tipo_ingreso;
+
+      if (tipo === "devolucion" || estadoPago === "pendiente") return acc;
+      if (tipo === "nc emitida") return acc - monto;
+
+      return acc + monto;
+    }, 0);
+  }, [ingresosData]);
+
+  /**
+   * Cálculo del Total de Detracciones acumuladas
+   */
+  const montoDetraccion = useMemo(() => {
+    return ingresosData.reduce((acc, item) => {
+      console.log(item)
+      const detraccion = item?.documentos_tributarios?.factura?.[0]?.monto_detraccion || 0;
+      return acc + detraccion;
+    }, 0);
+  }, [ingresosData]);
+
+  /**
+   * Cálculo del Total de Retenciones acumuladas
+   */
+  const montoRetencion = useMemo(() => {
+    return retencionData.reduce((acc, item) => {
+      return acc + (item?.monto || 0);
+    }, 0);
+  }, [retencionData]);
+
+  /**
+   * Utilidad Bruta: Ingreso real recibido (Monto Pagado) menos los costos reales totales
+   */
+  const utilidadBruta = useMemo(() => {
+    return montoPagado - totalGastos;
+  }, [montoPagado, totalGastos]);
+
+  /**
+   * Porcentaje de ejecución presupuestal basado en los costos reales frente al presupuesto total
+   */
+  const porcentajeEjecutado = useMemo(() => {
+    if (!presupuestoTotal || presupuestoTotal <= 0) return 0;
+    return (totalGastos / presupuestoTotal) * 100;
+  }, [totalGastos, presupuestoTotal]);
+
+
+  /**
+   * Cálculo del Monto Pendiente de Pago (Facturado pero aún no depositado por el cliente)
+   */
+  const montoPendientePago = useMemo(() => {
+    return presupuestoTotal - (montoPagado + montoDetraccion)
+  }, [ingresosData]);
   return (
     <Row className="mb-4">
       <Col>
         <Card className="border-0 shadow-sm rounded-4">
-          <Card.Body>
+          <Card.Body className="p-4">
+            
+            {/* Cabecera del Resumen */}
             <div className="d-flex justify-content-between align-items-center mb-4">
-              <h5 className="fw-bold mb-0">Resumen Financiero del Proyecto</h5>
+              <div>
+                <h5 className="fw-bold mb-1 text-dark">Resumen Financiero del Proyecto</h5>
+                <p className="text-muted small mb-0">Indicadores clave de rendimiento y control económico</p>
+              </div>
               {loading && <Spinner animation="border" size="sm" variant="primary" />}
             </div>
 
-            <div>
-              <small className="text-muted">EJECUCIÓN PRESUPUESTAL</small>
-              <ProgressBar now={100 - porcentajeEjecutado} className="mt-1" style={{ height: 12 }} />
-              <div className="d-flex justify-content-between mt-1">
-                <small className="text-muted">Disponible: {(100 - porcentajeEjecutado).toFixed(2)}%</small>
-                <small className="text-muted">Gastado: {porcentajeEjecutado.toFixed(2)}%</small>
+            {/* Barra de Progreso de Ejecución Presupuestal */}
+            <div className="mb-4 bg-light p-3 rounded-3 border">
+              <div className="d-flex justify-content-between mb-1">
+                <small className="text-muted fw-semibold uppercase" style={{ fontSize: "0.75rem" }}>
+                  EJECUCIÓN DEL PRESUPUESTO
+                </small>
+                <small className="fw-bold text-dark">
+                  {porcentajeEjecutado.toFixed(1)}% Ejecutado
+                </small>
+              </div>
+              <ProgressBar 
+                now={Math.min(porcentajeEjecutado, 100)} 
+                variant={porcentajeEjecutado > 90 ? "danger" : porcentajeEjecutado > 75 ? "warning" : "primary"}
+                className="mt-1" 
+                style={{ height: 10 }} 
+              />
+              <div className="d-flex justify-content-between mt-2">
+                <small className="text-muted">Gastado: {formatMoneda(totalGastos)}</small>
+                <small className="text-muted">Presupuesto: {formatMoneda(presupuestoTotal)}</small>
               </div>
             </div>
 
+            {/* Cuadrícula de Métricas Financieras (UI/UX Tarjetas Clean) */}
             <Row className="g-3">
-              <Col md={4}>
-                <div className="border rounded-3 p-3 h-100">
-                  <small className="text-muted d-block">Presupuesto Total (PT)</small>
-                  <h4 className="fw-bold text-primary mb-0">
+              
+              {/* 1. Presupuesto Total */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">PRESUPUESTO TOTAL (PT)</span>
+                  <h4 className="fw-bold text-primary mb-1 mt-1">
                     {formatMoneda(presupuestoTotal)}
                   </h4>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Monto asignado o cotizado</small>
                 </div>
               </Col>
 
-              <Col md={4}>
-                <div className="border rounded-3 p-3 h-100">
-                  <small className="text-muted d-block">Monto de Adelanto (MA)</small>
-                  <h4 className="fw-bold text-success mb-0">
-                    {formatMoneda(montoAdelanto)}
+              {/* 2. Costo Real Total */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">COSTO REAL TOTAL</span>
+                  <h4 className="fw-bold text-danger mb-1 mt-1">
+                    {formatMoneda(totalGastos)}
                   </h4>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Suma de todos los gastos</small>
                 </div>
               </Col>
 
-              <Col md={4}>
-                <div className="border rounded-3 p-3 h-100">
-                  <small className="text-muted d-block">Monto Pendiente de Pago (MPP)</small>
-                  <h4 className="fw-bold text-warning mb-0">
+              {/* 3. Monto Facturado */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">MONTO FACTURADO</span>
+                  <h4 className="fw-bold text-info mb-1 mt-1">
+                    {formatMoneda(montoFacturado)}
+                  </h4>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Total emitido en comprobantes</small>
+                </div>
+              </Col>
+
+              {/* 4. Monto Pagado */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">MONTO PAGADO (REAL)</span>
+                  <h4 className="fw-bold text-success mb-1 mt-1">
+                    {formatMoneda(montoPagado)}
+                  </h4>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Dinero recibido en cuenta</small>
+                </div>
+              </Col>
+
+              {/* 5. Monto Pendiente de Pago */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">PENDIENTE DE PAGO</span>
+                  <h4 className="fw-bold text-warning mb-1 mt-1">
                     {formatMoneda(montoPendientePago)}
                   </h4>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Monto por cobrar</small>
                 </div>
               </Col>
 
-              <Col md={4}>
-                <div className="border rounded-3 p-3 h-100">
-                  <small className="text-muted d-block">Total Gastos</small>
-                  <h4 className="fw-bold text-danger mb-0">
-                    {formatMoneda(totalGastos - montoIngresoDevoluciones)}
-                  </h4>
-                </div>
-              </Col>
-
-              <Col md={4}>
-                <div className="border rounded-3 p-3 h-100">
-                  <small className="text-muted d-block">Monto de Detracción (MD)</small>
-                  <h5 className="fw-bold mb-0">
+              {/* 6. Monto Detracciones */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">MONTO DETRACCIONES</span>
+                  <h5 className="fw-bold text-dark mb-1 mt-2">
                     {formatMoneda(montoDetraccion)}
                   </h5>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Retenciones fiscales de banco</small>
                 </div>
               </Col>
 
-              <Col md={4}>
-                <div className="border rounded-3 p-3 h-100">
-                  <small className="text-muted d-block">Monto de Retención (MR)</small>
-                  <h5 className="fw-bold mb-0">
+              {/* 7. Monto Retención */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">MONTO RETENCIÓN</span>
+                  <h5 className="fw-bold text-dark mb-1 mt-2">
                     {formatMoneda(montoRetencion)}
                   </h5>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Retenciones de clientes</small>
+                </div>
+              </Col>
+
+              {/* Espaciador visual o métrica adicional si se requiere en el futuro */}
+              {/* <Col md={3} sm={6} className="d-none d-md-block">
+                <div className="border rounded-3 p-3 h-100 bg-light opacity-75 d-flex flex-column justify-content-center text-center">
+                  <span className="text-muted small">Control Financiero</span>
+                  <span className="fw-bold text-secondary small">rf_app Project Suite</span>
+                </div>
+              </Col> */}
+
+              {/* 8. Utilidad Bruta (Métrica Destacada a Ancho Completo) */}
+              <Col xs={12}>
+                <div className={`border rounded-3 p-3 h-100 ${utilidadBruta >= 0 ? "bg-success-subtle border-success-subtle" : "bg-danger-subtle border-danger-subtle"}`}>
+                  <div className="d-flex flex-column flex-md-row justify-content-between align-items-md-center">
+                    <div>
+                      <span className="text-uppercase fw-bold small text-secondary" style={{ letterSpacing: "0.5px" }}>
+                        UTILIDAD BRUTA ESTIMADA (Ingresos Reales - Costos Reales)
+                      </span>
+                      <h3 className={`fw-bold mb-0 mt-1 ${utilidadBruta >= 0 ? "text-success" : "text-danger"}`}>
+                        {formatMoneda(utilidadBruta)}
+                      </h3>
+                    </div>
+                    <div className="mt-2 mt-md-0 text-md-end">
+                      <span className={`badge ${utilidadBruta >= 0 ? "bg-success" : "bg-danger"} fs-6 px-3 py-2`}>
+                        {utilidadBruta >= 0 ? "Proyecto Rentable" : "Margen en Negativo"}
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </Col>
 
             </Row>
+
           </Card.Body>
         </Card>
       </Col>

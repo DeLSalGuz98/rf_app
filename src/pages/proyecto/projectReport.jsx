@@ -302,7 +302,7 @@ export function ProjectReport() {
             <Col sm={6} md={4} lg={3}>
               <Card className="border-start border-4 border-info shadow-sm h-100">
                 <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">Monto Adelanto</small>
+                  <small className="text-muted fw-semibold text-uppercase">{"Monto Facturado"}</small>
                   <h5 className="fw-bold mb-0 mt-1">{formatCurrency(financialInfo.monto_adelanto)}</h5>
                 </Card.Body>
               </Card>
