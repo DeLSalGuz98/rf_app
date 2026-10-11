@@ -14,4 +14,5 @@ export async function deleteTaxDocumentDB(idTaxDocument){
     return null
   }
   toast.success("El Documento se elimino correctamente")
+  return true
 }

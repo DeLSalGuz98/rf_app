@@ -1,47 +1,52 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { getListPagoEmpleadoDB } from "../../querysDB/workers/getListPagoWorkers";
 import { Link } from "react-router-dom";
 import { Button } from "react-bootstrap";
+import { deletePagoDataDB } from "../../querysDB/workers/deletePagoData";
 
-export function TablaPagoWorkers({ idProject}) {
+/**
+ * Componente TablaPagoWorkers
+ * Muestra el listado detallado de pagos realizados al personal de un proyecto, 
+ * permitiendo filtrar por texto, tipo de pago, editar o eliminar registros.
+ * 
+ * @param {Object} props
+ * @param {string|number} props.idProject - Identificador único del proyecto.
+ */
+export function TablaPagoWorkers({ idProject }) {
   const [pagos, setPagos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Estados para filtros
+  // Estados para filtros de búsqueda
   const [searchTerm, setSearchTerm] = useState("");
   const [tipoPagoFilter, setTipoPagoFilter] = useState("todos");
 
-  useEffect(() => {
+  /**
+   * Obtiene la lista actualizada de pagos desde la base de datos de forma segura.
+   */
+  const fetchPagos = useCallback(async () => {
     if (!idProject) return;
 
-    let isMounted = true;
-    const fetchPagos = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await getListPagoEmpleadoDB(idProject);
-        if (isMounted) {
-          setPagos(res || []);
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error("Error al cargar los pagos:", err);
-          setError("No se pudieron cargar los datos de los pagos.");
-        }
-      } finally {
-        if (isMounted) setLoading(false);
-      }
-    };
-
-    fetchPagos();
-
-    return () => {
-      isMounted = false;
-    };
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await getListPagoEmpleadoDB(idProject);
+      setPagos(res || []);
+    } catch (err) {
+      console.error("Error al cargar los pagos:", err);
+      setError("No se pudieron cargar los datos de los pagos.");
+    } finally {
+      setLoading(false);
+    }
   }, [idProject]);
 
-  // Filtrado reactivo en memoria
+  useEffect(() => {
+    fetchPagos();
+  }, [fetchPagos]);
+
+  /**
+   * Filtrado reactivo en memoria basado en el término de búsqueda y el tipo de pago.
+   */
   const filteredPagos = useMemo(() => {
     return pagos.filter((pago) => {
       const matchSearch =
@@ -56,17 +61,45 @@ export function TablaPagoWorkers({ idProject}) {
     });
   }, [pagos, searchTerm, tipoPagoFilter]);
 
-  // Cálculo del total acumulado para los elementos filtrados
+  /**
+   * Cálculo del total acumulado para los elementos filtrados actualmente.
+   */
   const totalMonto = useMemo(() => {
     return filteredPagos.reduce((sum, pago) => sum + Number(pago.monto_pago || 0), 0);
   }, [filteredPagos]);
 
-  // Formateador de moneda (Soles Peruanos)
+  /**
+   * Formatea un valor numérico a la moneda local (Soles Peruanos - PEN).
+   * 
+   * @param {number} amount - Monto numérico.
+   * @returns {string} Monto formateado en moneda.
+   */
   const formatCurrency = (amount) => {
     return new Intl.NumberFormat("es-PE", {
       style: "currency",
       currency: "PEN",
     }).format(amount);
+  };
+
+  /**
+   * Maneja la eliminación lógica o física de un registro de pago y su comprobante asociado.
+   * 
+   * @param {string|number} idPago - ID del pago.
+   * @param {string|number|null} idComprobante - ID del comprobante tributario (si tuviera).
+   */
+  const handleDeletePago = async (idPago, idComprobante) => {
+    const isConfirmed = window.confirm("¿Está seguro de querer eliminar este registro de pago?");
+    if (!isConfirmed) return;
+
+    try {
+      const success = await deletePagoDataDB(idPago, idComprobante);
+      if (success) {
+        // Recargamos la lista limpia de la base de datos
+        fetchPagos();
+      }
+    } catch (err) {
+      console.error("Error al eliminar el pago:", err);
+    }
   };
 
   if (loading) {
@@ -75,7 +108,7 @@ export function TablaPagoWorkers({ idProject}) {
         <div className="spinner-border spinner-border-sm text-primary me-2" role="status">
           <span className="visually-hidden">Cargando...</span>
         </div>
-        <span className="small">Cargando pagos...</span>
+        <span className="small">Cargando pagos del personal...</span>
       </div>
     );
   }
@@ -91,7 +124,8 @@ export function TablaPagoWorkers({ idProject}) {
   return (
     <div className="card shadow-sm border mb-4">
       <div className="card-body p-3">
-        {/* Controles y Resumen Discreto */}
+        
+        {/* Controles de Filtrado y Resumen Financiero */}
         <div className="row g-2 align-items-center mb-3">
           <div className="col-12 col-md-5">
             <input
@@ -110,19 +144,21 @@ export function TablaPagoWorkers({ idProject}) {
             >
               <option value="todos">Todos los tipos de pago</option>
               <option value="pago_semanal">Pago Semanal</option>
-              <option value="fin_de_mes">Fin de Mes</option>
+              <option value="fin_de_mes">Sueldo / Fin de Mes</option>
               <option value="adelanto">Adelanto</option>
+              <option value="bono">Bono / Gratuidad</option>
+              <option value="liquidacion">Liquidación / Final</option>
             </select>
           </div>
           <div className="col-12 col-sm-6 col-md-3 text-sm-end">
             <div className="bg-light border rounded px-2 py-1 d-inline-block text-start text-sm-end w-100">
-              <span className="text-muted small me-2">Total:</span>
+              <span className="text-muted small me-2">Total Filtrado:</span>
               <span className="fw-bold text-dark">{formatCurrency(totalMonto)}</span>
             </div>
           </div>
         </div>
 
-        {/* Tabla de Resultados */}
+        {/* Tabla de Resultados Responsive */}
         <div className="table-responsive rounded border">
           <table className="table table-hover align-middle mb-0 text-sm">
             <thead className="table-light text-uppercase text-secondary small" style={{ fontSize: "0.75rem" }}>
@@ -144,7 +180,7 @@ export function TablaPagoWorkers({ idProject}) {
                       {pago.empleado_nombre_completo}
                     </td>
                     <td>
-                      <span className="badge bg-light text-dark border me-1 font-monospace uppercase">
+                      <span className="badge bg-light text-dark border me-1 font-monospace text-uppercase">
                         {pago.empleado?.tipo_doc || "DOC"}
                       </span>
                       <span className="text-secondary small">{pago.empleado?.nro_doc}</span>
@@ -178,14 +214,16 @@ export function TablaPagoWorkers({ idProject}) {
                         <Link
                           className="btn btn-primary btn-sm"
                           to={`/rf/editar-pago-empleado/${pago.id}`}
-                          state={{nameWorker: pago.empleado_nombre_completo}}
+                          state={{ nameWorker: pago.empleado_nombre_completo }}
+                          title="Editar pago"
                         >
                           <i className="bi bi-eye-fill"></i>
                         </Link>
                         <Button
                           variant="danger"
                           size="sm"
-                          onClick={() => alert(pago.id)}
+                          onClick={() => handleDeletePago(pago.id, pago.id_comprobante)}
+                          title="Eliminar pago"
                         >
                           <i className="bi bi-trash-fill"></i>
                         </Button>

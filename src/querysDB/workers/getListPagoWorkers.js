@@ -25,6 +25,7 @@ export async function getListPagoEmpleadoDB(idProyecto) {
         tipo_pago,
         forma_pago,
         id_proyecto,
+        id_comprobante,
         empleado:id_empleado (
           nombre,
           apellido_paterno,
