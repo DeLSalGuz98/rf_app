@@ -3,6 +3,7 @@ import { Card, Col, ProgressBar, Row, Spinner } from "react-bootstrap";
 import { getInfoFinancieraProyectoDB } from "../../querysDB/projects/getInfoFnanciera";
 import { formatMoneda } from "../../utils/formatoMoneda";
 import { getRetencionInfoProyectoDB } from "../../querysDB/projects/getRetencionInfo";
+import { getInfoPagoWorkerProyectoDB } from "../../querysDB/projects/getInfoPagoWorker";
 
 /**
  * Componente VistasResumenFinancieroProyecto
@@ -22,6 +23,7 @@ export function VistasResumenFinancieroProyecto({
   // Estados para almacenar las métricas financieras obtenidas del backend
   const [ingresosData, setIngresosData] = useState([]);
   const [retencionData, setRetencionData] = useState([]);
+  const [infoPagoWorkerData, setInfoPagoWorkerData] = useState(0)
   const [loading, setLoading] = useState(true);
 
   // Efecto para la carga asíncrona de la información financiera y de retenciones
@@ -34,15 +36,17 @@ export function VistasResumenFinancieroProyecto({
       setLoading(true);
       try {
         // Peticiones paralelas para optimizar tiempos de carga
-        const [infoFinanciera, retenciones] = await Promise.all([
+        const [infoFinanciera, retenciones, infoPagoWorkers] = await Promise.all([
           getInfoFinancieraProyectoDB(idProyecto),
           getRetencionInfoProyectoDB(idProyecto),
+          getInfoPagoWorkerProyectoDB(idProyecto)
         ]);
 
         if (!isMounted) return;
 
         setIngresosData(infoFinanciera?.ingresos || []);
         setRetencionData(retenciones || []);
+        setInfoPagoWorkerData(infoPagoWorkers || 0);
       } catch (error) {
         console.error("Error al obtener la información financiera del proyecto:", error);
       } finally {
@@ -189,7 +193,7 @@ export function VistasResumenFinancieroProyecto({
                 <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
                   <span className="text-muted d-block small fw-medium">COSTO REAL TOTAL</span>
                   <h4 className="fw-bold text-danger mb-1 mt-1">
-                    {formatMoneda(totalGastos)}
+                    {formatMoneda(totalGastos+infoPagoWorkerData)}
                   </h4>
                   <small className="text-muted" style={{ fontSize: "0.75rem" }}>Suma de todos los gastos</small>
                 </div>
@@ -250,13 +254,16 @@ export function VistasResumenFinancieroProyecto({
                 </div>
               </Col>
 
-              {/* Espaciador visual o métrica adicional si se requiere en el futuro */}
-              {/* <Col md={3} sm={6} className="d-none d-md-block">
-                <div className="border rounded-3 p-3 h-100 bg-light opacity-75 d-flex flex-column justify-content-center text-center">
-                  <span className="text-muted small">Control Financiero</span>
-                  <span className="fw-bold text-secondary small">rf_app Project Suite</span>
+              {/* (). Monto Retención */}
+              <Col md={3} sm={6}>
+                <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
+                  <span className="text-muted d-block small fw-medium">MONTO PAGO PERSONAL</span>
+                  <h5 className="fw-bold text-dark mb-1 mt-2">
+                    {formatMoneda(infoPagoWorkerData)}
+                  </h5>
+                  <small className="text-muted" style={{ fontSize: "0.75rem" }}>Total del pago a los trabajadores</small>
                 </div>
-              </Col> */}
+              </Col>
 
               {/* 8. Utilidad Bruta (Métrica Destacada a Ancho Completo) */}
               <Col xs={12}>
