@@ -24,6 +24,7 @@ import { VistaWorker } from "../pages/workers/vistaWorker";
 import { AddWorkerToProjectPage } from "../pages/proyecto/AddWorkerToProject";
 import { FormPagoWorker } from "../pages/workers/formPagoWorker";
 import { FormEditPagoWorker } from "../pages/pagoWorkers/editPagoWorker";
+import { FormEditDataWorker } from "../pages/workers/editDataWorker";
 
 export const privateRoutes = [
   { path: "dashboard", element: <DasboardHomePage /> },
@@ -44,6 +45,7 @@ export const privateRoutes = [
   { path: "proyecto/:idProject/agregar-trabajador", element: <AddWorkerToProjectPage/> },
   { path: "registar-pago-trabajador", element: <FormPagoWorker/> },
   { path: "editar-pago-empleado/:idPago", element: <FormEditPagoWorker/> },
+  { path: "editar-datos-empleado/:idWorker", element: <FormEditDataWorker/> },
 
   { path: "proyecto/:idProyecto/gasto/:idGasto", element: <EditExpenditureProyect /> },
   { path: "registrar-documentos/:idProyecto", element: <NewDocumentProject /> },

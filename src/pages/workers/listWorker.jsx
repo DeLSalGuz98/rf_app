@@ -301,12 +301,12 @@ export function ListWorker() {
                                 className="d-flex align-items-center gap-2">
                                   <i className="bi bi-eye"></i> Ver Detalle
                               </Dropdown.Item>
-                              <Dropdown.Item className="d-flex align-items-center gap-2">
+                              <Dropdown.Item 
+                                as={Link}
+                                to={`/rf/editar-datos-empleado/${worker.id}`}
+                                state={worker}
+                                className="d-flex align-items-center gap-2">
                                 <i className="bi bi-pencil"></i> Editar
-                              </Dropdown.Item>
-                              <Dropdown.Divider />
-                              <Dropdown.Item className="d-flex align-items-center gap-2 text-danger">
-                                <i className="bi bi-person-x"></i> Dar de baja
                               </Dropdown.Item>
                             </Dropdown.Menu>
                           </Dropdown>

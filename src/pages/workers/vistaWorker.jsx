@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback } from "react";
+import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   Container,
   Row,
@@ -14,7 +14,13 @@ import {
 import { getWorkerDataDB } from "../../querysDB/workers/getWorkerData";
 import { TablaPagoWorkers } from "../pagoWorkers/tablaPagoWorkers";
 import { TablaPagoOneWorker } from "./listPagoWorker";
+import { updateActiveWorkerDataDB } from "../../querysDB/workers/updateActiveWorker";
 
+/**
+ * Componente VistaWorker
+ * Muestra el perfil completo de un trabajador, incluyendo sus datos personales, 
+ * información laboral, estado de actividad y el historial de pagos asociados.
+ */
 export function VistaWorker() {
   const { idWorker } = useParams();
   const navigate = useNavigate();
@@ -22,20 +28,46 @@ export function VistaWorker() {
   const [worker, setWorker] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    getDataWorker();
-  }, [idWorker]);
-
-  const getDataWorker = async () => {
+  /**
+   * Obtiene la información detallada del trabajador desde la base de datos.
+   */
+  const getDataWorker = useCallback(async () => {
+    if (!idWorker) return;
     try {
       setLoading(true);
       const res = await getWorkerDataDB(idWorker);
-      // Simulación con tus datos o asignación del objeto recibido
       setWorker(res || null);
     } catch (error) {
       console.error("Error al cargar datos del trabajador:", error);
     } finally {
       setLoading(false);
+    }
+  }, [idWorker]);
+
+  useEffect(() => {
+    getDataWorker();
+  }, [getDataWorker]);
+
+  /**
+   * Cambia el estatus de actividad del trabajador (Activo / Inactivo).
+   * 
+   * @param {Object} data - Datos actuales del trabajador.
+   */
+  const handleEstatusActiveWorker = async (data) => {
+    const { activo, id } = data;
+    const nuevoEstado = !activo;
+    
+    try {
+      const res = await updateActiveWorkerDataDB(nuevoEstado, id);
+      if (res) {
+        // ✅ Corrección: Actualización inmutable correcta usando spread operator
+        setWorker((prevWorker) => ({
+          ...prevWorker,
+          activo: nuevoEstado,
+        }));
+      }
+    } catch (error) {
+      console.error("Error al actualizar el estado del trabajador:", error);
     }
   };
 
@@ -64,13 +96,14 @@ export function VistaWorker() {
     );
   }
 
-  // Iniciales para el Avatar
+  // Generación de iniciales para el Avatar de forma segura
   const initials = `${worker.nombre?.charAt(0) || ""}${
     worker.apellido_paterno?.charAt(0) || ""
   }`.toUpperCase();
 
   return (
     <Container fluid className="py-4 px-md-4">
+      
       {/* Botón Volver */}
       <div className="mb-3">
         <Button
@@ -88,6 +121,7 @@ export function VistaWorker() {
         <Card.Body className="p-4">
           <div className="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3">
             <div className="d-flex align-items-center gap-3">
+              
               {/* Avatar circular */}
               <div
                 className="rounded-circle bg-primary bg-opacity-10 text-primary fw-bold d-flex align-items-center justify-content-center text-uppercase fs-3"
@@ -144,19 +178,35 @@ export function VistaWorker() {
             {/* Botones de acción rápida */}
             <div className="d-flex align-items-center gap-2">
               <Button
+                as={Link}
+                to={`/rf/editar-datos-empleado/${worker.id}`}
+                state={worker}
                 variant="outline-secondary"
                 className="d-flex align-items-center gap-2 btn-sm px-3"
               >
                 <i className="bi bi-pencil"></i>
                 <span>Editar</span>
               </Button>
-              <Button
-                variant="outline-danger"
-                className="d-flex align-items-center gap-2 btn-sm px-3"
-              >
-                <i className="bi bi-person-x"></i>
-                <span>Dar de baja</span>
-              </Button>
+
+              {worker.activo ? (
+                <Button
+                  variant="outline-danger"
+                  className="d-flex align-items-center gap-2 btn-sm px-3"
+                  onClick={() => handleEstatusActiveWorker(worker)}
+                >
+                  <i className="bi bi-person-x"></i>
+                  <span>Dar de baja</span>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline-success"
+                  className="d-flex align-items-center gap-2 btn-sm px-3"
+                  onClick={() => handleEstatusActiveWorker(worker)}
+                >
+                  <i className="bi bi-person-add"></i>
+                  <span>Habilitar</span>
+                </Button>
+              )}
             </div>
           </div>
         </Card.Body>
@@ -164,7 +214,8 @@ export function VistaWorker() {
 
       {/* Contenido Principal */}
       <Row className="g-4">
-        {/* Columna Izquierda: Información Rápida / Contacto */}
+        
+        {/* Columna Izquierda: Información de Contacto */}
         <Col lg={4}>
           <Card className="border-0 shadow-sm mb-4">
             <Card.Header className="bg-white border-0 pt-4 px-4 pb-0">
@@ -305,14 +356,17 @@ export function VistaWorker() {
                   </Row>
                 </Tab>
 
-                {/* Tab opcional para futuros módulos */}
-                <Tab eventKey="documentos" title="Relacion de pagos">
-                  <TablaPagoOneWorker idWorker={worker.id}/>
+                {/* Tab: Relación de Pagos */}
+                <Tab eventKey="documentos" title="Relación de Pagos">
+                  <div className="pt-2">
+                    <TablaPagoOneWorker idWorker={worker.id} />
+                  </div>
                 </Tab>
               </Tabs>
             </Card.Body>
           </Card>
         </Col>
+
       </Row>
     </Container>
   );
