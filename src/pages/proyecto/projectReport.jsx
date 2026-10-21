@@ -10,17 +10,30 @@ import { getInfoFinancieraProyectoDB } from "../../querysDB/projects/getInfoFnan
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
 import { exportToExcel } from "../../utils/exportToExcel";
 import { convertirMoneda } from "../../utils/convertirMoneda";
+import { VistasResumenFinancieroProyecto } from "./vistaResumenFinancieroProyecto";
 
 // ==========================================
 // FUNCIONES AUXILIARES (UTILIDADES)
 // ==========================================
 
+/**
+ * Convierte un monto a Soles (PEN) aplicando el tipo de cambio si la moneda es extranjera.
+ * @param {number} [monto=0] - Monto original.
+ * @param {string} [moneda="PEN"] - Código de moneda ('PEN', 'USD', etc.).
+ * @param {number} [tipoCambio=1] - Tipo de cambio aplicable.
+ * @returns {number} Monto convertido en Soles.
+ */
 const getMontoSoles = (monto = 0, moneda = "PEN", tipoCambio = 1) => {
   const numMonto = Number(monto) || 0;
   const numTC = Number(tipoCambio) || 1;
   return moneda !== "PEN" ? numMonto * numTC : numMonto;
 };
 
+/**
+ * Formatea un valor numérico a moneda local (Soles Peruanos - PEN).
+ * @param {number} [amount=0] - Cantidad numérica.
+ * @returns {string} Cadena formateada como moneda.
+ */
 const formatCurrency = (amount = 0) =>
   new Intl.NumberFormat("es-PE", {
     style: "currency",
@@ -28,15 +41,25 @@ const formatCurrency = (amount = 0) =>
     minimumFractionDigits: 2,
   }).format(Number(amount) || 0);
 
+/**
+ * Formatea la serie y número de un comprobante de pago.
+ * @param {string} serie - Serie del comprobante.
+ * @param {string} nro - Número del comprobante.
+ * @returns {string} Comprobante formateado (Ej. "F001-000123").
+ */
 const formatComprobante = (serie, nro) => {
   if (!serie && !nro) return "S/N";
   return `${(serie || "").toUpperCase()}-${nro || ""}`;
 };
 
 // ==========================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL: ProjectReport
 // ==========================================
 
+/**
+ * Muestra el reporte integral, financiero y gerencial de un proyecto, 
+ * permitiendo exportar los datos a Excel e imprimirlos.
+ */
 export function ProjectReport() {
   const { idProyecto } = useParams();
   const navigate = useNavigate();
@@ -46,14 +69,14 @@ export function ProjectReport() {
   const [dataReportProject, setDataReportProject] = useState({});
   const [dataExpenditure, setDataExpenditure] = useState([]);
   const [dataTaxDoc, setDataTaxDoc] = useState([]);
-  const [financialInfo, setFinancialInfo] = useState({
-    monto_detraccion: 0,
-    monto_adelanto: 0,
-  });
+  
+  // ------------------------------------------
+  // CÁLCULOS FINANCIEROS Y MÉTRICAS
+  // ------------------------------------------
 
-  // ------------------------------------------
-  // CÁLCULO DE MÉTRICAS FINANCIERAS
-  // ------------------------------------------
+  /**
+   * Calcula el total de detracciones y adelantos a partir de la información financiera.
+   */
   const calculateFinancialMetrics = useCallback((res) => {
     if (!res || !Array.isArray(res.ingresos)) {
       return { monto_detraccion: 0, monto_adelanto: 0 };
@@ -80,6 +103,20 @@ export function ProjectReport() {
     };
   }, []);
 
+  /**
+   * Calcula el monto total facturado neto considerando notas de crédito emitidas.
+   */
+  const calculateMontoFact = useCallback((documentos = []) => {
+    return documentos.reduce((acc, item) => {
+      const tipo = item?.tipo_doc;
+      const monto = Number(item?.monto) || 0;
+
+      if (tipo === "nc emitida") return acc - monto;
+      if (tipo === "factura emitida") return acc + monto;
+      return acc;
+    }, 0);
+  }, []);
+
   // ------------------------------------------
   // CARGA DE DATOS EN PARALELO
   // ------------------------------------------
@@ -87,9 +124,11 @@ export function ProjectReport() {
     let isMounted = true;
 
     const fetchData = async () => {
+      if (!idProyecto) return;
+
       try {
         setLoading(true);
-        const [resProject, resFinancialInfo] = await Promise.all([
+        const resProject = await Promise.all([
           getReportProjectDataDB(idProyecto),
           getInfoFinancieraProyectoDB(idProyecto),
         ]);
@@ -99,10 +138,6 @@ export function ProjectReport() {
             setDataReportProject(resProject);
             setDataExpenditure(resProject.gastos || []);
             setDataTaxDoc(resProject.documentos_tributarios || []);
-          }
-          if (resFinancialInfo) {
-            const metrics = calculateFinancialMetrics(resFinancialInfo);
-            setFinancialInfo(metrics);
           }
         }
       } catch (err) {
@@ -114,20 +149,18 @@ export function ProjectReport() {
       }
     };
 
-    if (idProyecto) {
-      fetchData();
-    }
+    fetchData();
 
     return () => {
       isMounted = false;
     };
-  }, [idProyecto, calculateFinancialMetrics]);
+  }, [idProyecto, calculateFinancialMetrics, calculateMontoFact]);
 
   // ------------------------------------------
   // CÁLCULOS OPTIMIZADOS (MEMOIZADOS)
   // ------------------------------------------
 
-  // Clasificación de gastos en una sola pasada
+  // Clasificación de gastos en directos e indirectos
   const { gastosDirectos, gastosIndirectos } = useMemo(() => {
     const directos = [];
     const indirectos = [];
@@ -157,7 +190,7 @@ export function ProjectReport() {
     );
   }, [dataExpenditure]);
 
-  // Agrupación por categoría
+  // Agrupación de gastos por categoría
   const gastosPorCategoria = useMemo(() => {
     const agrupado = dataExpenditure.reduce((acc, g) => {
       const cat = g.categoria || "Sin Categoría";
@@ -224,7 +257,7 @@ export function ProjectReport() {
     };
   }, [dataReportProject.monto_ofertado, gastosFacturadoYNo.total]);
 
-  // Exportar Excel
+  // Exportación a Excel
   const handleExportarExcel = useCallback(() => {
     const dataToExport = [...gastosDirectos, ...gastosIndirectos].map((e) => ({
       Fecha: e.fecha,
@@ -268,6 +301,7 @@ export function ProjectReport() {
       {/* Reporte Principal Imprimible */}
       <Card className="shadow-sm border-0 rounded-3">
         <Card.Body className="p-4" ref={printRef}>
+          
           {/* Cabecera */}
           <div className="border-bottom pb-3 mb-4">
             <div className="d-flex justify-content-between align-items-start">
@@ -290,66 +324,11 @@ export function ProjectReport() {
           </div>
 
           {/* Tarjetas de Métricas Clave */}
-          <Row className="g-3 mb-4">
-            <Col sm={6} md={4} lg={3}>
-              <Card className="border-start border-4 border-primary shadow-sm h-100">
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">Monto Contratado</small>
-                  <h5 className="fw-bold mb-0 mt-1">{formatCurrency(dataReportProject.monto_ofertado)}</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} md={4} lg={3}>
-              <Card className="border-start border-4 border-info shadow-sm h-100">
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">{"Monto Facturado"}</small>
-                  <h5 className="fw-bold mb-0 mt-1">{formatCurrency(financialInfo.monto_adelanto)}</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} md={4} lg={3}>
-              <Card className="border-start border-4 border-warning shadow-sm h-100">
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">Costo Real Total</small>
-                  <h5 className="fw-bold mb-0 mt-1">{formatCurrency(gastosFacturadoYNo.total)}</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} md={4} lg={3}>
-              <Card className={`border-start border-4 border-${utilidadNetaBruta >= 0 ? "success" : "danger"} shadow-sm h-100`}>
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">Utilidad Bruta Est.</small>
-                  <h5 className="fw-bold mb-0 mt-1">{formatCurrency(utilidadNetaBruta)}</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} md={4} lg={4}>
-              <Card className={`border-start border-4 border-${margenBrutoPorc >= 0 ? "success" : "danger"} shadow-sm h-100`}>
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">Margen Bruto Est.</small>
-                  <h5 className="fw-bold mb-0 mt-1">{margenBrutoPorc.toFixed(2)}%</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} md={4} lg={4}>
-              <Card className="border-start border-4 border-secondary shadow-sm h-100">
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">Monto Detracciones</small>
-                  <h5 className="fw-bold mb-0 mt-1">{formatCurrency(financialInfo.monto_detraccion)}</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-            <Col sm={6} md={4} lg={4}>
-              <Card className="border-start border-4 border-dark shadow-sm h-100">
-                <Card.Body className="p-3">
-                  <small className="text-muted fw-semibold text-uppercase">
-                    Monto Retención {flujoCaja.esEstimado ? "(Estimado 3%)" : ""}
-                  </small>
-                  <h5 className="fw-bold mb-0 mt-1">{formatCurrency(flujoCaja.retencionSunat)}</h5>
-                </Card.Body>
-              </Card>
-            </Col>
-          </Row>
+          <VistasResumenFinancieroProyecto
+            presupuestoTotal={dataReportProject.monto_ofertado}
+            idProyecto={dataReportProject.id}
+            totalGastos={gastosFacturadoYNo.total}
+          />
 
           {/* Sección 1: Información General */}
           <section className="mb-4">
@@ -528,6 +507,7 @@ export function ProjectReport() {
             </h5>
             <TablaIngresos idProyecto={idProyecto} />
           </section>
+
         </Card.Body>
       </Card>
     </Container>
@@ -535,9 +515,12 @@ export function ProjectReport() {
 }
 
 // ==========================================
-// TABLAS INTERNAS (MISMOS COMPONENTES LOCALE)
+// COMPONENTES AUXILIARES DE TABLAS INTERNAS
 // ==========================================
 
+/**
+ * Tabla interna para desplegar los ítems de gastos directos o indirectos.
+ */
 function TablaGastos({ items = [] }) {
   if (!items.length) {
     return <p className="text-muted fst-italic small">No hay gastos registrados en esta categoría.</p>;
@@ -584,6 +567,9 @@ function TablaGastos({ items = [] }) {
   );
 }
 
+/**
+ * Tabla interna que carga y despliega de forma reactiva los ingresos asociados al proyecto.
+ */
 function TablaIngresos({ idProyecto }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
