@@ -125,15 +125,18 @@ export function NewExpensePage() {
         await saveTaxDocumentDB(invoiceData);
       }
 
+      
       // Guardar items
       const itemsToSave = dataItemInvoice.map(item => {
 
         return isProjectContext
-          ? { ...item, id_proyecto: idProyecto }
-          : item;
+        ? { ...item, id_proyecto: idProyecto }
+        : item;
       });
-
-      await saveBolckExpenditureDB(itemsToSave);
+      
+      if(itemsToSave.length > 0){
+        await saveBolckExpenditureDB(itemsToSave);
+      }
 
       navigate(-1);
 
@@ -588,7 +591,7 @@ export function NewExpensePage() {
                 <Button
                   className="w-100 mt-4 py-3"
                   size="lg"
-                  disabled={dataItemInvoice.length === 0 || saving}
+                  disabled={saving}
                   onClick={saveAllItems}
                 >
 
