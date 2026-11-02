@@ -128,7 +128,8 @@ export function ProjectReport() {
 
       try {
         setLoading(true);
-        const resProject = await Promise.all([
+        // ✅ Corrección: Destructuración correcta del resultado de Promise.all
+        const [resProject, resFinancialInfo] = await Promise.all([
           getReportProjectDataDB(idProyecto),
           getInfoFinancieraProyectoDB(idProyecto),
         ]);
@@ -138,6 +139,11 @@ export function ProjectReport() {
             setDataReportProject(resProject);
             setDataExpenditure(resProject.gastos || []);
             setDataTaxDoc(resProject.documentos_tributarios || []);
+          }
+          if (resFinancialInfo) {
+            // Puedes procesar resFinancialInfo o metrics aquí si lo requieres en estados adicionales
+            calculateFinancialMetrics(resFinancialInfo);
+            calculateMontoFact(resProject?.documentos_tributarios || []);
           }
         }
       } catch (err) {

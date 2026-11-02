@@ -215,7 +215,7 @@ export function VistasResumenFinancieroProyecto({
                 <div className="border rounded-3 p-3 h-100 bg-white shadow-xs">
                   <span className="text-muted d-block small fw-medium">MONTO PAGADO (REAL)</span>
                   <h4 className="fw-bold text-success mb-1 mt-1">
-                    {formatMoneda(montoPagado)}
+                    {montoRetencion!==0?formatMoneda(montoPagado-montoRetencion):formatMoneda(montoPagado)}
                   </h4>
                   <small className="text-muted" style={{ fontSize: "0.75rem" }}>Dinero recibido en cuenta</small>
                 </div>
