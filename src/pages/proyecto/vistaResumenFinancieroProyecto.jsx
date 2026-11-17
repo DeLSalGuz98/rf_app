@@ -66,7 +66,7 @@ export function VistasResumenFinancieroProyecto({
       const tipoDoc = item.documentos_tributarios.tipo_doc;
       const monto = Number(item.documentos_tributarios.monto) || 0;
 
-      if (tipo === "anulado") return acc;
+      if (tipo === "anulado") return acc + monto;
       if (tipoDoc === "nc emitido") return acc - monto;
 
       return acc + monto;
