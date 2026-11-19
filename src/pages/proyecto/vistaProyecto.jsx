@@ -16,29 +16,30 @@ import {
 } from "react-bootstrap";
 
 // Funciones API
-import { getInfoProject } from "../../querysDB/projects/getInfoProject";
-import { getListToGraphProjectDB } from "../../querysDB/gastos/getListToGraphProject";
-import { getTotalExpenditureProject } from "../../querysDB/gastos/getTotalExpenditureProject";
 import { updateStateProjectDB } from "../../querysDB/projects/updateStateProject";
-import { getListExpenditureProject } from "../../querysDB/gastos/listExpenditureProject";
-// import { getTotalIncomesProject } from "../../querysDB/ingresos/getTotalIngresos";
 
 // Utils y Componentes
 import { SetCapitalLetter } from "../../utils/setCapitalLetterString";
-import { GraphExpenditureProject } from "../../components/graphExpenditureProject";
 import { DataProyectComponent } from "./componentsVistaProyecto/datosGeneralesProyecto";
 import { TableGastos } from "./componentsVistaProyecto/tablaGastosProyecto";
 import { TableIngresos } from "./componentsVistaProyecto/tablaIngresosProyecto";
 import { VistasResumenFinancieroProyecto } from "./vistaResumenFinancieroProyecto";
 import { TableWorkersProject } from "./componentsVistaProyecto/tablaWorkers";
 import { TablaPagoWorkers } from "../pagoWorkers/tablaPagoWorkers";
+import { getInfoProyectoFromDB } from "../../utils/getResumenFinancieroProyecto";
 
 export function ProjectPage() {
   const { idProyecto } = useParams();
 
   const [proyecto, setProyecto] = useState(null);
+  const [infoCliente, setInfoCliente] = useState(null);
+  const [fechasProyecto, setFechasProyecto] = useState(null);
+  const [infoFinancieraProyecto, setInfoFinancieraProyecto] = useState(null);
+  const [ingresos, setIngresos] = useState(null);
+  const [gastos, setGastos] = useState(null);
+  const [documentosTributarios, setDocumentosTributarios] = useState(null);
+
   const [loading, setLoading] = useState(true);
-  const [listGraphProject, setListGraphProject] = useState([]);
   // const [totalIngresos, setTotalIngresos] = useState(0);
   const [stateProjectValue, setStateProjectValue] = useState("");
   const [showModal, setShowModal] = useState(false);
@@ -49,48 +50,15 @@ export function ProjectPage() {
         setLoading(true);
 
         // Promise.all ejecuta todas las consultas en paralelo (Mucho más rápido)
-        const [
-          dataProyecto,
-          rawExpenditure,
-          graphData,
-          expenditureList
-        ] = await Promise.all([
-          getInfoProject(idProyecto),
-          getTotalExpenditureProject(idProyecto),
-          getListToGraphProjectDB(idProyecto),
-          getListExpenditureProject(idProyecto)
-        ]);
-
-        // Procesar cálculos de facturación en memoria de forma limpia
-        let facturado = 0;
-        let noFacturado = 0;
-
-        expenditureList.forEach((e) => {
-          const totalSoles = e.moneda !== "PEN" ? e.monto_total * e.tipo_cambio : e.monto_total;
-          if (!e.nro_comprobante && !e.serie_comprobante) {
-            noFacturado += totalSoles;
-          } else {
-            facturado += totalSoles;
-          }
-        });
-
-        const totalExpenditureNum = Number(rawExpenditure) || 0;
-        // const totalIncomesNum = Number(rawIncomes) || 0;
-        const porcentaje = dataProyecto.monto_ofertado ? (totalExpenditureNum * 100) / dataProyecto.monto_ofertado : 0;
-
-        // Inyectar datos financieros calculados directamente en el objeto de estado del proyecto
-        setProyecto({
-          ...dataProyecto,
-          total_expenditure: totalExpenditureNum,
-          dif: dataProyecto.monto_ofertado - totalExpenditureNum,
-          porcentaje,
-          facturado: facturado.toFixed(2),
-          noFacturado: noFacturado.toFixed(2)
-        });
-
-        // setTotalIngresos(totalIncomesNum);
-        setListGraphProject(graphData);
-        setStateProjectValue(dataProyecto.estado);
+        const proyectoData = await getInfoProyectoFromDB(idProyecto)
+        console.log(proyectoData.documentosTributarios)
+        setProyecto(proyectoData.proyecto.infoPrincipal)
+        setInfoCliente(proyectoData.proyecto.infoCliente)
+        setFechasProyecto(proyectoData.proyecto.fechasProyecto)
+        setInfoFinancieraProyecto(proyectoData.proyecto.infoFinanciera)
+        setIngresos(proyectoData.ingresos)
+        setGastos(proyectoData.gastos)
+        setDocumentosTributarios(proyectoData.documentosTributarios)
       } catch (error) {
         console.error("Error cargando los datos del proyecto:", error);
       } finally {
@@ -131,170 +99,171 @@ export function ProjectPage() {
     <div className="container-fluid">
       {/* HERO HEADER */}
       <Card className="border-0 shadow-sm rounded-4 mb-4 overflow-hidden">
-  <Card.Body className="p-4">
-    <Row className="align-items-start g-4">
-      {/* Columna Izquierda: Información del Proyecto */}
-      <Col lg={7} xl={8}>
-        <div className="d-flex align-items-center gap-3 mb-3">
-          <div>
-            {/* Título + Enlace SIAF */}
-            <h1 className="fw-bold mb-2 text-uppercase text-primary display-6 d-flex align-items-center flex-wrap gap-2">
-              <span>{proyecto.nombre_proyecto}</span>
-              {proyecto.exp_siaf && (
-                <a
-                  href="https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-primary text-opacity-75 fs-4 align-self-center ms-1 text-decoration-none"
-                  title="Consultar Expediente en MEF"
-                >
-                  <i className="bi bi-box-arrow-up-right"></i>
-                </a>
+        <Card.Body className="p-4">
+          <Row className="align-items-start g-4">
+            {/* Columna Izquierda: Información del Proyecto */}
+            <Col lg={7} xl={8}>
+              <div className="d-flex align-items-center gap-3 mb-3">
+                <div>
+                  {/* Título + Enlace SIAF */}
+                  <h1 className="fw-bold mb-2 text-uppercase text-primary display-6 d-flex align-items-center flex-wrap gap-2">
+                    <span>{proyecto.nombre_proyecto}</span>
+                    {proyecto.exp_siaf && (
+                      <a
+                        href="https://apps2.mef.gob.pe/consulta-vfp-webapp/consultaExpediente.jspx"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-primary text-opacity-75 fs-4 align-self-center ms-1 text-decoration-none"
+                        title="Consultar Expediente en MEF"
+                      >
+                        <i className="bi bi-box-arrow-up-right"></i>
+                      </a>
+                    )}
+                  </h1>
+
+                  {/* Badges Informativos */}
+                  <div className="d-flex gap-2 align-items-center flex-wrap">
+                    {proyecto.tipo && (
+                      <Badge bg="dark" className="fs-6 px-3 py-2 text-uppercase fw-semibold">
+                        {SetCapitalLetter(proyecto.tipo)}
+                      </Badge>
+                    )}
+
+                    {proyecto.estado && (
+                      <Badge
+                        className="fs-6 px-3 py-2 text-uppercase shadow-sm fw-semibold"
+                        bg={
+                          proyecto.estado === "finalizado" || proyecto.estado === "pagado"
+                            ? "success"
+                            : proyecto.estado === "pendiente" || proyecto.estado === "en proceso"
+                            ? "warning"
+                            : "secondary"
+                        }
+                      >
+                        {proyecto.estado}
+                      </Badge>
+                    )}
+
+                    {proyecto.exp_siaf && (
+                      <Badge bg="light" text="dark" className="fs-6 border px-3 py-2 shadow-sm fw-normal">
+                        Exp. SIAF: <strong className="font-monospace">{proyecto.exp_siaf}</strong>
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {/* Descripción del Proyecto */}
+              {proyecto.descripcion_proyecto && (
+                <p className="text-secondary fs-5 mb-0 fw-normal lh-sm">
+                  {SetCapitalLetter(proyecto.descripcion_proyecto)}
+                </p>
               )}
-            </h1>
-
-            {/* Badges Informativos */}
-            <div className="d-flex gap-2 align-items-center flex-wrap">
-              {proyecto.tipo && (
-                <Badge bg="dark" className="fs-6 px-3 py-2 text-uppercase fw-semibold">
-                  {SetCapitalLetter(proyecto.tipo)}
-                </Badge>
-              )}
-
-              {proyecto.estado && (
-                <Badge
-                  className="fs-6 px-3 py-2 text-uppercase shadow-sm fw-semibold"
-                  bg={
-                    proyecto.estado === "finalizado" || proyecto.estado === "pagado"
-                      ? "success"
-                      : proyecto.estado === "pendiente" || proyecto.estado === "en proceso"
-                      ? "warning"
-                      : "secondary"
-                  }
-                >
-                  {proyecto.estado}
-                </Badge>
-              )}
-
-              {proyecto.exp_siaf && (
-                <Badge bg="light" text="dark" className="fs-6 border px-3 py-2 shadow-sm fw-normal">
-                  Exp. SIAF: <strong className="font-monospace">{proyecto.exp_siaf}</strong>
-                </Badge>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Descripción del Proyecto */}
-        {proyecto.descripcion_proyecto && (
-          <p className="text-secondary fs-5 mb-0 fw-normal lh-sm">
-            {SetCapitalLetter(proyecto.descripcion_proyecto)}
-          </p>
-        )}
-      </Col>
-
-      {/* Columna Derecha: Panel de Acciones */}
-      <Col lg={5} xl={4}>
-        <Stack gap={2}>
-          {/* Botones Principales Rápidos: Ingreso y Gasto */}
-          <Row className="g-2">
-            <Col xs={6}>
-              <Button
-                as={Link}
-                to={`/rf/registrar-ingresos-proyecto/${idProyecto}`}
-                size="md"
-                variant="success"
-                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
-              >
-                <i className="bi bi-plus-circle-fill fs-6"></i>
-                <span>Ingreso</span>
-              </Button>
             </Col>
-            <Col xs={6}>
-              <Button
-                as={Link}
-                to={`/rf/registrar-gastos-proyecto/${idProyecto}`}
-                size="md"
-                variant="danger"
-                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
-              >
-                <i className="bi bi-dash-circle-fill fs-6"></i>
-                <span>Gasto</span>
-              </Button>
+
+            {/* Columna Derecha: Panel de Acciones */}
+            <Col lg={5} xl={4}>
+              <Stack gap={2}>
+                {/* Botones Principales Rápidos: Ingreso y Gasto */}
+                <Row className="g-2">
+                  <Col xs={6}>
+                    <Button
+                      as={Link}
+                      to={`/rf/registrar-ingresos-proyecto/${idProyecto}`}
+                      size="md"
+                      variant="success"
+                      className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
+                    >
+                      <i className="bi bi-plus-circle-fill fs-6"></i>
+                      <span>Ingreso</span>
+                    </Button>
+                  </Col>
+                  <Col xs={6}>
+                    <Button
+                      as={Link}
+                      to={`/rf/registrar-gastos-proyecto/${idProyecto}`}
+                      size="md"
+                      variant="danger"
+                      className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-semibold shadow-sm"
+                    >
+                      <i className="bi bi-dash-circle-fill fs-6"></i>
+                      <span>Gasto</span>
+                    </Button>
+                  </Col>
+                </Row>
+
+                {/* Botones Secundarios y Edición */}
+                <Button
+                  as={Link}
+                  to={`/rf/registrar-documentos/${idProyecto}`}
+                  variant="outline-primary"
+                  className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+                >
+                  <i className="bi bi-file-earmark-text fs-6"></i>
+                  <span>Documentos Tributarios</span>
+                </Button>
+
+                <Button
+                  as={Link}
+                  to={`/rf/reporte-proyecto/${idProyecto}`}
+                  variant="outline-dark"
+                  className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+                >
+                  <i className="bi bi-bar-chart-line fs-6"></i>
+                  <span>Reporte Financiero</span>
+                </Button>
+
+                <Button
+                  as={Link}
+                  to={`/rf/proyecto/${idProyecto}/agregar-trabajador`}
+                  variant="outline-dark"
+                  className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+                >
+                  <i className="bi bi-people fs-6"></i>
+                  <span>Añadir Personal</span>
+                </Button>
+
+                <Row className="g-2">
+                  <Col xs={6}>
+                    <Button
+                      variant="outline-warning"
+                      className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium text-dark"
+                      onClick={() => setShowModal(true)}
+                    >
+                      <i className="bi bi-arrow-repeat fs-6"></i>
+                      <span>Estado</span>
+                    </Button>
+                  </Col>
+                  <Col xs={6}>
+                    <Button
+                      as={Link}
+                      to={`/rf/proyecto/${idProyecto}/editar-datos`}
+                      state={proyecto}
+                      variant="outline-secondary"
+                      className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
+                    >
+                      <i className="bi bi-pencil-square fs-6"></i>
+                      <span>Editar</span>
+                    </Button>
+                  </Col>
+                </Row>
+              </Stack>
             </Col>
           </Row>
-
-          {/* Botones Secundarios y Edición */}
-          <Button
-            as={Link}
-            to={`/rf/registrar-documentos/${idProyecto}`}
-            variant="outline-primary"
-            className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
-          >
-            <i className="bi bi-file-earmark-text fs-6"></i>
-            <span>Documentos Tributarios</span>
-          </Button>
-
-          <Button
-            as={Link}
-            to={`/rf/reporte-proyecto/${idProyecto}`}
-            variant="outline-dark"
-            className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
-          >
-            <i className="bi bi-bar-chart-line fs-6"></i>
-            <span>Reporte Financiero</span>
-          </Button>
-
-          <Button
-            as={Link}
-            to={`/rf/proyecto/${idProyecto}/agregar-trabajador`}
-            variant="outline-dark"
-            className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
-          >
-            <i className="bi bi-people fs-6"></i>
-            <span>Añadir Personal</span>
-          </Button>
-
-          <Row className="g-2">
-            <Col xs={6}>
-              <Button
-                variant="outline-warning"
-                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium text-dark"
-                onClick={() => setShowModal(true)}
-              >
-                <i className="bi bi-arrow-repeat fs-6"></i>
-                <span>Estado</span>
-              </Button>
-            </Col>
-            <Col xs={6}>
-              <Button
-                as={Link}
-                to={`/rf/proyecto/${idProyecto}/editar-datos`}
-                state={proyecto}
-                variant="outline-secondary"
-                className="w-100 d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
-              >
-                <i className="bi bi-pencil-square fs-6"></i>
-                <span>Editar</span>
-              </Button>
-            </Col>
-          </Row>
-        </Stack>
-      </Col>
-    </Row>
-  </Card.Body>
-</Card>
+        </Card.Body>
+      </Card>
 
       <Row>
         <Col lg={3}>
-          <DataProyectComponent proyecto={proyecto} />
+          <DataProyectComponent infoCliente={infoCliente} fechasProyecto={fechasProyecto} />
         </Col>
         
         <Col lg={9}>
           <VistasResumenFinancieroProyecto 
-            presupuestoTotal={proyecto.monto_ofertado}
-            idProyecto={idProyecto}
-            totalGastos={proyecto.total_expenditure}
+            infoFinancieraProyecto = {infoFinancieraProyecto}
+            ingresos ={ingresos}
+            gastos={gastos}
+            documentosTributarios={documentosTributarios}
           />
           <Row className="mt-4">
             <Col lg={12}>
@@ -314,21 +283,6 @@ export function ProjectPage() {
                       <TablaPagoWorkers idProject={idProyecto}/>
                     </Tab>
                   </Tabs>
-                </Card.Body>
-              </Card>
-            </Col>
-
-            <Col lg={12} className="mt-4">
-              <Card className="border-0 shadow-sm rounded-4">
-                <Card.Header className="bg-white border-0 pt-4 px-4">
-                  <h5 className="fw-bold mb-0">Distribución de gastos</h5>
-                </Card.Header>
-                <Card.Body>
-                  {listGraphProject.length > 0 ? (
-                    <GraphExpenditureProject data={listGraphProject} />
-                  ) : (
-                    <p className="text-muted text-center">No hay datos disponibles</p>
-                  )}
                 </Card.Body>
               </Card>
             </Col>

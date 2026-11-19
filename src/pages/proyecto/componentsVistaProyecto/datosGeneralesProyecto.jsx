@@ -1,14 +1,10 @@
 import { Row, Col, Card, Badge } from "react-bootstrap";
+import { frmtFecha } from "../../../utils/formatDate";
 
-const formatDate = (date) => {
-  if (!date) return "-"
-  const newDate = new Date(date).toLocaleDateString("es-PE", {timeZone: "UTC"})
-  return newDate
-}
-
-export function DataProyectComponent({ proyecto }) {
-  if (!proyecto) return null;
-
+export function DataProyectComponent({ infoCliente, fechasProyecto }) {
+  if (!infoCliente) return null;
+  if (!fechasProyecto) return null;
+  
   return (
     <div className="mb-4">
 
@@ -33,30 +29,30 @@ export function DataProyectComponent({ proyecto }) {
                   <div className="mb-3">
                     <small className="text-muted">Razón Social</small>
                     <div className="fw-semibold">
-                      {proyecto.rs_cliente}
+                      {infoCliente.rs_cliente}
                     </div>
                   </div>
 
                   <div className="mb-3">
                     <small className="text-muted">RUC</small>
                     <div className="fw-semibold">
-                      {proyecto.ruc_cliente || "-"}
+                      {infoCliente.ruc_cliente || "-"}
                     </div>
                   </div>
                   <div className="mb-3">
                     <small className="text-muted">Unidad Ejecutora</small>
                     <div className="fw-semibold">
-                      {proyecto.unidad_ejecutora || "-"}
+                      {infoCliente.unidad_ejecutora || "-"}
                     </div>
                   </div>
 
                   <div>
                     <small className="text-muted">Dirección</small>
                     <div className="fw-semibold">
-                      {proyecto.direccion || "-"} <br />
-                      {proyecto.distrito?.toUpperCase() || ""}{" "}
-                      {proyecto.provincia?.toUpperCase() || ""} <br />
-                      {proyecto.departamento?.toUpperCase() || ""}
+                      {infoCliente.direccion || "-"} <br />
+                      {infoCliente.distrito?.toUpperCase() || ""}{" "}
+                      {infoCliente.provincia?.toUpperCase() || ""} <br />
+                      {infoCliente.departamento?.toUpperCase() || ""}
                     </div>
                   </div>
             </Card.Body>
@@ -75,21 +71,21 @@ export function DataProyectComponent({ proyecto }) {
               <div className="d-flex justify-content-between mb-3">
                 <span className="text-muted">Fecha de Inicio</span>
                 <span className="fw-semibold">
-                  {formatDate(proyecto.fecha_inicio)}
+                  {frmtFecha(fechasProyecto.fecha_inicio)}
                 </span>
               </div>
 
               <div className="d-flex justify-content-between mb-3">
                 <span className="text-muted">Plazo (días)</span>
                 <Badge bg="secondary">
-                  {proyecto.plazo_dias || 0}
+                  {fechasProyecto.plazo_dias || 0}
                 </Badge>
               </div>
 
               <div className="d-flex justify-content-between">
                 <span className="text-muted">Fecha de Finalización</span>
                 <span className="fw-semibold">
-                  {formatDate(proyecto.fecha_fin)}
+                  {frmtFecha(fechasProyecto.fecha_fin)}
                 </span>
               </div>
 

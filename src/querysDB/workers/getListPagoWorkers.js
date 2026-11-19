@@ -62,3 +62,30 @@ export async function getListPagoEmpleadoDB(idProyecto) {
     return null;
   }
 }
+
+export async function getListPagoEmpleadoProyectoDB(idProyecto) {
+  // 1. Validación previa del parámetro de entrada
+  if (!idProyecto) {
+    console.warn("getListPagoEmpleadoDB: idProyecto no fue proporcionado.");
+    return [];
+  }
+
+  try {
+    // 2. Consulta en Supabase con relaciones anidadas
+    const { data, error } = await supabase
+      .from("pago_empleado")
+      .select(`
+        monto_pago
+      `)
+      .eq("id_proyecto", idProyecto)
+
+    if (error) throw error;
+
+    return data
+
+  } catch (error) {
+    console.error("Error en getListPagoEmpleadoDB:", error.message || error);
+    toast.error("Error al obtener la lista de pagos.");
+    return null;
+  }
+}

@@ -60,3 +60,22 @@ export async function getListTaxDocumentsProyectDB(idProject) {
   }
   return data
 }
+export async function getDocsTributariosProyectoDB(idProject) {
+  const {data, error} = await supabase.from("documentos_tributarios")
+  .select(`
+    *,
+    factura(*),
+    nota_credito(*)
+    `)
+  .eq("id_proyecto", idProject)
+
+  if(error){
+    console.error(error)
+    toast.error("No se pudo obtener los datos")
+    return null
+  }
+  if(data.length === 0){
+    toast.warning("La lista esta vacia, No se obtuvo ningun elemento")
+  }
+  return data
+}
