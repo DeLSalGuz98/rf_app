@@ -6,6 +6,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, useWatch } from "react-hook-form";
 import { useEffect } from "react";
 import { getItemAndPriceDB } from "../../querysDB/prices/getPrices";
+import { exchangeUSD } from "../../utils/convertirMoneda";
+import { frmtFecha } from "../../utils/formatDate";
 
 // Expresión regular que permite: Letras (incluyendo tildes/ñ), números y espacios.
 const safeCharsRegex = /^[a-zA-Z0-9ñÑáéíóúÁÉÍÓÚ\s%]+$/;
@@ -99,24 +101,32 @@ export function DashPricesPage(){
                         <th className="py-3 px-4 text-secondary text-uppercase font-monospace" style={{ fontSize: '0.8rem' }}>
                           Descripción del Item
                         </th>
+                        <th className="py-3 text-secondary text-uppercase font-monospace" style={{ fontSize: '0.8rem' }}>
+                          Fecha Registro
+                        </th>
                         <th className="py-3 px-4 text-end text-secondary text-uppercase font-monospace" style={{ fontSize: '0.8rem' }}>
                           Precio Unitario
                         </th>
                       </tr>
                     </thead>
                     <tbody>
-                      {results.map((item, index) => (
+                      {results.map((item, index) => {
+                        const newItem = exchangeUSD(item)
+                        return(
                         <tr key={item.id || index} style={{ cursor: 'pointer' }}>
                           <td className="py-3 px-4 align-middle">
                             <span className="fw-medium text-dark">{item.descripcion}</span>
                           </td>
+                          <td>
+                            <span className="fw-medium text-dark">{frmtFecha(item.fecha)}</span>
+                          </td>
                           <td className="py-3 px-4 text-end align-middle">
                             <span className="badge bg-success-subtle text-success border border-success-subtle fs-6 p-2">
-                              S/. {Number(item.precio_unitario).toFixed(2)}
+                              S/. {Number(newItem.precio_unitario).toFixed(2)}
                             </span>
                           </td>
                         </tr>
-                      ))}
+                      )})}
                     </tbody>
                   </Table>
                 </div>

@@ -31,6 +31,7 @@ import { getInfoProyectoFromDB } from "../../utils/getResumenFinancieroProyecto"
 export function ProjectPage() {
   const { idProyecto } = useParams();
 
+  const [data, setData] = useState(null);
   const [proyecto, setProyecto] = useState(null);
   const [infoCliente, setInfoCliente] = useState(null);
   const [fechasProyecto, setFechasProyecto] = useState(null);
@@ -51,7 +52,7 @@ export function ProjectPage() {
 
         // Promise.all ejecuta todas las consultas en paralelo (Mucho más rápido)
         const proyectoData = await getInfoProyectoFromDB(idProyecto)
-        console.log(proyectoData.documentosTributarios)
+        setData(proyectoData)
         setProyecto(proyectoData.proyecto.infoPrincipal)
         setInfoCliente(proyectoData.proyecto.infoCliente)
         setFechasProyecto(proyectoData.proyecto.fechasProyecto)
@@ -206,6 +207,7 @@ export function ProjectPage() {
                 <Button
                   as={Link}
                   to={`/rf/reporte-proyecto/${idProyecto}`}
+                  state={{data}}
                   variant="outline-dark"
                   className="d-flex align-items-center justify-content-center gap-2 py-2 fw-medium"
                 >
